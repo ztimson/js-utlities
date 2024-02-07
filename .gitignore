@@ -1,0 +1,23 @@
+# IDEs
+.idea
+.vscode
+
+# Artifacts
+coverage
+dist
+node_modules
+uploads
+public/momentum*js
+
+# Logs
+*.log
+*.tsbuildinfo
+
+# Databases
+*.db
+*.db3
+*.sqlite
+*.sqlite3
+
+# Environment files
+*.local
