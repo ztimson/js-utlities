@@ -8,15 +8,16 @@
  * ```
  *
  * @param {T} obj Object reference that will be cleaned
+ * @param undefinedOnly Ignore null values
  * @returns {Partial<T>} Cleaned object
  */
-export function clean<T>(obj: T, includeNull = false): Partial<T> {
+export function clean<T>(obj: T, undefinedOnly = false): Partial<T> {
 	if(obj == null) throw new Error("Cannot clean a NULL value");
 	if(Array.isArray(obj)) {
 		obj = <any>obj.filter(o => o != null);
 	} else {
 		Object.entries(obj).forEach(([key, value]) => {
-			if(value === undefined || (includeNull || value === null)) delete (<any>obj)[key];
+			if((undefinedOnly && value === undefined) || (!undefinedOnly && value == null)) delete (<any>obj)[key];
 		});
 	}
 	return <any>obj;
@@ -67,6 +68,34 @@ export function dotNotation<T>(obj: any, prop: string, set?: T): T | undefined {
 			return obj[prop] = set;
 		return obj[prop];
 	}, obj);
+}
+
+/**
+ * Recursively flatten a nested object, while maintaining key structure.
+ *
+ * @example
+ * ```ts
+ * const car = {honda: {model: "Civic"}};
+ * console.log(flattenObj(car)); //Output {honda.model: "Civic"}
+ * ```
+ *
+ * @param obj - Object to flatten
+ * @param parent - Recursively check if key is a parent key or not
+ * @param result - Result
+ * @returns {object} - Flattened object
+ */
+export function flattenObj(obj: any, parent?: any, result: any = {}) {
+	if(typeof obj === "object" && !Array.isArray(obj)) {
+		for(const key of Object.keys(obj)) {
+			const propName = parent ? parent + '.' + key : key;
+			if(typeof obj[key] === 'object') {
+				flattenObj(obj[key], propName, result);
+			} else {
+				result[propName] = obj[key];
+			}
+		}
+		return result;
+	}
 }
 
 /**

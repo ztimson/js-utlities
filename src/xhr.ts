@@ -52,10 +52,10 @@ export class XHR<T> {
 					fn(resp, () => res(null)));
 				await wait;
 			}
-			if(resp.headers['Content-Type'] && resp.headers.get('Content-Type').startsWith('application/json'))
-				return await resp.json();
-			if(resp.headers['Content-Type'] && resp.headers.get('Content-Type').startsWith('text/plain'))
-				return await resp.text();
+			if(resp.headers.has('Content-Type')) {
+				if(resp.headers.get('Content-Type')?.startsWith('application/json')) return await resp.json();
+				if(resp.headers.get('Content-Type')?.startsWith('text/plain')) return await resp.text();
+			}
 			return resp;
 		});
 	}

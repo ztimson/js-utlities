@@ -7,8 +7,8 @@ export function addUnique<T>(array: T[], el: T): T[] {
 
 export function arrayDiff(a: any[], b: any[]): any[] {
 	return makeUnique([
-		...a.filter(v1 => !b.includes(v2 => isEqual(v1, v2))),
-		...b.filter(v1 => !a.includes(v2 => isEqual(v1, v2))),
+		...a.filter(v1 => !b.includes((v2: any) => isEqual(v1, v2))),
+		...b.filter(v1 => !a.includes((v2: any) => isEqual(v1, v2))),
 	]);
 }
 
@@ -80,7 +80,7 @@ export function flattenArr(arr: any[], result: any[] = []): any[] {
  * @returns {(a, b) => (number)} - Function to handle sort (Meant to be passed to Array.prototype.sort)
  */
 export function sortByProp(prop: string, reverse = false) {
-	return function (a, b) {
+	return function (a: any, b: any) {
 		const aVal = dotNotation<any>(a, prop);
 		const bVal = dotNotation<any>(b, prop);
 		if(typeof aVal == 'number' && typeof bVal == 'number')
@@ -92,7 +92,7 @@ export function sortByProp(prop: string, reverse = false) {
 }
 
 export function findByProp(prop: string, value: any) {
-	return (v) => isEqual(v[prop], value);
+	return (v: any) => isEqual(v[prop], value);
 }
 
 export function makeUnique(arr: any[]) {

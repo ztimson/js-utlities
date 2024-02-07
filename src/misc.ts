@@ -52,8 +52,8 @@ export function urlParser(url: string): ParsedUrl {
 		groups.subdomain = domains.join('.');
 	}
 	if(groups.query) {
-		const split = (<any>groups.query).split('&'), query = {};
-		split.forEach(q => {
+		const split = (<any>groups.query).split('&'), query: any = {};
+		split.forEach((q: any) => {
 			const [key, val] = q.split('=');
 			query[key] = val;
 		});
