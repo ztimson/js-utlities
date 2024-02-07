@@ -1,0 +1,33 @@
+{
+	"name": "@ztimson/utilities",
+	"version": "0.0.0",
+	"description": "Utility library",
+	"author": "Zak Timson",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://git.zakscode.com/ztimson/utlities"
+	},
+	"main": "./dist/utilities.js",
+	"module": "./dist/utilities.mjs",
+	"types": "./dist/src/index.d.ts",
+	"scripts": {
+		"build": "vite build",
+		"watch": "vite build --watch"
+	},
+	"devDependencies": {
+		"@types/node": "^18.14.0",
+		"typescript": "^5.3.3",
+		"vite": "^5.0.12",
+		"vite-plugin-dts": "^3.7.2"
+	},
+	"exports": {
+		".": {
+			"import": "./dist/utilites.mjs",
+			"require": "./dist/utilities.js"
+		}
+	},
+	"files": [
+		"dist"
+	]
+}

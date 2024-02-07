@@ -1,0 +1,18 @@
+{
+	"include": [
+		"src/**/*"
+	],
+	"compilerOptions": {
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"experimentalDecorators": true,
+		"esModuleInterop": true,
+		"lib": ["ESNext", "DOM"],
+		"module": "ES6",
+		"moduleResolution": "Node",
+		"outDir": "./dist",
+		"strict": true,
+		"target": "ESNext"
+	}
+}
