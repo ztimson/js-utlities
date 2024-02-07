@@ -1,15 +1,15 @@
 {
-	"name": "@ztimson/utilities",
+	"name": "@ztimson/js-utilities",
 	"version": "0.0.0",
-	"description": "Utility library",
+	"description": "JavaScript Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://git.zakscode.com/ztimson/utlities"
+		"url": "https://git.zakscode.com/ztimson/js-utilities"
 	},
-	"main": "./dist/utilities.js",
-	"module": "./dist/utilities.mjs",
+	"main": "./dist/js-utilities.js",
+	"module": "./dist/js-utilities.mjs",
 	"types": "./dist/src/index.d.ts",
 	"scripts": {
 		"build": "vite build",
@@ -23,8 +23,8 @@
 	},
 	"exports": {
 		".": {
-			"import": "./dist/utilites.mjs",
-			"require": "./dist/utilities.js"
+			"import": "./dist/js-utilities.mjs",
+			"require": "./dist/js-utilities.js"
 		}
 	},
 	"files": [

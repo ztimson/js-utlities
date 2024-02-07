@@ -6,10 +6,10 @@ export default defineConfig({
 	build: {
 		lib: {
 			entry: resolve(process.cwd(), 'src/index.ts'),
-			name: 'momentum',
+			name: 'js-utilities',
 			fileName: (module, entryName) => {
-				if(module == 'es') return 'utilities.mjs';
-				if(module == 'umd') return 'utilities.js';
+				if(module == 'es') return 'js-utilities.mjs';
+				if(module == 'umd') return 'js-utilities.js';
 			}
 		},
 	},
