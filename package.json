@@ -1,9 +1,10 @@
 {
 	"name": "@ztimson/js-utilities",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "JavaScript Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
+	"private": false,
 	"repository": {
 		"type": "git",
 		"url": "https://git.zakscode.com/ztimson/js-utilities"

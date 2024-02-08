@@ -45,7 +45,7 @@ export class XHR<T> {
 		return fetch(`${this.baseUrl}${href || ''}`.replace(/([^:]\/)\/+/g, '$1'), {
 			headers,
 			method: opts.method || (body ? 'POST' : 'GET'),
-			body: (headers['Content-Type'].startsWith('application/json') && body) ? JSON.stringify(body) : body
+			body: (headers['Content-Type']?.startsWith('application/json') && body) ? JSON.stringify(body) : body
 		}).then(async resp => {
 			for(let fn of this.getInterceptors()) {
 				const wait = new Promise(res =>
