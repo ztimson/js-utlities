@@ -1,28 +1,33 @@
-export type Listener<T> = (event: T) => any;
+export type Listener = (...args: any[]) => any;
+export type TypedEvents = {[k in string | symbol]: Listener} & {'*': (event: string, ...args: any[]) => any};
 
-export class Emitter<T> {
-	private listeners: {[key: string]: Listener<T>} = {};
+export class TypedEmitter<T extends TypedEvents = TypedEvents> {
+	private listeners: { [key in keyof T]?: Function[] } = {};
 
-	constructor() { }
+	emit<K extends keyof T>(event: K, ...args: Parameters<T[K]>) {
+		(this.listeners['*'] || []).forEach(l => l(event, ...args));
+		(this.listeners[event] || []).forEach(l => l(...args));
+	};
 
-	emit(e: T) {
-		Object.values(this.listeners).forEach(l => l(e));
+	off<K extends keyof T = string>(event: K, listener: T[K]): this {
+		console.log('cleared');
+		this.listeners[event] = (this.listeners[event] || []).filter(l => l === listener);
+		return this;
 	}
 
-	listen(fn: Listener<T>): () => {};
-	listen(key: string, fn: Listener<T>): () => {};
-	listen(keyOrFn: string | Listener<T>, fn?: Listener<T>): () => {} {
-		const func: any = fn ? fn : keyOrFn;
-		const key: string = typeof keyOrFn == 'string' ? keyOrFn :
-			`_${Object.keys(this.listeners).length.toString()}`;
-		this.listeners[<any>key] = func;
-		return () => delete this.listeners[<any>key];
+	on<K extends keyof T = string>(event: K, listener: T[K]) {
+		if(!this.listeners[event]) this.listeners[event] = [];
+		this.listeners[event]?.push(listener);
+		return () => this.off(event, listener);
 	}
 
-	once(fn: Listener<T>) {
-		const stop = this.listen(e => {
-			fn(e);
-			stop();
+	once<K extends keyof T = string>(event: K, listener?: T[K]): Promise<any> {
+		return new Promise(res => {
+			const unsubscribe = this.on(event, <any>((...args: any) => {
+				res(args.length == 1 ? args[0] : args);
+				if(listener) listener(...args);
+				unsubscribe();
+			}));
 		});
 	}
 }
