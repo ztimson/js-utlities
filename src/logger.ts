@@ -68,36 +68,41 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 
 	debug(...args: string[]) {
 		if(LOG_LEVEL.VERBOSE >= Logger.LOG_LEVEL) {
-			Logger.emit(LOG_LEVEL.VERBOSE, ...args);
-			console.debug(CliForeground.LIGHT_GREY + this.format(...args) + CliEffects.CLEAR);
+			const str = this.format(...args);
+			Logger.emit(LOG_LEVEL.VERBOSE, str);
+			console.debug(CliForeground.LIGHT_GREY + str + CliEffects.CLEAR);
 		}
 	}
 
 	error(...args: string[]) {
 		if(LOG_LEVEL.ERROR >= Logger.LOG_LEVEL) {
-			Logger.emit(LOG_LEVEL.ERROR, ...args);
-			console.error(CliForeground.RED + this.format(...args) + CliEffects.CLEAR);
+			const str = this.format(...args);
+			Logger.emit(LOG_LEVEL.ERROR, str);
+			console.error(CliForeground.RED + str + CliEffects.CLEAR);
 		}
 	}
 
 	info(...args: string[]) {
 		if(LOG_LEVEL.INFO >= Logger.LOG_LEVEL) {
-			Logger.emit(LOG_LEVEL.INFO, ...args);
-			console.info(CliForeground.CYAN + this.format(...args) + CliEffects.CLEAR);
+			const str = this.format(...args);
+			Logger.emit(LOG_LEVEL.INFO, str);
+			console.info(CliForeground.CYAN + str + CliEffects.CLEAR);
 		}
 	}
 
 	log(...args: string[]) {
 		if(LOG_LEVEL.INFO >= Logger.LOG_LEVEL) {
-			Logger.emit(LOG_LEVEL.INFO, ...args);
-			console.log(CliEffects.CLEAR + this.format(...args));
+			const str = this.format(...args);
+			Logger.emit(LOG_LEVEL.INFO, str);
+			console.log(CliEffects.CLEAR + str);
 		}
 	}
 
 	warn(...args: string[]) {
 		if(LOG_LEVEL.WARN >= Logger.LOG_LEVEL) {
-			Logger.emit(LOG_LEVEL.WARN, ...args);
-			console.warn(CliForeground.YELLOW + this.format(...args) + CliEffects.CLEAR);
+			const str = this.format(...args);
+			Logger.emit(LOG_LEVEL.WARN, str);
+			console.warn(CliForeground.YELLOW + str + CliEffects.CLEAR);
 		}
 	}
 }
