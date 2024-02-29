@@ -1,6 +1,6 @@
 {
 	"name": "@ztimson/js-utilities",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"description": "JavaScript Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
@@ -13,6 +13,7 @@
 	"module": "./dist/js-utilities.mjs",
 	"types": "./dist/src/index.d.ts",
 	"scripts": {
+		"postinstall": "npm run build",
 		"build": "vite build",
 		"test": "npx jest",
 		"test:coverage": "npx jest --coverage",

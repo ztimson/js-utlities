@@ -58,12 +58,22 @@ export type LoggerEvents = TypedEvents & {
 export class Logger extends TypedEmitter<LoggerEvents> {
 	static LOG_LEVEL: LOG_LEVEL = LOG_LEVEL.INFO;
 
-	constructor(public readonly namespace: string) {
+	constructor(public readonly namespace?: string) {
 		super();
 	}
 
+	private pad(text: string, length: number, char: string, end = false) {
+		const l = length - text.length;
+		if(l <= 0) return text;
+		const padding = Array(~~(l / char.length)).fill(char).join('');
+		return !end ? padding + text : text + padding;
+	}
+
+
 	private format(...text: string[]): string {
-		return `${new Date().toISOString()} [${this.namespace}] ${text.join(' ')}`;
+		const now = new Date();
+		const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${this.pad(now.getHours().toString(), 2, '0')}:${this.pad(now.getMinutes().toString(), 2, '0')}:${this.pad(now.getSeconds().toString(), 2, '0')}.${this.pad(now.getMilliseconds().toString(), 3, '0', true)}`;
+		return `${timestamp}${this.namespace ? ` [${this.namespace}]` : ''} ${text.join(' ')}`;
 	}
 
 	debug(...args: string[]) {
@@ -86,7 +96,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 		if(LOG_LEVEL.INFO >= Logger.LOG_LEVEL) {
 			const str = this.format(...args);
 			Logger.emit(LOG_LEVEL.INFO, str);
-			console.info(CliForeground.CYAN + str + CliEffects.CLEAR);
+			console.info(CliForeground.BLUE + str + CliEffects.CLEAR);
 		}
 	}
 
