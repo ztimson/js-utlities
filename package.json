@@ -13,10 +13,11 @@
 	"module": "./dist/js-utilities.mjs",
 	"types": "./dist/src/index.d.ts",
 	"scripts": {
-		"build": "vite build",
+		"postinstall": "npm run build",
+		"build": "npx vite build",
 		"test": "npx jest",
 		"test:coverage": "npx jest --coverage",
-		"watch": "vite build --watch"
+		"watch": "npx vite build --watch"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.12",
