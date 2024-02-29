@@ -1,3 +1,5 @@
+import {TypedEmitter, TypedEvents} from './emitter';
+
 export const CliEffects = {
 	CLEAR: "\x1b[0m",
 	BRIGHT: "\x1b[1m",
@@ -9,15 +11,22 @@ export const CliEffects = {
 }
 
 export const CliForeground = {
-	BLACK: "\x1b[30m",
-	RED: "\x1b[31m",
-	GREEN: "\x1b[32m",
-	YELLOW: "\x1b[33m",
-	BLUE: "\x1b[34m",
-	MAGENTA: "\x1b[35m",
-	CYAN: "\x1b[36m",
-	WHITE: "\x1b[37m",
-	GREY: "\x1b[90m",
+	BLACK: '\x1b[30m',
+	RED: '\x1b[31m',
+	GREEN: '\x1b[32m',
+	YELLOW: '\x1b[33m',
+	BLUE: '\x1b[34m',
+	MAGENTA: '\x1b[35m',
+	CYAN: '\x1b[36m',
+	LIGHT_GREY: '\x1b[37m',
+	GREY: '\x1b[90m',
+	LIGHT_RED: '\x1b[91m',
+	LIGHT_GREEN: '\x1b[92m',
+	LIGHT_YELLOW: '\x1b[93m',
+	LIGHT_BLUE: '\x1b[94m',
+	LIGHT_MAGENTA: '\x1b[95m',
+	LIGHT_CYAN: '\x1b[96m',
+	WHITE: '\x1b[97m',
 }
 
 export const CliBackground = {
@@ -32,34 +41,63 @@ export const CliBackground = {
 	GREY: "\x1b[100m",
 }
 
-export class Logger {
-	constructor(public readonly namespace: string) { }
+export enum LOG_LEVEL {
+	VERBOSE,
+	INFO,
+	WARN,
+	ERROR
+}
+
+export type LoggerEvents = TypedEvents & {
+	'VERBOSE': (...args: any[]) => any;
+	'INFO': (...args: any[]) => any;
+	'WARN': (...args: any[]) => any;
+	'ERROR': (...args: any[]) => any;
+};
+
+export class Logger extends TypedEmitter<LoggerEvents> {
+	static LOG_LEVEL: LOG_LEVEL = LOG_LEVEL.INFO;
+
+	constructor(public readonly namespace: string) {
+		super();
+	}
 
 	private format(...text: string[]): string {
 		return `${new Date().toISOString()} [${this.namespace}] ${text.join(' ')}`;
 	}
 
 	debug(...args: string[]) {
-		console.log(CliForeground.MAGENTA + this.format(...args) + CliEffects.CLEAR);
+		if(LOG_LEVEL.VERBOSE >= Logger.LOG_LEVEL) {
+			this.emit('VERBOSE', ...args);
+			console.debug(CliForeground.LIGHT_GREY + this.format(...args) + CliEffects.CLEAR);
+		}
 	}
 
 	error(...args: string[]) {
-		console.log(CliForeground.RED + this.format(...args) + CliEffects.CLEAR);
+		if(LOG_LEVEL.ERROR >= Logger.LOG_LEVEL) {
+			this.emit('ERROR', ...args);
+			console.error(CliForeground.RED + this.format(...args) + CliEffects.CLEAR);
+		}
 	}
 
 	info(...args: string[]) {
-		console.log(CliForeground.CYAN + this.format(...args) + CliEffects.CLEAR);
+		if(LOG_LEVEL.INFO >= Logger.LOG_LEVEL) {
+			this.emit('INFO', ...args);
+			console.info(CliForeground.CYAN + this.format(...args) + CliEffects.CLEAR);
+		}
 	}
 
 	log(...args: string[]) {
-		console.log(CliEffects.CLEAR + this.format(...args));
+		if(LOG_LEVEL.INFO >= Logger.LOG_LEVEL) {
+			this.emit('INFO', ...args);
+			console.log(CliEffects.CLEAR + this.format(...args));
+		}
 	}
 
 	warn(...args: string[]) {
-		console.log(CliForeground.YELLOW + this.format(...args) + CliEffects.CLEAR);
-	}
-
-	verbose(...args: string[]) {
-		console.log(CliForeground.WHITE + this.format(...args) + CliEffects.CLEAR);
+		if(LOG_LEVEL.WARN >= Logger.LOG_LEVEL) {
+			this.emit('WARN', ...args);
+			console.warn(CliForeground.YELLOW + this.format(...args) + CliEffects.CLEAR);
+		}
 	}
 }
