@@ -52,11 +52,12 @@ export function insertAt(target: string, str: string, index: number): String {
 	return `${target.slice(0, index)}${str}${target.slice(index + 1)}`;
 }
 
-export function pad(text: string, length: number, char: string, start = true) {
-	const l = length - text.length;
-	if(l <= 0) return text;
+export function pad(text: any, length: number, char: string, start = true) {
+	const t = text.toString();
+	const l = length - t.length;
+	if(l <= 0) return t;
 	const padding = Array(~~(l / char.length)).fill(char).join('');
-	return start ? padding + text : text + padding;
+	return start ? padding + t : t + padding;
 }
 
 /**
