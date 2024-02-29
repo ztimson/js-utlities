@@ -62,11 +62,12 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 		super();
 	}
 
-	private pad(text: string, length: number, char: string, end = false) {
-		const l = length - text.length;
-		if(l <= 0) return text;
+	private pad(text: any, length: number, char: string, end = false) {
+		const t = text.toString();
+		const l = length - t.length;
+		if(l <= 0) return t;
 		const padding = Array(~~(l / char.length)).fill(char).join('');
-		return !end ? padding + text : text + padding;
+		return !end ? padding + t : t + padding;
 	}
 
 
