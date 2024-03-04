@@ -43,9 +43,11 @@ export const CliBackground = {
 
 export enum LOG_LEVEL {
 	VERBOSE,
-	INFO,
-	WARN,
-	ERROR
+	DEBUG = 0,
+	LOG = 1,
+	INFO = 2,
+	WARN = 3,
+	ERROR = 4,
 }
 
 export type LoggerEvents = TypedEvents & {
@@ -70,7 +72,6 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 		return !end ? padding + t : t + padding;
 	}
 
-
 	private format(...text: string[]): string {
 		const now = new Date();
 		const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${this.pad(now.getHours().toString(), 2, '0')}:${this.pad(now.getMinutes().toString(), 2, '0')}:${this.pad(now.getSeconds().toString(), 2, '0')}.${this.pad(now.getMilliseconds().toString(), 3, '0', true)}`;
@@ -78,42 +79,37 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	}
 
 	debug(...args: string[]) {
-		if(Logger.LOG_LEVEL >= LOG_LEVEL.VERBOSE) {
-			const str = this.format(...args);
-			Logger.emit(LOG_LEVEL.VERBOSE, str);
-			console.debug(CliForeground.LIGHT_GREY + str + CliEffects.CLEAR);
-		}
-	}
-
-	error(...args: string[]) {
-		if(Logger.LOG_LEVEL >= LOG_LEVEL.ERROR) {
-			const str = this.format(...args);
-			Logger.emit(LOG_LEVEL.ERROR, str);
-			console.error(CliForeground.RED + str + CliEffects.CLEAR);
-		}
-	}
-
-	info(...args: string[]) {
-		if(Logger.LOG_LEVEL >= LOG_LEVEL.INFO) {
-			const str = this.format(...args);
-			Logger.emit(LOG_LEVEL.INFO, str);
-			console.info(CliForeground.BLUE + str + CliEffects.CLEAR);
-		}
+		if(Logger.LOG_LEVEL > LOG_LEVEL.VERBOSE) return;
+		const str = this.format(...args);
+		Logger.emit(LOG_LEVEL.VERBOSE, str);
+		console.debug(CliForeground.LIGHT_GREY + str + CliEffects.CLEAR);
 	}
 
 	log(...args: string[]) {
-		if(Logger.LOG_LEVEL >= LOG_LEVEL.INFO) {
-			const str = this.format(...args);
-			Logger.emit(LOG_LEVEL.INFO, str);
-			console.log(CliEffects.CLEAR + str);
-		}
+		if(Logger.LOG_LEVEL > LOG_LEVEL.INFO) return;
+		const str = this.format(...args);
+		Logger.emit(LOG_LEVEL.INFO, str);
+		console.log(CliEffects.CLEAR + str);
+	}
+
+	info(...args: string[]) {
+		if(Logger.LOG_LEVEL > LOG_LEVEL.INFO) return;
+		const str = this.format(...args);
+		Logger.emit(LOG_LEVEL.INFO, str);
+		console.info(CliForeground.BLUE + str + CliEffects.CLEAR);
 	}
 
 	warn(...args: string[]) {
-		if(Logger.LOG_LEVEL >= LOG_LEVEL.WARN) {
-			const str = this.format(...args);
-			Logger.emit(LOG_LEVEL.WARN, str);
-			console.warn(CliForeground.YELLOW + str + CliEffects.CLEAR);
-		}
+		if(Logger.LOG_LEVEL > LOG_LEVEL.WARN) return;
+		const str = this.format(...args);
+		Logger.emit(LOG_LEVEL.WARN, str);
+		console.warn(CliForeground.YELLOW + str + CliEffects.CLEAR);
+	}
+
+	error(...args: string[]) {
+		if(Logger.LOG_LEVEL > LOG_LEVEL.ERROR) return;
+		const str = this.format(...args);
+		Logger.emit(LOG_LEVEL.ERROR, str);
+		console.error(CliForeground.RED + str + CliEffects.CLEAR);
 	}
 }

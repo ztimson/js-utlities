@@ -4,7 +4,6 @@ export * from './errors';
 export * from './logger';
 export * from './misc';
 export * from './objects';
-// export * from './redis';
 export * from './string';
 export * from './time';
 export * from './xhr';
