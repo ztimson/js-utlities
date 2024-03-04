@@ -56,7 +56,7 @@ export type LoggerEvents = TypedEvents & {
 };
 
 export class Logger extends TypedEmitter<LoggerEvents> {
-	static LOG_LEVEL: LOG_LEVEL = LOG_LEVEL.INFO;
+	static LOG_LEVEL: LOG_LEVEL = LOG_LEVEL.VERBOSE;
 
 	constructor(public readonly namespace?: string) {
 		super();
@@ -78,7 +78,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	}
 
 	debug(...args: string[]) {
-		if(LOG_LEVEL.VERBOSE >= Logger.LOG_LEVEL) {
+		if(Logger.LOG_LEVEL >= LOG_LEVEL.VERBOSE) {
 			const str = this.format(...args);
 			Logger.emit(LOG_LEVEL.VERBOSE, str);
 			console.debug(CliForeground.LIGHT_GREY + str + CliEffects.CLEAR);
@@ -86,7 +86,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	}
 
 	error(...args: string[]) {
-		if(LOG_LEVEL.ERROR >= Logger.LOG_LEVEL) {
+		if(Logger.LOG_LEVEL >= LOG_LEVEL.ERROR) {
 			const str = this.format(...args);
 			Logger.emit(LOG_LEVEL.ERROR, str);
 			console.error(CliForeground.RED + str + CliEffects.CLEAR);
@@ -94,7 +94,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	}
 
 	info(...args: string[]) {
-		if(LOG_LEVEL.INFO >= Logger.LOG_LEVEL) {
+		if(Logger.LOG_LEVEL >= LOG_LEVEL.INFO) {
 			const str = this.format(...args);
 			Logger.emit(LOG_LEVEL.INFO, str);
 			console.info(CliForeground.BLUE + str + CliEffects.CLEAR);
@@ -102,7 +102,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	}
 
 	log(...args: string[]) {
-		if(LOG_LEVEL.INFO >= Logger.LOG_LEVEL) {
+		if(Logger.LOG_LEVEL >= LOG_LEVEL.INFO) {
 			const str = this.format(...args);
 			Logger.emit(LOG_LEVEL.INFO, str);
 			console.log(CliEffects.CLEAR + str);
@@ -110,7 +110,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	}
 
 	warn(...args: string[]) {
-		if(LOG_LEVEL.WARN >= Logger.LOG_LEVEL) {
+		if(Logger.LOG_LEVEL >= LOG_LEVEL.WARN) {
 			const str = this.format(...args);
 			Logger.emit(LOG_LEVEL.WARN, str);
 			console.warn(CliForeground.YELLOW + str + CliEffects.CLEAR);
