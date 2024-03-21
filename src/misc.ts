@@ -19,7 +19,7 @@ export function formEncode(data: any): string {
  * @param {string} def Default image, can be a link or '404', see: https://docs.gravatar.com/general/images/
  * @returns {string} Gravatar URL
  */
-export function gravatar(email: string, def='md') {
+export function gravatar(email: string, def='mp') {
 	if(!email) return '';
 	return `https://www.gravatar.com/avatar/${md5(email)}?d=${def}`;
 }
