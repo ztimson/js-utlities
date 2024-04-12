@@ -45,7 +45,7 @@ export class XHR {
 	}
 
 	async request<T>(opts: RequestOptions = {}): Promise<T>  {
-		if(!this.opts.url && !opts.url) throw new Error('Momentum server URL needs to be set');
+		if(!this.opts.url && !opts.url) throw new Error('URL needs to be set');
 		const url = (opts.url?.startsWith('http') ? opts.url : (this.opts.url || '') + opts.url).replace(/([^:]\/)\/+/g, '$1');
 
 		// Prep headers
@@ -57,23 +57,19 @@ export class XHR {
 		});
 
 		// Send request
-		const req = fetch(url, {
+		return fetch(url, {
 			headers,
 			method: opts.method || (opts.body ? 'POST' : 'GET'),
 			body: (headers['Content-Type']?.startsWith('application/json') && opts.body) ? JSON.stringify(opts.body) : opts.body
 		}).then(async resp => {
 			for(let fn of [...Object.values(XHR.interceptors), ...Object.values(this.interceptors)]) {
-				const wait = new Promise(res => fn(resp, () => res(null)));
-				await wait;
+				await new Promise<void>(res => fn(resp, () => res()));
 			}
 
-			if(!resp.ok) throw Error(resp.statusText);
+			if(!resp.ok) throw new Error(resp.statusText);
 			if(resp.headers.get('Content-Type')?.startsWith('application/json')) return await resp.json();
 			if(resp.headers.get('Content-Type')?.startsWith('text/plain')) return await <any>resp.text();
 			return resp;
-		}).catch((err: Error) => {
-			throw err;
 		});
-		return req;
 	}
 }
