@@ -1,7 +1,7 @@
 {
-	"name": "@ztimson/js-utilities",
-	"version": "0.4.0",
-	"description": "JavaScript Utility library",
+	"name": "@ztimson/utils",
+	"version": "0.2.0",
+	"description": "Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
 	"private": false,
@@ -9,30 +9,23 @@
 		"type": "git",
 		"url": "https://git.zakscode.com/ztimson/js-utilities"
 	},
-	"main": "./dist/js-utilities.js",
-	"module": "./dist/js-utilities.mjs",
-	"types": "./dist/src/index.d.ts",
+	"main": "./dist/utils.cjs",
+	"module": "./dist/utils.mjs",
+	"types": "./dist/index.d.ts",
 	"scripts": {
-		"build": "npx vite build",
+		"build": "npx tsc && npx vite build",
 		"test": "npx jest",
 		"test:coverage": "npx jest --coverage",
 		"watch": "npx vite build --watch"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.12",
-		"@types/node": "^18.14.0",
 		"jest": "^29.7.0",
 		"jest-junit": "^16.0.0",
 		"ts-jest": "^29.1.2",
 		"typescript": "^5.3.3",
 		"vite": "^5.0.12",
 		"vite-plugin-dts": "^3.7.2"
-	},
-	"exports": {
-		".": {
-			"import": "./dist/js-utilities.mjs",
-			"require": "./dist/js-utilities.js"
-		}
 	},
 	"files": [
 		"dist"

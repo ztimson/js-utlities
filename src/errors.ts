@@ -1,6 +1,6 @@
 import {XHR} from './xhr';
 
-XHR.addInterceptor((resp: Response, next: () => {}) => {
+XHR.addInterceptor((resp: Response, next: () => void) => {
 	if(resp.status == 200) return next();
 	if(resp.status == 400) throw new BadRequestError(resp.statusText);
 	if(resp.status == 401) throw new UnauthorizedError(resp.statusText);

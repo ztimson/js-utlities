@@ -1,4 +1,3 @@
-import {TypedEmitter, type TypedEvents} from './emitter';
 import {clean} from './objects';
 
 export type Interceptor = (request: Response, next: () => void) => void;
@@ -11,27 +10,23 @@ export type RequestOptions = {
 	[key: string]: any;
 }
 
-export type XhrEvents = TypedEvents & {
-	'REQUEST': (request: Promise<any>, options: RequestOptions) => any;
-	'RESPONSE': (response: Response, options: RequestOptions) => any;
-	'REJECTED': (response: Error, options: RequestOptions) => any;
-
-};
-
 export type XhrOptions = {
+	headers?: {[key: string | symbol]: string | null | undefined};
 	interceptors?: Interceptor[];
 	url?: string;
 }
 
-export class XHR extends TypedEmitter<XhrEvents> {
-	private static headers: {[key: string]: string} = {};
+export class XHR {
 	private static interceptors: {[key: string]: Interceptor} = {};
 
-	private headers: {[key: string]: string} = {}
+	static headers: {[key: string]: string | null | undefined} = {};
+
 	private interceptors: {[key: string]: Interceptor} = {}
 
+	headers: {[key: string]: string | null | undefined} = {}
+
 	constructor(public readonly opts: XhrOptions = {}) {
-		super();
+		this.headers = opts.headers || {};
 		if(opts.interceptors) {
 			opts.interceptors.forEach(i => XHR.addInterceptor(i));
 		}
@@ -72,17 +67,13 @@ export class XHR extends TypedEmitter<XhrEvents> {
 				await wait;
 			}
 
-			this.emit(`${resp.status}`, resp, opts);
 			if(!resp.ok) throw Error(resp.statusText);
-			this.emit('RESPONSE', resp, opts);
 			if(resp.headers.get('Content-Type')?.startsWith('application/json')) return await resp.json();
 			if(resp.headers.get('Content-Type')?.startsWith('text/plain')) return await <any>resp.text();
 			return resp;
 		}).catch((err: Error) => {
-			this.emit('REJECTED', err, opts);
 			throw err;
 		});
-		this.emit('REQUEST', req, opts)
 		return req;
 	}
 }

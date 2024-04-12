@@ -115,7 +115,7 @@ export function flattenObj(obj: any, parent?: any, result: any = {}) {
  */
 export function includes(target: any, values: any, allowMissing = false): boolean {
 	if(target == undefined) return allowMissing;
-	if(Array.isArray(values)) return values.findIndex((e, i) => !includes(target[i], values[i], allowMissing)) == -1;
+	if(Array.isArray(values)) return values.findIndex((e: any, i: number) => !includes(target[i], values[i], allowMissing)) == -1;
 	const type = typeof values;
 	if(type != typeof target) return false;
 	if(type == 'object') {
@@ -139,4 +139,17 @@ export function isEqual(a: any, b: any): boolean {
 	const keys = Object.keys(a);
 	if(keys.length != Object.keys(b).length) return false;
 	return Object.keys(a).every(key => isEqual(a[key], b[key]));
+}
+
+export function mixin(target: any, constructors: any[]) {
+	constructors.forEach(c => {
+		Object.getOwnPropertyNames(c.prototype).forEach((name) => {
+			Object.defineProperty(
+				target.prototype,
+				name,
+				Object.getOwnPropertyDescriptor(c.prototype, name) ||
+				Object.create(null)
+			);
+		});
+	});
 }
