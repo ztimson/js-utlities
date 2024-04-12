@@ -42,23 +42,23 @@ export const CliBackground = {
 }
 
 export enum LOG_LEVEL {
-	VERBOSE,
-	DEBUG = 0,
-	LOG = 1,
+	ERROR = 0,
+	WARN = 1,
 	INFO = 2,
-	WARN = 3,
-	ERROR = 4,
+	LOG = 3,
+	DEBUG = 4,
 }
 
 export type LoggerEvents = TypedEvents & {
-	'VERBOSE': (...args: any[]) => any;
-	'INFO': (...args: any[]) => any;
-	'WARN': (...args: any[]) => any;
 	'ERROR': (...args: any[]) => any;
+	'WARN': (...args: any[]) => any;
+	'INFO': (...args: any[]) => any;
+	'LOG': (...args: any[]) => any;
+	'DEBUG': (...args: any[]) => any;
 };
 
 export class Logger extends TypedEmitter<LoggerEvents> {
-	static LOG_LEVEL: LOG_LEVEL = LOG_LEVEL.VERBOSE;
+	static LOG_LEVEL: LOG_LEVEL = LOG_LEVEL.DEBUG;
 
 	constructor(public readonly namespace?: string) {
 		super();
@@ -79,35 +79,35 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	}
 
 	debug(...args: string[]) {
-		if(Logger.LOG_LEVEL > LOG_LEVEL.VERBOSE) return;
+		if(Logger.LOG_LEVEL < LOG_LEVEL.DEBUG) return;
 		const str = this.format(...args);
-		Logger.emit(LOG_LEVEL.VERBOSE, str);
+		Logger.emit(LOG_LEVEL.DEBUG, str);
 		console.debug(CliForeground.LIGHT_GREY + str + CliEffects.CLEAR);
 	}
 
 	log(...args: string[]) {
-		if(Logger.LOG_LEVEL > LOG_LEVEL.INFO) return;
+		if(Logger.LOG_LEVEL < LOG_LEVEL.LOG) return;
 		const str = this.format(...args);
-		Logger.emit(LOG_LEVEL.INFO, str);
+		Logger.emit(LOG_LEVEL.LOG, str);
 		console.log(CliEffects.CLEAR + str);
 	}
 
 	info(...args: string[]) {
-		if(Logger.LOG_LEVEL > LOG_LEVEL.INFO) return;
+		if(Logger.LOG_LEVEL < LOG_LEVEL.INFO) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.INFO, str);
 		console.info(CliForeground.BLUE + str + CliEffects.CLEAR);
 	}
 
 	warn(...args: string[]) {
-		if(Logger.LOG_LEVEL > LOG_LEVEL.WARN) return;
+		if(Logger.LOG_LEVEL < LOG_LEVEL.WARN) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.WARN, str);
 		console.warn(CliForeground.YELLOW + str + CliEffects.CLEAR);
 	}
 
 	error(...args: string[]) {
-		if(Logger.LOG_LEVEL > LOG_LEVEL.ERROR) return;
+		if(Logger.LOG_LEVEL < LOG_LEVEL.ERROR) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.ERROR, str);
 		console.error(CliForeground.RED + str + CliEffects.CLEAR);
