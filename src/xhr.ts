@@ -46,7 +46,7 @@ export class XHR {
 
 	async request<T>(opts: RequestOptions = {}): Promise<T>  {
 		if(!this.opts.url && !opts.url) throw new Error('URL needs to be set');
-		const url = (opts.url?.startsWith('http') ? opts.url : (this.opts.url || '') + opts.url).replace(/([^:]\/)\/+/g, '$1');
+		const url = (opts.url?.startsWith('http') ? opts.url : (this.opts.url || '') + (opts.url || '')).replace(/([^:]\/)\/+/g, '$1');
 
 		// Prep headers
 		const headers = <any>clean({
