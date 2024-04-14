@@ -153,3 +153,14 @@ export function mixin(target: any, constructors: any[]) {
 		});
 	});
 }
+
+export function sanitizedJSON(obj: any, space?: number) {
+	let cache: any[] = [];
+	return JSON.parse(JSON.stringify(obj, (key, value) => {
+		if (typeof value === 'object' && value !== null) {
+			if (cache.includes(value)) return;
+			cache.push(value);
+		}
+		return value;
+	}, space));
+}
