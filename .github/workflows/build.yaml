@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: node
-      volumes:
-        - '/mnt/swarm/gitea/runner/cache:/cache'
     steps:
       -   name: Clone Repository
           uses: ztimson/actions/clone@develop
