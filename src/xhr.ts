@@ -1,3 +1,4 @@
+import {TypedEmitter, TypedEvents} from './emitter.ts';
 import {clean} from './objects';
 
 export type Interceptor = (request: Response, next: () => void) => void;
@@ -45,14 +46,6 @@ export class XHR {
 		return () => { this.interceptors[key] = <any>null; }
 	}
 
-	download(opts: RequestOptions & {url: string}) {
-		this.request<Response>({...opts, skipConverting: true}).then(async resp => {
-			const blob = await resp.blob();
-			download(URL.createObjectURL(blob), <string>opts.url.split('/').pop());
-			URL.revokeObjectURL(opts.url);
-		});
-	}
-
 	async request<T>(opts: RequestOptions = {}): Promise<T>  {
 		if(!this.opts.url && !opts.url) throw new Error('URL needs to be set');
 		const url = (opts.url?.startsWith('http') ? opts.url : (this.opts.url || '') + (opts.url || '')).replace(/([^:]\/)\/+/g, '$1');
@@ -81,13 +74,4 @@ export class XHR {
 			return resp;
 		});
 	}
-}
-
-export function download(href: any, name: string) {
-	const a = document.createElement('a');
-	a.href = href;
-	a.download = name;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
 }
