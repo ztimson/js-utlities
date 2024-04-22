@@ -7,6 +7,7 @@ export type RequestOptions = {
 	method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
 	body?: any;
 	headers?: {[key: string | symbol]: string | null | undefined};
+	skipConverting?: boolean;
 	[key: string]: any;
 }
 
@@ -44,6 +45,14 @@ export class XHR {
 		return () => { this.interceptors[key] = <any>null; }
 	}
 
+	download(opts: RequestOptions & {url: string}) {
+		this.request<Response>({...opts, skipConverting: true}).then(async resp => {
+			const blob = await resp.blob();
+			download(URL.createObjectURL(blob), <string>opts.url.split('/').pop());
+			URL.revokeObjectURL(opts.url);
+		});
+	}
+
 	async request<T>(opts: RequestOptions = {}): Promise<T>  {
 		if(!this.opts.url && !opts.url) throw new Error('URL needs to be set');
 		const url = (opts.url?.startsWith('http') ? opts.url : (this.opts.url || '') + (opts.url || '')).replace(/([^:]\/)\/+/g, '$1');
@@ -67,9 +76,18 @@ export class XHR {
 			}
 
 			if(!resp.ok) throw new Error(resp.statusText);
-			if(resp.headers.get('Content-Type')?.startsWith('application/json')) return await resp.json();
-			if(resp.headers.get('Content-Type')?.startsWith('text/plain')) return await <any>resp.text();
+			if(!opts.skipConverting && resp.headers.get('Content-Type')?.startsWith('application/json')) return await resp.json();
+			if(!opts.skipConverting && resp.headers.get('Content-Type')?.startsWith('text/plain')) return await <any>resp.text();
 			return resp;
 		});
 	}
+}
+
+export function download(href: any, name: string) {
+	const a = document.createElement('a');
+	a.href = href;
+	a.download = name;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
 }
