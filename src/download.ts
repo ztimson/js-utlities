@@ -1,4 +1,4 @@
-import {TypedEmitter, TypedEvents} from './emitter.ts';
+import {TypedEmitter, TypedEvents} from './emitter';
 
 export type downloadEvents = TypedEvents & {
 	complete: (blob: Blob) => any;
