@@ -1,6 +1,6 @@
 export * from './array';
 export * from './aset';
-export * from './download.ts';
+export * from './download';
 export * from './emitter';
 export * from './errors';
 export * from './logger';
