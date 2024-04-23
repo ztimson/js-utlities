@@ -14,7 +14,15 @@ export function download(href: any, name: string) {
 	document.body.removeChild(a);
 }
 
-export function downloadStream(url: string, name?: string) {
+/**
+ * Download a URL using fetch so progress can be tracked. Uses Typed Emitter to emit a "progress" &
+ * "complete" event.
+ *
+ * @param {string} url
+ * @param {string} downloadName
+ * @return {TypedEmitter<downloadEvents>}
+ */
+export function downloadProgress(url: string, downloadName?: string) {
 	const emitter = new TypedEmitter<downloadEvents>();
 	fetch(url).then(response => {
 		const contentLength = response.headers.get('Content-Length') || '0';
@@ -24,19 +32,17 @@ export function downloadStream(url: string, name?: string) {
 		reader?.read().then(function processResult(result) {
 			if(result.done) {
 				const blob = new Blob(chunks);
-				emitter.emit('progress', 1);
-				if(name) {
+				if(downloadName) {
 					const url = URL.createObjectURL(blob);
-					download(url, name);
+					download(url, downloadName);
 					URL.revokeObjectURL(url);
 				}
 				emitter.emit('complete', blob);
-				return;
 			} else {
 				const chunk = result.value;
 				chunks.push(chunk);
 				loaded += chunk.length;
-				const progress = Math.round((loaded / total) * 100);
+				const progress = loaded / total;
 				emitter.emit('progress', progress);
 				reader.read().then(processResult);
 			}
