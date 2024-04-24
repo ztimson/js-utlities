@@ -6,7 +6,7 @@ export type UploadEvents = TypedEvents & {
 	progress: (progress: number) => any;
 }
 
-export function uploadProgress(files : File | FileList, url: string) {
+export function uploadProgress(files : File | File[], url: string) {
 	const xhr = new XMLHttpRequest();
 	const progress = new TypedEmitter<UploadEvents>();
 	const formData = new FormData();
