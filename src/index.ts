@@ -8,4 +8,5 @@ export * from './misc';
 export * from './objects';
 export * from './string';
 export * from './time';
+export * from './upload';
 export * from './xhr';

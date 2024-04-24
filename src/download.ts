@@ -1,7 +1,8 @@
 import {TypedEmitter, TypedEvents} from './emitter';
 
-export type downloadEvents = TypedEvents & {
+export type DownloadEvents = TypedEvents & {
 	complete: (blob: Blob) => any;
+	failed: (error: Error) => any;
 	progress: (progress: number) => any;
 }
 
@@ -20,11 +21,12 @@ export function download(href: any, name: string) {
  *
  * @param {string} url
  * @param {string} downloadName
- * @return {TypedEmitter<downloadEvents>}
+ * @return {TypedEmitter<DownloadEvents>}
  */
 export function downloadProgress(url: string, downloadName?: string) {
-	const emitter = new TypedEmitter<downloadEvents>();
+	const progress = new TypedEmitter<DownloadEvents>();
 	fetch(url).then(response => {
+		if(!response.ok) return progress.emit('failed', new Error(response.statusText));
 		const contentLength = response.headers.get('Content-Length') || '0';
 		const total = parseInt(contentLength, 10);
 		let chunks: any[] = [], loaded = 0;
@@ -37,16 +39,15 @@ export function downloadProgress(url: string, downloadName?: string) {
 					download(url, downloadName);
 					URL.revokeObjectURL(url);
 				}
-				emitter.emit('complete', blob);
+				progress.emit('complete', blob);
 			} else {
 				const chunk = result.value;
 				chunks.push(chunk);
 				loaded += chunk.length;
-				const progress = loaded / total;
-				emitter.emit('progress', progress);
+				progress.emit('progress', loaded / total);
 				reader.read().then(processResult);
 			}
 		});
-	});
-	return emitter;
+	}).catch(err => progress.emit('failed', err));
+	return progress;
 }
