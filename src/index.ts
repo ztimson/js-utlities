@@ -6,7 +6,7 @@ export * from './errors';
 export * from './logger';
 export * from './misc';
 export * from './objects';
+export * from './promise-progress';
 export * from './string';
 export * from './time';
-export * from './upload';
 export * from './xhr';

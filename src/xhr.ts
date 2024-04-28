@@ -1,4 +1,3 @@
-import {TypedEmitter, TypedEvents} from './emitter.ts';
 import {clean} from './objects';
 
 export type Interceptor = (request: Response, next: () => void) => void;
