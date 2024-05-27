@@ -4,6 +4,7 @@ export * from './download';
 export * from './emitter';
 export * from './errors';
 export * from './logger';
+export * from './math';
 export * from './misc';
 export * from './objects';
 export * from './promise-progress';
