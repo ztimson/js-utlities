@@ -75,10 +75,16 @@ export class XHR {
 				await new Promise<void>(res => fn(resp, () => res()));
 			}
 
-			if(!resp.ok) throw new Error(resp.statusText);
-			if(!opts.skipConverting && resp.headers.get('Content-Type')?.startsWith('application/json')) return await resp.json();
-			if(!opts.skipConverting && resp.headers.get('Content-Type')?.startsWith('text/plain')) return await <any>resp.text();
-			return resp;
+			const decode = async () => {
+				if(!opts.skipConverting && resp.headers.get('Content-Type')?.startsWith('application/json')) return await resp.json();
+				if(!opts.skipConverting && resp.headers.get('Content-Type')?.startsWith('text/plain')) return await <any>resp.text();
+				return resp;
+			}
+
+			const payload = await decode();
+			if(resp.ok) return payload;
+			const text = resp.statusText || (typeof payload == 'string' ? payload : null);
+			throw (text ? new Error(text) : payload);
 		});
 	}
 }
