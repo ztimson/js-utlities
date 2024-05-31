@@ -1,3 +1,11 @@
+import {
+	BadRequestError,
+	CustomError,
+	ForbiddenError,
+	InternalServerError,
+	NotFoundError,
+	UnauthorizedError
+} from './errors.ts';
 import {clean} from './objects';
 
 export type Interceptor = (request: Response, next: () => void) => void;
@@ -74,3 +82,14 @@ export class XHR {
 		});
 	}
 }
+
+XHR.addInterceptor((resp: Response, next: () => void) => {
+	const getErr = (e: any) => e.error?.message || e.reason?.message || e.message || e.statusText || e.toString();
+	if(resp.status == 200) return next();
+	if(resp.status == 400) throw new BadRequestError(getErr(resp));
+	if(resp.status == 401) throw new UnauthorizedError(getErr(resp));
+	if(resp.status == 403) throw new ForbiddenError(getErr(resp));
+	if(resp.status == 404) throw new NotFoundError(getErr(resp));
+	if(resp.status == 500) throw new InternalServerError(getErr(resp));
+	throw new CustomError(getErr(resp), resp.status);
+});

@@ -1,15 +1,3 @@
-import {XHR} from './xhr';
-
-XHR.addInterceptor((resp: Response, next: () => void) => {
-	if(resp.status == 200) return next();
-	if(resp.status == 400) throw new BadRequestError(resp.statusText);
-	if(resp.status == 401) throw new UnauthorizedError(resp.statusText);
-	if(resp.status == 403) throw new ForbiddenError(resp.statusText);
-	if(resp.status == 404) throw new NotFoundError(resp.statusText);
-	if(resp.status == 500) throw new InternalServerError(resp.statusText);
-	throw new CustomError(resp.statusText, resp.status);
-});
-
 export class CustomError extends Error {
 	static code = 500;
 
