@@ -37,11 +37,15 @@ jobs:
             key: node_modules
             pattern: node_modules
 
-      -   name: Cache Artifacts
-          uses: ztimson/actions/cache@develop
+      -   name: Upload to Registry
+          uses: ztimson/actions/npm/publish@develop
+
+      -   name: Upload to NPM
+          uses: ztimson/actions/npm/publish@develop
           with:
-            key: dist
-            pattern: dist
+              owner: ztimson
+              registry: https://registry.npmjs.org/
+              token: ${{secrets.NPM_TOKEN}}
   tag:
     name: Tag Version
     needs: build
@@ -59,31 +63,3 @@ jobs:
           uses: ztimson/actions/tag@develop
           with:
             tag: ${{env.VERSION}}
-
-  publish:
-    name: Publish
-    needs: build
-    if: ${{github.ref_name}} == 'release'
-    runs-on: ubuntu-latest
-    container:
-      image: node
-      volumes:
-        - '/mnt/swarm/gitea/runner/cache:/cache'
-    steps:
-      -   name: Clone Repository
-          uses: ztimson/actions/clone@develop
-
-      -   name: Restore Artifacts
-          uses: ztimson/actions/cache/restore@develop
-          with:
-            key: dist
-
-      -   name: Upload to Registry
-          uses: ztimson/actions/npm/publish@develop
-
-      -   name: Upload to NPM
-          uses: ztimson/actions/npm/publish@develop
-          with:
-            owner: ztimson
-            registry: https://registry.npmjs.org/
-            token: ${{secrets.NPM_TOKEN}}
