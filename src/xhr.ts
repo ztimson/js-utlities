@@ -1,17 +1,11 @@
-import {
-	BadRequestError,
-	CustomError,
-	ForbiddenError,
-	InternalServerError,
-	NotFoundError,
-	UnauthorizedError
-} from './errors.ts';
 import {clean} from './objects';
 
 export type Interceptor = (request: Response, next: () => void) => void;
 
 export type RequestOptions = {
 	url?: string;
+	fragment?: string;
+	query?: {key: string, value: string}[] | {[key: string]: string};
 	method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
 	body?: any;
 	headers?: {[key: string | symbol]: string | null | undefined};
@@ -55,7 +49,13 @@ export class XHR {
 
 	async request<T>(opts: RequestOptions = {}): Promise<T>  {
 		if(!this.opts.url && !opts.url) throw new Error('URL needs to be set');
-		const url = (opts.url?.startsWith('http') ? opts.url : (this.opts.url || '') + (opts.url || '')).replace(/([^:]\/)\/+/g, '$1');
+		let url = (opts.url?.startsWith('http') ? opts.url : (this.opts.url || '') + (opts.url || '')).replace(/([^:]\/)\/+/g, '$1');
+		if(opts.fragment) url.includes('#') ? url.replace(/#.*(\?|\n)/g, (match, arg1) => `#${opts.fragment}${arg1}`) : url += '#' + opts.fragment;
+		if(opts.query) {
+			const q = Array.isArray(opts.query) ? opts.query :
+				Object.keys(opts.query).map(k => ({key: k, value: (<any>opts.query)[k]}))
+			url += (url.includes('?') ? '&' : '?') + q.map(q => `${q.key}=${q.value}`).join('&');
+		}
 
 		// Prep headers
 		const headers = <any>clean({
