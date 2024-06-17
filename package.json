@@ -1,6 +1,6 @@
 {
 	"name": "@ztimson/utils",
-	"version": "0.11.2",
+	"version": "0.11.3",
 	"description": "Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
@@ -14,8 +14,9 @@
 	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
+			"import": "./dist/utils.mjs",
 			"require": "./dist/utils.cjs",
-			"import": "./dist/utils.mjs"
+			"types": "./dist/index.d.ts"
 		}
 	},
 	"scripts": {
