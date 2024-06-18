@@ -36,6 +36,27 @@ export function deepCopy<T>(value: T): T {
 }
 
 /**
+ * Merge any number of objects into the target
+ *
+ * @param target Destination of all properties
+ * @param sources Objects that will copied into target
+ * @return {any} The des
+ */
+function deepMerge<T>(target: any, ...sources: any[]): T {
+	for(const source of sources) {
+		for(const key in source) {
+			if(source[key] && typeof source[key] == 'object' && !Array.isArray(source[key])) {
+				if(!target[key]) target[key] = {};
+				deepMerge(target[key], source[key]);
+			} else {
+				target[key] = source[key];
+			}
+		}
+	}
+	return target;
+}
+
+/**
  * Get/set a property of an object using dot notation
  *
  * @example
