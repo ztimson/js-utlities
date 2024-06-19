@@ -43,16 +43,16 @@ export function deepCopy<T>(value: T): T {
  * @return {any} The des
  */
 export function deepMerge<T>(target: any, ...sources: any[]): T {
-	for(const source of sources) {
-		for(const key in source) {
-			if(source[key] && typeof source[key] == 'object' && !Array.isArray(source[key])) {
+	sources.forEach(s => {
+		for(const key in s) {
+			if(s[key] && typeof s[key] == 'object' && !Array.isArray(s[key])) {
 				if(!target[key]) target[key] = {};
-				deepMerge(target[key], source[key]);
+				deepMerge(target[key], s[key]);
 			} else {
-				target[key] = source[key];
+				target[key] = s[key];
 			}
 		}
-	}
+	});
 	return target;
 }
 
