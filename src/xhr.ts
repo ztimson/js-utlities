@@ -83,8 +83,8 @@ export class XHR {
 
 			const payload = await decode();
 			if(resp.ok) return payload;
-			const text = resp.statusText || (typeof payload == 'string' ? payload : null);
-			throw (text ? new Error(text) : payload);
+			throw Object.assign(new Error(typeof payload == 'string' ? payload : resp.statusText),
+				typeof payload == 'object' ? payload : {});
 		});
 	}
 }
