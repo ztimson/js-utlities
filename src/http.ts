@@ -70,7 +70,7 @@ export class Http {
 		});
 
 		if(typeof opts.body == 'object' && opts.body != null && headers['Content-Type'] == 'application/json')
-			opts.body = JSON.stringify(opts.json);
+			opts.body = JSON.stringify(opts.body);
 
 		// Send request
 		return new PromiseProgress((res, rej, prog) => {
