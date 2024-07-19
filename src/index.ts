@@ -1,6 +1,6 @@
 export * from './array';
 export * from './aset';
-export * from './download';
+export * from './files';
 export * from './emitter';
 export * from './errors';
 export * from './http';
@@ -11,4 +11,3 @@ export * from './objects';
 export * from './promise-progress';
 export * from './string';
 export * from './time';
-export * from './upload';
