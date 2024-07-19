@@ -1,4 +1,4 @@
-import {PromiseProgress} from './promise-progress.ts';
+import {PromiseProgress} from './promise-progress';
 
 export function download(href: any, name: string) {
 	const a = document.createElement('a');
