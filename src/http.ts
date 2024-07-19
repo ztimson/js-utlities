@@ -1,7 +1,7 @@
 import {clean} from './objects';
 import {PromiseProgress} from './promise-progress';
 
-export type DecodedResponse<T> = Response & {data?: T}
+export type DecodedResponse<T> = Response & {data: T | null}
 
 export type HttpInterceptor = (response: Response, next: () => void) => void;
 
@@ -78,13 +78,10 @@ export class Http {
 				headers,
 				method: opts.method || (opts.body ? 'POST' : 'GET'),
 				body: opts.body
-			}).then(async (resp: DecodedResponse<T>) => {
-				console.log('done!');
+			}).then(async (resp: any) => {
 				for(let fn of [...Object.values(Http.interceptors), ...Object.values(this.interceptors)]) {
 					await new Promise<void>(res => fn(resp, () => res()));
 				}
-
-				if(!resp.ok) rej(resp);
 
 				const contentLength = resp.headers.get('Content-Length');
 				const total = contentLength ? parseInt(contentLength, 10) : 0;
@@ -94,28 +91,28 @@ export class Http {
 				const stream = new ReadableStream({
 					start(controller) {
 						function push() {
-							reader?.read().then(({done, value}) => {
-								if(done) return controller.close();
-								loaded += value.byteLength;
+							reader?.read().then((event: any) => {
+								if(event.done) return controller.close();
+								loaded += event.value.byteLength;
 								prog(loaded / total);
-								controller.enqueue(value);
+								controller.enqueue(event.value);
 								push();
-							}).catch(error => {
-								controller.error(error);
-							});
+							}).catch((error: any) => controller.error(error));
 						}
 						push();
 					}
 				});
 
 				const data = new Response(stream);
-
 				const content = resp.headers.get('Content-Type')?.toLowerCase();
 				if(content?.includes('json')) resp.data = <T>await data.json();
 				else if(content?.includes('text')) resp.data = <T>await data.text();
 				else if(content?.includes('form')) resp.data = <T>await data.formData();
 				else if(content?.includes('application')) resp.data = <T>await data.blob();
-				res(resp);
+				else resp.data = <any>null;
+
+				if(resp.ok) res(resp);
+				else rej(resp);
 			})
 		});
 	}
