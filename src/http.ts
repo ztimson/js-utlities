@@ -1,5 +1,5 @@
 import {clean} from './objects';
-import {PromiseProgress} from './promise-progress.ts';
+import {PromiseProgress} from './promise-progress';
 
 export type DecodedResponse<T> = Response & {data?: T}
 

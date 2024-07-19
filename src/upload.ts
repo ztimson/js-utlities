@@ -1,4 +1,4 @@
-import {PromiseProgress} from './promise-progress.ts';
+import {PromiseProgress} from './promise-progress';
 
 export type UploadOptions = {
 	url: string;
