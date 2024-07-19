@@ -6,3 +6,9 @@ export function download(href: any, name: string) {
 	a.click();
 	document.body.removeChild(a);
 }
+
+export function downloadBlob(blob: Blob, name: string) {
+	const url = URL.createObjectURL(blob);
+	download(url, name);
+	URL.revokeObjectURL(url);
+}
