@@ -31,21 +31,21 @@ export function fileBrowser(options: {accept?: string, multiple?: boolean} = {})
 	});
 }
 
-export function uploadWithProgress(options: {
+export function uploadWithProgress<T>(options: {
 	url: string;
-	file: File;
+	files: File[];
 	headers?: {[key: string]: string};
 	withCredentials?: boolean;
-}) {
-	return new PromiseProgress((res, rej, prog) => {
+}): PromiseProgress<T> {
+	return new PromiseProgress<T>((res, rej, prog) => {
 		const xhr = new XMLHttpRequest();
 		const formData = new FormData();
-		formData.append('file', options.file);
+		options.files.forEach(f => formData.append('file', f));
 
 		xhr.withCredentials = !!options.withCredentials
 		Object.entries(options.headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));
 		xhr.upload.addEventListener('progress', (event) => event.lengthComputable ? prog(event.loaded / event.total) : null);
-		xhr.upload.addEventListener('load', (resp) => res(resp));
+		xhr.upload.addEventListener('load', (resp) => res(<any>resp));
 		xhr.upload.addEventListener('error', (err) => rej(err));
 
 		xhr.open('POST', options.url);
