@@ -20,10 +20,10 @@
 		}
 	},
 	"scripts": {
-		"build": "npx tsc && npx vite build",
-		"test": "npx jest",
-		"test:coverage": "npx jest --coverage",
-		"watch": "npx vite build --watch"
+		"build": "tsc && vite build",
+		"test": "jest",
+		"test:coverage": "jest --coverage",
+		"watch": "vite build --watch"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.12",
