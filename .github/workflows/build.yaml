@@ -9,17 +9,14 @@ jobs:
   build:
     name: Build NPM Project
     runs-on: ubuntu-latest
-    container:
-      image: node:alpine
-      volumes:
-        - '/mnt/swarm/gitea/runner/cache:/cache'
+    container: node:alpine
     steps:
       -   name: Clone Repository
           uses: ztimson/actions/clone@develop
 
-      -   name: Install & Build Project
+      -   name: Install & Build
           run: |
-            npm run i
+            npm i
             npm run build
 
       -   name: Test
