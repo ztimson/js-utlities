@@ -10,32 +10,20 @@ jobs:
     name: Build NPM Project
     runs-on: ubuntu-latest
     container:
-      image: node
+      image: node:alpine
       volumes:
         - '/mnt/swarm/gitea/runner/cache:/cache'
     steps:
       -   name: Clone Repository
           uses: ztimson/actions/clone@develop
 
-      -   name: Restore node_modules
-          uses: ztimson/actions/cache/restore@develop
-          with:
-            key: node_modules
-
-      -   name: Install Dependencies
-          run: npm i
-
-      -   name: Build Project
-          run: npm run build
+      -   name: Install & Build Project
+          run: |
+            npm run i
+            npm run build
 
       -   name: Test
           run: npm run test:coverage
-
-      -   name: Cache node_modules
-          uses: ztimson/actions/cache@develop
-          with:
-            key: node_modules
-            pattern: node_modules
 
       -   name: Upload to Registry
           uses: ztimson/actions/npm/publish@develop
