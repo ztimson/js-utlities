@@ -43,12 +43,12 @@ export function uploadWithProgress<T>(options: {
 		options.files.forEach(f => formData.append('file', f));
 
 		xhr.withCredentials = !!options.withCredentials
-		Object.entries(options.headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));
 		xhr.upload.addEventListener('progress', (event) => event.lengthComputable ? prog(event.loaded / event.total) : null);
 		xhr.upload.addEventListener('load', (resp) => res(<any>resp));
 		xhr.upload.addEventListener('error', (err) => rej(err));
 
 		xhr.open('POST', options.url);
+		Object.entries(options.headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));
 		xhr.send(formData);
 	});
 }
