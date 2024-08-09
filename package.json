@@ -1,6 +1,6 @@
 {
 	"name": "@ztimson/utils",
-	"version": "0.14.5",
+	"version": "0.14.6",
 	"description": "Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
@@ -9,13 +9,13 @@
 		"type": "git",
 		"url": "https://git.zakscode.com/ztimson/js-utilities"
 	},
-	"main": "./dist/utils.cjs",
-	"module": "./dist/utils.mjs",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
-			"import": "./dist/utils.mjs",
-			"require": "./dist/utils.cjs",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs",
 			"types": "./dist/index.d.ts"
 		}
 	},

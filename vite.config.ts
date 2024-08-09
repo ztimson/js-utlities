@@ -8,8 +8,8 @@ export default defineConfig({
 			entry: resolve(process.cwd(), 'src/index.ts'),
 			name: 'utils',
 			fileName: (module, entryName) => {
-				if(module == 'es') return 'utils.mjs';
-				if(module == 'umd') return 'utils.cjs';
+				if(module == 'es') return 'index.mjs';
+				if(module == 'umd') return 'index.cjs';
 			}
 		},
 		emptyOutDir: true,
