@@ -104,13 +104,19 @@ export class Http {
 					}
 				});
 
-				resp.data = new Response(stream);
+				const data = new Response(stream);
+				resp.body = data.body;
+				resp.blob = data.blob;
+				resp.formData = data.formData;
+				resp.json = data.json;
+				resp.text = data.text;
+
 				if(opts.decode !== false) {
 					const content = resp.headers.get('Content-Type')?.toLowerCase();
-					if(content?.includes('json')) resp.data = <T>await resp.data.json();
-					else if(content?.includes('text')) resp.data = <T>await resp.data.text();
-					else if(content?.includes('form')) resp.data = <T>await resp.data.formData();
-					else if(content?.includes('application')) resp.data = <T>await resp.data.blob();
+					if(content?.includes('application')) resp.data = <T>await data.blob();
+					else if(content?.includes('form')) resp.data = <T>await data.formData();
+					else if(content?.includes('json')) resp.data = <T>await data.json();
+					else if(content?.includes('text')) resp.data = <T>await data.text();
 				}
 
 				if(resp.ok) res(resp);
