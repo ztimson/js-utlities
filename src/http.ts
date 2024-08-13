@@ -6,12 +6,13 @@ export type DecodedResponse<T> = Response & {data: T | null}
 export type HttpInterceptor = (response: Response, next: () => void) => void;
 
 export type HttpRequestOptions = {
-	url?: string;
-	fragment?: string;
-	query?: {key: string, value: string}[] | {[key: string]: string};
-	method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
 	body?: any;
+	decode?: boolean;
+	fragment?: string;
 	headers?: {[key: string | symbol]: string | null | undefined};
+	method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+	query?: {key: string, value: string}[] | {[key: string]: string};
+	url?: string;
 	[key: string]: any;
 }
 
@@ -103,13 +104,14 @@ export class Http {
 					}
 				});
 
-				const data = new Response(stream);
-				const content = resp.headers.get('Content-Type')?.toLowerCase();
-				if(content?.includes('json')) resp.data = <T>await data.json();
-				else if(content?.includes('text')) resp.data = <T>await data.text();
-				else if(content?.includes('form')) resp.data = <T>await data.formData();
-				else if(content?.includes('application')) resp.data = <T>await data.blob();
-				else resp.data = <any>null;
+				resp.data = new Response(stream);
+				if(opts.decode !== false) {
+					const content = resp.headers.get('Content-Type')?.toLowerCase();
+					if(content?.includes('json')) resp.data = <T>await resp.data.json();
+					else if(content?.includes('text')) resp.data = <T>await resp.data.text();
+					else if(content?.includes('form')) resp.data = <T>await resp.data.formData();
+					else if(content?.includes('application')) resp.data = <T>await resp.data.blob();
+				}
 
 				if(resp.ok) res(resp);
 				else rej(resp);
