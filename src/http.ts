@@ -105,7 +105,6 @@ export class Http {
 				});
 
 				const data = new Response(stream);
-				resp.body = data.body;
 				resp.blob = data.blob;
 				resp.formData = data.formData;
 				resp.json = data.json;
