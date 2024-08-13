@@ -105,12 +105,12 @@ export class Http {
 				});
 
 				resp.data = new Response(stream);
-				if(opts.decode !== false) {
+				if(opts.decode == null || opts.decode) {
 					const content = resp.headers.get('Content-Type')?.toLowerCase();
-					if(content?.includes('application')) resp.data = <T>await resp.data.blob();
-					else if(content?.includes('form')) resp.data = <T>await resp.data.formData();
+					if(content?.includes('form')) resp.data = <T>await resp.data.formData();
 					else if(content?.includes('json')) resp.data = <T>await resp.data.json();
 					else if(content?.includes('text')) resp.data = <T>await resp.data.text();
+					else if(content?.includes('application')) resp.data = <T>await resp.data.blob();
 				}
 
 				if(resp.ok) res(resp);
