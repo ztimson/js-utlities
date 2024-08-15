@@ -1,18 +1,6 @@
 import {md5} from './string';
 
 /**
- * Convert data into a form encoded format.
- *
- * @param {any} data - data to convert
- * @returns {string} - Ecodeded form data
- */
-export function formEncode(data: any): string {
-	return Object.entries(data).map(([key, value]) =>
-		encodeURIComponent(key) + '=' + encodeURIComponent(<any>value)
-	).join('&');
-}
-
-/**
  * Get profile image from Gravatar
  *
  * @param {string} email Account email address

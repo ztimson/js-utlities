@@ -120,6 +120,17 @@ export function flattenObj(obj: any, parent?: any, result: any = {}) {
 }
 
 /**
+ * Convert object to FormData
+ * @param target - Object to convert
+ * @return {FormData} - Form object
+ */
+export function formData(target: any): FormData {
+	const data = new FormData();
+	Object.entries(target).forEach(([key, value]) => data.append(key, <any>value));
+	return data;
+}
+
+/**
  * Check that an object has the following values
  *
  * @example
@@ -184,4 +195,16 @@ export function sanitizedJSON(obj: any, space?: number) {
 		}
 		return value;
 	}, space));
+}
+
+/**
+ * Convert object into URL encoded string
+ *
+ * @param {any} data - data to convert
+ * @returns {string} - Encoded form data
+ */
+export function urlEncode(data: any): string {
+	return Object.entries(data).map(([key, value]) =>
+		encodeURIComponent(key) + '=' + encodeURIComponent(<any>value)
+	).join('&');
 }
