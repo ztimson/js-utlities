@@ -1,3 +1,4 @@
+import {deepCopy, JSONAttemptParse} from './objects.ts';
 import {PromiseProgress} from './promise-progress';
 
 export function download(href: any, name: string) {
@@ -42,10 +43,11 @@ export function uploadWithProgress<T>(options: {
 		const formData = new FormData();
 		options.files.forEach(f => formData.append('file', f));
 
-		xhr.withCredentials = !!options.withCredentials
+		xhr.withCredentials = !!options.withCredentials;
 		xhr.upload.addEventListener('progress', (event) => event.lengthComputable ? prog(event.loaded / event.total) : null);
-		xhr.upload.addEventListener('load', (resp) => res(<any>resp));
-		xhr.upload.addEventListener('error', (err) => rej(err));
+		xhr.addEventListener('loadend', () => res(<T>JSONAttemptParse(xhr.responseText)));
+		xhr.addEventListener('error', () => rej(JSONAttemptParse(xhr.responseText)));
+		xhr.addEventListener('timeout', () => rej({error: 'Request timed out'}));
 
 		xhr.open('POST', options.url);
 		Object.entries(options.headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));

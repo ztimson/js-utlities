@@ -186,7 +186,12 @@ export function mixin(target: any, constructors: any[]) {
 	});
 }
 
-export function sanitizedJSON(obj: any, space?: number) {
+export function JSONAttemptParse<T>(json: string): T | string {
+	try { return JSON.parse(json); }
+	catch { return json; }
+}
+
+export function JSONSanitized(obj: any, space?: number) {
 	let cache: any[] = [];
 	return JSON.parse(JSON.stringify(obj, (key, value) => {
 		if (typeof value === 'object' && value !== null) {
