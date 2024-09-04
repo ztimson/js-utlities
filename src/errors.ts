@@ -172,3 +172,41 @@ export class GatewayTimeoutError extends CustomError {
 		return (<any>err).constructor.code == this.code;
 	}
 }
+
+/**
+ * Create the correct error object from a status code
+ * @param {number} code Will be converted to respective error (ex. 404 -> NotFoundError)
+ * @param {string} message Override default error message
+ * @return {CustomError} The proper error type
+ */
+export function errorFromCode(code: number, message?: string) {
+	if(code >= 200 && code < 300) return null;
+	switch(code) {
+		case 400:
+			return new BadRequestError(message);
+		case 401:
+			return new UnauthorizedError(message);
+		case 402:
+			return new PaymentRequiredError(message);
+		case 403:
+			return new ForbiddenError(message);
+		case 404:
+			return new NotFoundError(message);
+		case 405:
+			return new MethodNotAllowedError(message);
+		case 406:
+			return new NotAcceptableError(message);
+		case 500:
+			return new InternalServerError(message);
+		case 501:
+			return new NotImplementedError(message);
+		case 502:
+			return new BadGatewayError(message);
+		case 503:
+			return new ServiceUnavailableError(message);
+		case 504:
+			return new GatewayTimeoutError(message);
+		default:
+			return new CustomError(message, code);
+	}
+}
