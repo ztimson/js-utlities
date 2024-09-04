@@ -53,6 +53,18 @@ export class UnauthorizedError extends CustomError {
 	}
 }
 
+export class PaymentRequiredError extends CustomError {
+	static code = 402;
+
+	constructor(message: string = 'Payment Required') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
 export class ForbiddenError extends CustomError {
 	static code = 403;
 
@@ -77,10 +89,82 @@ export class NotFoundError extends CustomError {
 	}
 }
 
+export class MethodNotAllowedError extends CustomError {
+	static code = 405;
+
+	constructor(message: string = 'Method Not Allowed') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
+export class NotAcceptableError extends CustomError {
+	static code = 406;
+
+	constructor(message: string = 'Not Acceptable') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
 export class InternalServerError extends CustomError {
 	static code = 500;
 
 	constructor(message: string = 'Internal Server Error') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
+export class NotImplementedError extends CustomError {
+	static code = 501;
+
+	constructor(message: string = 'Not Implemented') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
+export class BadGatewayError extends CustomError {
+	static code = 502;
+
+	constructor(message: string = 'Bad Gateway') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
+export class ServiceUnavailableError extends CustomError {
+	static code = 503;
+
+	constructor(message: string = 'Service Unavailable') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
+export class GatewayTimeoutError extends CustomError {
+	static code = 504;
+
+	constructor(message: string = 'Gateway Timeout') {
 		super(message);
 	}
 
