@@ -10,7 +10,7 @@ export type HttpRequestOptions = {
 	decode?: boolean;
 	fragment?: string;
 	headers?: {[key: string | symbol]: string | null | undefined};
-	method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+	method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 	query?: {key: string, value: string}[] | {[key: string]: string};
 	url?: string;
 	[key: string]: any;
