@@ -20,9 +20,10 @@ Javascript/Typescript Utilities
 
   ---
   <div>
-    <a href="https://git.zakscode.com/ztimson/persist/releases" target="_blank">Release Notes</a>
-    • <a href="https://git.zakscode.com/ztimson/persist/issues/new?template=.github%2fissue_template%2fbug.md" target="_blank">Report a Bug</a>
-    • <a href="https://git.zakscode.com/ztimson/persist/issues/new?template=.github%2fissue_template%2fenhancement.md" target="_blank">Request a Feature</a>
+    <a href="https://git.zakscode.com/ztimson/utils/wiki" target="_blank">Documentation</a>
+    • <a href="https://git.zakscode.com/ztimson/utils/releases" target="_blank">Release Notes</a>
+    • <a href="https://git.zakscode.com/ztimson/utils/issues/new?template=.github%2fissue_template%2fbug.md" target="_blank">Report a Bug</a>
+    • <a href="https://git.zakscode.com/ztimson/utils/issues/new?template=.github%2fissue_template%2fenhancement.md" target="_blank">Request a Feature</a>
   </div>
 
   ---
