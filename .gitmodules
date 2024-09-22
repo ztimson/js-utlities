@@ -2,4 +2,4 @@
 	path = docs
 	url = git@git.zakscode.com:ztimson/utils.wiki.git
 	branch = master
-	ignore = any
+	ignore = all
