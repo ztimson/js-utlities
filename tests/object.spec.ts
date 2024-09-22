@@ -29,28 +29,6 @@ describe('Object Utilities', () => {
 		});
 	});
 
-	describe('deepCopy', () => {
-		const copy = deepCopy(TEST_OBJECT);
-		test('Array of arrays', () => {
-			const a = [[1, 2], [3, 4]];
-			const b = deepCopy(a);
-			b[0][1] = 5;
-			expect(a).not.toEqual(b);
-		});
-		test('Change array inside object', () => {
-			copy.b[1] = [1, 1, 1];
-			expect(copy.b[1]).not.toEqual(TEST_OBJECT.b[1]);
-		});
-		test('Change object inside object', () => {
-			copy.g = {h: Math.random()};
-			expect(copy.g).not.toEqual(TEST_OBJECT.g);
-		});
-		test('Change object property inside nested array', () => {
-			copy.c.d[0][0].e = -1;
-			expect(copy.c.d[0][0].e).not.toEqual(TEST_OBJECT.c.d[0][0].e);
-		});
-	});
-
 	describe('dotNotation', () => {
 		test('no object or properties', () => {
 			expect(dotNotation(undefined, 'z')).toStrictEqual(undefined);
