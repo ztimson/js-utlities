@@ -21,7 +21,7 @@
 	},
 	"scripts": {
 		"build": "npx tsc && npx vite build",
-		"docs": "typedoc --plugin typedoc-plugin-markdown --hidePageHeader --out ./docs --entryPoints src/**/*.ts",
+		"docs": "typedoc --plugin typedoc-plugin-markdown --cleanOutputDir false --outputFileStrategy modules --hidePageHeader --out ./docs --entryPoints src/**/*.ts --readme none --entryFileName Home",
 		"test": "npx jest",
 		"test:coverage": "npx jest --coverage",
 		"watch": "npx vite build --watch"
