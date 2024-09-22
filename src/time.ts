@@ -1,13 +1,17 @@
-export function formatDate(date: Date | number | string) {
-	const d = date instanceof Date ? date : new Date(date);
-	return new Intl.DateTimeFormat("en-us", {
-		weekday: "long",
-		month: "short",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-		hour12: true
-	}).format(d);
+/**
+ * Return date formated highest to lowest: YYYY-MM-DD H:mm AM
+ *
+ * @param {Date | number | string} date Date or timestamp to convert to string
+ * @return {string} Formated date
+ */
+export function formatDate(date: Date | number | string): string {
+	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
+	let hours = date.getHours(), postfix = 'AM';
+	if(hours >= 12) {
+		if(hours > 12) hours -= 12;
+		postfix = 'PM';
+	} else if(hours == 0) hours = 12;
+	return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}, ${hours}:${date.getMinutes().toString().padStart(2, '0')} ${postfix}`;
 }
 
 /**
@@ -17,6 +21,7 @@ export function formatDate(date: Date | number | string) {
  * ```js
  * await sleep(1000) // Pause for 1 second
  * ```
+ *
  * @param {number} ms - Time to pause for in milliseconds
  * @returns {Promise<unknown>} - Resolves promise when it's time to resume
  */
@@ -33,6 +38,7 @@ export function sleep(ms: number): Promise<void> {
  * setTimeout(() => wait = false, 1000);
  * await sleepUntil(() => loading); // Won't continue until loading flag is false
  * ```
+ *
  * @param {() => boolean} fn Return true to continue
  * @param {number} checkInterval Run function ever x milliseconds
  * @return {Promise<void>} Callback when sleep is over

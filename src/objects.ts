@@ -1,5 +1,5 @@
 /**
- *  Removes any null values from an object in-place
+ * Removes any null values from an object in-place
  *
  * @example
  * ```ts
@@ -27,12 +27,12 @@ export function clean<T>(obj: T, undefinedOnly = false): Partial<T> {
  * Create a deep copy of an object (vs. a shallow copy of references)
  *
  * Should be replaced by `structuredClone` once released.
- *
  * @param {T} value Object to copy
  * @returns {T} Type
+ * @deprecated Please use `structuredClone`
  */
 export function deepCopy<T>(value: T): T {
-	return JSON.parse(JSON.stringify(value));
+	return structuredClone(value);
 }
 
 /**
@@ -91,8 +91,28 @@ export function dotNotation<T>(obj: any, prop: string, set?: T): T | undefined {
 	}, obj);
 }
 
+
 /**
- * Recursively flatten a nested object, while maintaining key structure.
+ * Convert object into URL encoded query string
+ *
+ * @example
+ * ```js
+ * const query = encodeQuery({page: 1, size: 20});
+ * console.log(query); // Output: "page=1&size=20"
+ * ```
+ *
+ * @param {any} data - data to convert
+ * @returns {string} - Encoded form data
+ */
+export function encodeQuery(data: any): string {
+	return Object.entries(data).map(([key, value]) =>
+		encodeURIComponent(key) + '=' + encodeURIComponent(<any>value)
+	).join('&');
+}
+
+
+/**
+ * Recursively flatten a nested object, while maintaining key structure
  *
  * @example
  * ```ts
@@ -121,6 +141,7 @@ export function flattenObj(obj: any, parent?: any, result: any = {}) {
 
 /**
  * Convert object to FormData
+ *
  * @param target - Object to convert
  * @return {FormData} - Form object
  */
@@ -173,6 +194,12 @@ export function isEqual(a: any, b: any): boolean {
 	return Object.keys(a).every(key => isEqual(a[key], b[key]));
 }
 
+/**
+ * Experimental: Combine multiple object prototypes into one
+ *
+ * @param target Object that will have prototypes added
+ * @param {any[]} constructors Additionally prototypes that should be merged into target
+ */
 export function mixin(target: any, constructors: any[]) {
 	constructors.forEach(c => {
 		Object.getOwnPropertyNames(c.prototype).forEach((name) => {
@@ -186,30 +213,31 @@ export function mixin(target: any, constructors: any[]) {
 	});
 }
 
+/**
+ * Parse JSON but return the original string if it fails
+ *
+ * @param {string} json JSON string to parse
+ * @return {string | T} Object if successful, original string otherwise
+ */
 export function JSONAttemptParse<T>(json: string): T | string {
 	try { return JSON.parse(json); }
 	catch { return json; }
 }
 
-export function JSONSanitized(obj: any, space?: number) {
+/**
+ * Convert an object to a JSON string avoiding any circular references.
+ *
+ * @param obj Object to convert to JSON
+ * @param {number} space Format the JSON with spaces
+ * @return {string} JSON string
+ */
+export function JSONSanitize(obj: any, space?: number): string {
 	let cache: any[] = [];
-	return JSON.parse(JSON.stringify(obj, (key, value) => {
+	return JSON.stringify(obj, (key, value) => {
 		if (typeof value === 'object' && value !== null) {
 			if (cache.includes(value)) return;
 			cache.push(value);
 		}
 		return value;
-	}, space));
-}
-
-/**
- * Convert object into URL encoded string
- *
- * @param {any} data - data to convert
- * @returns {string} - Encoded form data
- */
-export function urlEncode(data: any): string {
-	return Object.entries(data).map(([key, value]) =>
-		encodeURIComponent(key) + '=' + encodeURIComponent(<any>value)
-	).join('&');
+	}, space);
 }

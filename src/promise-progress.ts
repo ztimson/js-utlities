@@ -1,5 +1,25 @@
 export type ProgressCallback = (progress: number) => any;
 
+/**
+ * A promise that fires the `onProgress` callback on incremental progress
+ *
+ * @example
+ * ```js
+ * const promise = new Promise((resolve, reject, progress) => {
+ *   const max = 10;
+ * 	 for(let i = 0; i < max; i++) progress(i / max);
+ * 	 resolve(1);
+ * });
+ *
+ * console.log(promise.progress);
+ *
+ * promise.onProgress(console.log)
+ *        .then(console.log)
+ *        .catch(console.error)
+ *        .finally(...);
+ *
+ * ```
+ */
 export class PromiseProgress<T> extends Promise<T> {
 	private listeners: ProgressCallback[] = [];
 

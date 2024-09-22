@@ -1,10 +1,32 @@
 import {dotNotation, isEqual} from './objects';
 
+/**
+ * Only add element to array if it isn't already included
+ *
+ * @example
+ * ```js
+ * const arr = addUnique([1, 2, 3], 3);
+ * console.log(arr); // Output: [1, 2, 3]
+ * ```
+ *
+ * @param {T[]} array Target array element will be added to
+ * @param {T} el Unique element to add
+ * @return {T[]} Array with element if it was unique
+ * @deprecated Use ASet to create unique arrays
+ */
 export function addUnique<T>(array: T[], el: T): T[] {
 	if(array.indexOf(el) === -1) array.push(el);
 	return array;
 }
 
+/**
+ * Find all unique elements in arrays
+ *
+ * @param {any[]} a First array to compare
+ * @param {any[]} b Second array to compare
+ * @return {any[]} Unique elements
+ * @deprecated Use ASet to perform Set operations on arrays
+ */
 export function arrayDiff(a: any[], b: any[]): any[] {
 	return makeUnique([
 		...a.filter(v1 => !b.includes((v2: any) => isEqual(v1, v2))),
@@ -31,6 +53,25 @@ export function caseInsensitiveSort(prop: string) {
 		if(typeof aVal !== 'string' || typeof bVal !== 'string') return 1;
 		return aVal.toLowerCase().localeCompare(bVal.toLowerCase());
 	};
+}
+
+/**
+ * Shorthand to find objects with a property value
+ *
+ * @example
+ * ```js
+ * const found = [
+ *   {name: 'Batman'},
+ *   {name: 'Superman'},
+ * ].filter(findByProp('name', 'Batman'));
+ * ```
+ *
+ * @param {string} prop Property to compare (Dot nation supported)
+ * @param value Value property must have
+ * @return {(v: any) => boolean} Function used by `filter` or `find`
+ */
+export function findByProp(prop: string, value: any) {
+	return (v: any) => isEqual(dotNotation(v, prop), value);
 }
 
 /**
@@ -91,10 +132,13 @@ export function sortByProp(prop: string, reverse = false) {
 	};
 }
 
-export function findByProp(prop: string, value: any) {
-	return (v: any) => isEqual(v[prop], value);
-}
-
+/**
+ * Make sure every element in array is unique
+ *
+ * @param {any[]} arr Array that will be filtered in place
+ * @return {any[]} Original array
+ * @deprecated Please use ASet to create a guaranteed unique array
+ */
 export function makeUnique(arr: any[]) {
 	for(let i = arr.length - 1; i >= 0; i--) {
 		if(arr.slice(0, i).find(n => isEqual(n, arr[i]))) arr.splice(i, 1);
@@ -103,7 +147,8 @@ export function makeUnique(arr: any[]) {
 }
 
 /**
- * Make sure value is an array, if it isn't wrap it in one.
+ * Make sure value is an array, if it isn't wrap it in one
+ *
  * @param {T[] | T} value Value that should be an array
  * @returns {T[]} Value in an array
  */

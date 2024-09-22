@@ -1,4 +1,4 @@
-import {sleep, urlParser} from '../src';
+import {sleep, parseUrl} from '../src';
 
 describe('Miscellanies Utilities', () => {
 	describe('sleep', () => {
@@ -12,7 +12,7 @@ describe('Miscellanies Utilities', () => {
 
 	describe('urlParser', () => {
 		test('localhost w/ port', () => {
-			const parsed = urlParser('http://localhost:4200/some/path?q1=test1&q2=test2#frag');
+			const parsed = parseUrl('http://localhost:4200/some/path?q1=test1&q2=test2#frag');
 			expect(parsed.protocol).toStrictEqual('http');
 			expect(parsed.host).toStrictEqual('localhost:4200');
 			expect(parsed.domain).toStrictEqual('localhost');
@@ -23,7 +23,7 @@ describe('Miscellanies Utilities', () => {
 		});
 
 		test('advanced URL', () => {
-			const parsed = urlParser('https://sub.domain.example.com/some/path?q1=test1&q2=test2#frag');
+			const parsed = parseUrl('https://sub.domain.example.com/some/path?q1=test1&q2=test2#frag');
 			expect(parsed.protocol).toStrictEqual('https');
 			expect(parsed.host).toStrictEqual('sub.domain.example.com');
 			expect(parsed.domain).toStrictEqual('example.com');

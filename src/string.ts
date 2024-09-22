@@ -1,28 +1,10 @@
-export function countChars(text: string, pattern: RegExp) {
-	return text.length - text.replaceAll(pattern, '').length;
-}
-
-export function createHex(length: number) {
-	return Array(length).fill(null).map(() => Math.round(Math.random() * 0xF).toString(16)).join('');
-}
-
-export function formatBytes(bytes: number, decimals = 2) {
-	if (bytes === 0) return '0 Bytes';
-	const k = 1024;
-	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
-}
-
 /**
  * String of all letters
- *
  */
 const LETTER_LIST = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 /**
  * String of all numbers
- *
  */
 const NUMBER_LIST = '0123456789';
 
@@ -36,6 +18,37 @@ const SYMBOL_LIST = '~`!@#$%^&*()_-+={[}]|\\:;"\'<,>.?/';
  */
 const CHAR_LIST = LETTER_LIST + NUMBER_LIST + SYMBOL_LIST;
 
+/**
+ * Generate a random hexadecimal value
+ *
+ * @param {number} length Number of hexadecimal place values
+ * @return {string} Hexadecimal number as a string
+ */
+export function randomHex(length: number) {
+	return Array(length).fill(null).map(() => Math.round(Math.random() * 0xF).toString(16)).join('');
+}
+
+/**
+ * Convert number of bytes into a human-readable size
+ *
+ * @param {number} bytes Number of bytes
+ * @param {number} decimals Decimal places to preserve
+ * @return {string} Formated size
+ */
+export function formatBytes(bytes: number, decimals = 2) {
+	if (bytes === 0) return '0 Bytes';
+	const k = 1024;
+	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+	return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+}
+
+/**
+ * Extract numbers from a string & create a formated phone number: +1 (123) 456-7890
+ *
+ * @param {string} number String that will be parsed for numbers
+ * @return {string} Formated phone number
+ */
 export function formatPhoneNumber(number: string) {
 	const parts = /(\+?1)?.*?(\d{3}).*?(\d{3}).*?(\d{4})/g.exec(number);
 	if(!parts) throw new Error(`Number cannot be parsed: ${number}`);
@@ -46,7 +59,7 @@ export function formatPhoneNumber(number: string) {
  * Insert a string into another string at a given position
  *
  * @example
- * ```
+ * ```js
  * console.log(insertAt('Hello world!', ' glorious', 5);
  * // Output: Hello glorious world!
  * ```
@@ -60,12 +73,26 @@ export function insertAt(target: string, str: string, index: number): String {
 	return `${target.slice(0, index)}${str}${target.slice(index + 1)}`;
 }
 
-export function pad(text: any, length: number, char: string, start = true) {
-	const t = text.toString();
-	const l = length - t.length;
-	if(l <= 0) return t;
-	const padding = Array(~~(l / char.length)).fill(char).join('');
-	return start ? padding + t : t + padding;
+/**
+ * Add padding to string
+ *
+ * @example
+ * ```js
+ * const now = new Date();
+ * const padded = now.getHours() + ':' + pad(now.getMinutes(), 2, '0');
+ * console.log(padded); // Output: "2:05"
+ * ```
+ *
+ * @param text Text that will be padded
+ * @param {number} length Target length
+ * @param {string} char Character to use as padding, defaults to space
+ * @param {boolean} start Will pad start of text if true, or the end if false
+ * @return {string} Padded string
+ * @deprecated Please use `String.padStart` & `String.padEnd`
+ */
+export function pad(text: any, length: number, char: string = ' ', start = true) {
+	if(start) return text.toString().padStart(length, char);
+	return text.toString().padEnd(length, char);
 }
 
 /**
@@ -149,8 +176,50 @@ export function matchAll(value: string, regex: RegExp | string): RegExpExecArray
 	return ret;
 }
 
+/** Parts of a URL */
+export type ParsedUrl = {
+	protocol?: string,
+	subdomain?: string,
+	domain: string,
+	host: string,
+	port?: number,
+	path?: string,
+	query?: {[name: string]: string}
+	fragment?: string
+}
+
+/**
+ * Break a URL string into its parts for easy parsing
+ *
+ * @param {string} url URL string that will be parsed
+ * @returns {RegExpExecArray} Parts of URL
+ */
+export function parseUrl(url: string): ParsedUrl {
+	const processed = new RegExp(
+		'(?:(?<protocol>[\\w\\d]+)\\:\\/\\/)?(?:(?<user>.+)\\@)?(?<host>(?<domain>[^:\\/\\?#@\\n]+)(?:\\:(?<port>\\d*))?)(?<path>\\/.*?)?(?:\\?(?<query>.*?))?(?:#(?<fragment>.*?))?$',
+		'gm').exec(url);
+	const groups: ParsedUrl = <any>processed?.groups ?? {};
+	const domains = groups.domain.split('.');
+	if(groups['port'] != null) groups.port = Number(groups.port);
+	if(domains.length > 2) {
+		groups.domain = domains.splice(-2, 2).join('.');
+		groups.subdomain = domains.join('.');
+	}
+	if(groups.query) {
+		const split = (<any>groups.query).split('&'), query: any = {};
+		split.forEach((q: any) => {
+			const [key, val] = q.split('=');
+			query[key] = val;
+		});
+		groups.query = query;
+	}
+	return groups;
+}
+
+
 /**
  * Create MD5 hash using native javascript
+ *
  * @param d String to hash
  * @returns {string} Hashed string
  */

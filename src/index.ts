@@ -11,3 +11,4 @@ export * from './objects';
 export * from './promise-progress';
 export * from './string';
 export * from './time';
+export * from './types';
