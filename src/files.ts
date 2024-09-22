@@ -1,20 +1,6 @@
+import {makeArray} from './array.ts';
 import {JSONAttemptParse} from './objects.ts';
 import {PromiseProgress} from './promise-progress';
-
-/**
- * Download a file from a URL
- *
- * @param href URL that will be downloaded
- * @param {string} name Override download name
- */
-export function download(href: any, name?: string) {
-	const a = document.createElement('a');
-	a.href = href;
-	a.download = name || href.split('/').pop();
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-}
 
 /**
  * Download blob as a file
@@ -22,10 +8,26 @@ export function download(href: any, name?: string) {
  * @param {Blob} blob File as a blob
  * @param {string} name Name blob will be downloaded as
  */
-export function downloadBlob(blob: Blob, name: string) {
+export function downloadFile(blob: Blob | string | string[], name: string) {
+	if(!(blob instanceof Blob)) blob = new Blob(makeArray(blob));
 	const url = URL.createObjectURL(blob);
-	download(url, name);
+	downloadUrl(url, name);
 	URL.revokeObjectURL(url);
+}
+
+/**
+ * Download a file from a URL
+ *
+ * @param href URL that will be downloaded
+ * @param {string} name Override download name
+ */
+export function downloadUrl(href: any, name?: string) {
+	const a = document.createElement('a');
+	a.href = href;
+	a.download = name || href.split('/').pop();
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
 }
 
 /**

@@ -1,5 +1,6 @@
 export * from './array';
 export * from './aset';
+export * from './csv';
 export * from './files';
 export * from './emitter';
 export * from './errors';

@@ -1,3 +1,5 @@
+import {dotNotation, flattenObj} from './objects.ts';
+
 /**
  * String of all letters
  */
@@ -17,16 +19,6 @@ const SYMBOL_LIST = '~`!@#$%^&*()_-+={[}]|\\:;"\'<,>.?/';
  * String of all letters, numbers & symbols
  */
 const CHAR_LIST = LETTER_LIST + NUMBER_LIST + SYMBOL_LIST;
-
-/**
- * Generate a random hexadecimal value
- *
- * @param {number} length Number of hexadecimal place values
- * @return {string} Hexadecimal number as a string
- */
-export function randomHex(length: number) {
-	return Array(length).fill(null).map(() => Math.round(Math.random() * 0xF).toString(16)).join('');
-}
 
 /**
  * Convert number of bytes into a human-readable size
@@ -93,6 +85,16 @@ export function insertAt(target: string, str: string, index: number): String {
 export function pad(text: any, length: number, char: string = ' ', start = true) {
 	if(start) return text.toString().padStart(length, char);
 	return text.toString().padEnd(length, char);
+}
+
+/**
+ * Generate a random hexadecimal value
+ *
+ * @param {number} length Number of hexadecimal place values
+ * @return {string} Hexadecimal number as a string
+ */
+export function randomHex(length: number) {
+	return Array(length).fill(null).map(() => Math.round(Math.random() * 0xF).toString(16)).join('');
 }
 
 /**
