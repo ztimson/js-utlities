@@ -39,12 +39,12 @@ export function sleep(ms: number): Promise<void> {
  * await sleepUntil(() => loading); // Won't continue until loading flag is false
  * ```
  *
- * @param {() => boolean} fn Return true to continue
+ * @param {() => boolean | Promise<boolean>} fn Return true to continue
  * @param {number} checkInterval Run function ever x milliseconds
  * @return {Promise<void>} Callback when sleep is over
  */
-export async function sleepUntil(fn : () => boolean, checkInterval=100): Promise<void> {
-	while(fn()) await sleep(checkInterval);
+export async function sleepUntil(fn : () => boolean | Promise<boolean>, checkInterval = 100): Promise<void> {
+	while(await fn()) await sleep(checkInterval);
 }
 
 /**
