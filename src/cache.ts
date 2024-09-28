@@ -13,7 +13,19 @@ export class Cache<K, T> {
 	 * @param {keyof T} key Default property to use as primary key
 	 * @param {number} ttl Default expiry in milliseconds
 	 */
-	constructor(public readonly key: keyof T, public ttl?: number) { }
+	constructor(public readonly key: keyof T, public ttl?: number) {
+		return new Proxy(this, {
+			get: (target: this, prop: string | symbol) => {
+				if(prop in target) return (<any>target)[prop];
+				return target.store[prop];
+			},
+			set: (target: any, prop: string | symbol, value: T) => {
+				if(prop in target) target[prop] = value;
+				else target.store[prop] = value;
+				return true;
+			}
+		});
+	}
 
 	private getKey(value: T): K {
 		return <K>value[this.key];
