@@ -84,6 +84,15 @@ export class Cache<K, T> {
 	}
 
 	/**
+	 * Get item from the cache
+	 * @param {K} key Key to lookup
+	 * @return {T} Cached item
+	 */
+	get(key: K): T {
+		return this.store[key];
+	}
+
+	/**
 	 * Get a list of cached keys
 	 *
 	 * @return {K[]} Array of keys
