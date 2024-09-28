@@ -1,7 +1,8 @@
 /**
  * Map of data which tracks whether it is a complete collection & offers optional expiry of cached values
  */
-export class Cache<K, T> extends Map<K, T> {
+export class Cache<K, T> {
+	private store: any = {};
 
 	/** Whether cache is complete */
 	complete = false;
@@ -12,9 +13,7 @@ export class Cache<K, T> extends Map<K, T> {
 	 * @param {keyof T} key Default property to use as primary key
 	 * @param {number} ttl Default expiry in milliseconds
 	 */
-	constructor(public readonly key: keyof T, public ttl?: number) {
-		super();
-	}
+	constructor(public readonly key: keyof T, public ttl?: number) { }
 
 	private getKey(value: T): K {
 		return <K>value[this.key];
@@ -25,8 +24,8 @@ export class Cache<K, T> extends Map<K, T> {
 	 *
 	 * @return {T[]} Array of items
 	 */
-	all() {
-		return Array.from(this.values());
+	all(): T[] {
+		return Object.values(this.store);
 	}
 
 	/**
@@ -56,18 +55,52 @@ export class Cache<K, T> extends Map<K, T> {
 	}
 
 	/**
+	 * Delete an item from the cache
+	 *
+	 * @param {K} key Item's primary key
+	 */
+	delete(key: K) {
+		delete this.store[key];
+	}
+
+	/**
+	 * Return cache as an array of key-value pairs
+	 * @return {[K, T][]} Key-value pairs array
+	 */
+	entries(): [K, T][] {
+		return <[K, T][]>Object.entries(this.store);
+	}
+
+	/**
+	 * Get a list of cached keys
+	 *
+	 * @return {K[]} Array of keys
+	 */
+	keys(): K[] {
+		return <K[]>Object.keys(this.store);
+	}
+
+	/**
 	 * Add an item to the cache manually specifying the key
+	 *
 	 * @param {K} key Key item will be cached under
 	 * @param {T} value Item to cache
 	 * @param {number | undefined} ttl Override default expiry
 	 * @return {this}
 	 */
 	set(key: K, value: T, ttl = this.ttl): this {
-		super.set(key, value);
+		this.store[key] = value;
 		if(ttl) setTimeout(() => {
 			this.complete = false;
-			super.delete(key)
+			this.delete(key);
 		}, ttl);
 		return this;
 	}
+
+	/**
+	 * Get all cached items
+	 *
+	 * @return {T[]} Array of items
+	 */
+	values = this.all();
 }
