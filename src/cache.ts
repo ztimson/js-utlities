@@ -1,9 +1,11 @@
 /**
  * Map of data which tracks whether it is a complete collection & offers optional expiry of cached values
  */
-export class Cache<K, T> {
-	private store: any = {};
+export class Cache<K extends string | number | symbol, T> {
+	private store = <Record<K, T>>{};
 
+	/** Support index lookups */
+	[key: string | number | symbol]: T | any;
 	/** Whether cache is complete */
 	complete = false;
 
@@ -13,21 +15,22 @@ export class Cache<K, T> {
 	 * @param {keyof T} key Default property to use as primary key
 	 * @param {number} ttl Default expiry in milliseconds
 	 */
-	constructor(public readonly key: keyof T, public ttl?: number) {
+	constructor(public readonly key?: keyof T, public ttl?: number) {
 		return new Proxy(this, {
 			get: (target: this, prop: string | symbol) => {
-				if(prop in target) return (<any>target)[prop];
-				return target.store[prop];
+				if (prop in target) return (target as any)[prop];
+				return target.store[prop as K];
 			},
-			set: (target: any, prop: string | symbol, value: T) => {
-				if(prop in target) target[prop] = value;
-				else target.store[prop] = value;
+			set: (target: this, prop: string | symbol, value: any) => {
+				if (prop in target) (target as any)[prop] = value;
+				else target.store[prop as K] = value;
 				return true;
 			}
 		});
 	}
 
 	private getKey(value: T): K {
+		if(!this.key) throw new Error('No key defined');
 		return <K>value[this.key];
 	}
 
@@ -99,6 +102,15 @@ export class Cache<K, T> {
 	 */
 	keys(): K[] {
 		return <K[]>Object.keys(this.store);
+	}
+
+	/**
+	 * Get map of cached items
+	 *
+	 * @return {Record<K, T>}
+	 */
+	map(): Record<K, T> {
+		return structuredClone(this.store);
 	}
 
 	/**
