@@ -62,7 +62,7 @@ jobs:
       -   name: Get Version Number
           shell: sh
           run: |
-            [[ -f server/package.json ]] && echo "VERSION=$(cat server/package.json | grep version | grep -Eo ':.+' | grep -Eo '[[:alnum:]\.\/\-]+')" >> $GITHUB_ENV
+            [[ -f package.json ]] && echo "VERSION=$(cat package.json | grep version | grep -Eo ':.+' | grep -Eo '[[:alnum:]\.\/\-]+')" >> $GITHUB_ENV
 
       -   name: Push with branch tag
           uses: ztimson/actions/docker/push@develop
