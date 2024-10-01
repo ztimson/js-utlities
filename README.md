@@ -20,7 +20,7 @@ Javascript/Typescript Utilities
 
   ---
   <div>
-    <a href="https://git.zakscode.com/ztimson/utils/wiki" target="_blank">Documentation</a>
+    <a href="https://utils.docs.zakscode.com" target="_blank">Documentation</a>
     • <a href="https://git.zakscode.com/ztimson/utils/releases" target="_blank">Release Notes</a>
     • <a href="https://git.zakscode.com/ztimson/utils/issues/new?template=.github%2fissue_template%2fbug.md" target="_blank">Report a Bug</a>
     • <a href="https://git.zakscode.com/ztimson/utils/issues/new?template=.github%2fissue_template%2fenhancement.md" target="_blank">Request a Feature</a>
@@ -36,7 +36,7 @@ Javascript/Typescript Utilities
 	- [Setup](#setup)
 		- [Production](#production)
 		- [Development](#development)
-	- [Documentation](https://git.zakscode.com/ztimson/utils/wiki)
+	- [Documentation](https://utils.docs.zakscode.com/)
 	- [License](#license)
 
 ## About
@@ -82,7 +82,7 @@ A collection of utilities to make life a little easier
 
 ## Documentation
 
-[Available Here](https://git.zakscode.com/ztimson/utils/wiki)
+[Available Here](https://utils.docs.zakscode.com/)
 
 ## License
 
