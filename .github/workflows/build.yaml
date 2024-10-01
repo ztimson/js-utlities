@@ -53,44 +53,8 @@ jobs:
   docs:
     name: Publish Documentation
     needs: build
-    runs-on: ubuntu-latest
-    container: docker
-    steps:
-      -   name: Clone Repository
-          uses: ztimson/actions/clone@develop
-
-      -   name: Get Version Number
-          shell: sh
-          run: |
-            [[ -f package.json ]] && echo "VERSION=$(cat package.json | grep version | grep -Eo ':.+' | grep -Eo '[[:alnum:]\.\/\-]+')" >> $GITHUB_ENV
-
-      -   name: Push with branch tag
-          uses: ztimson/actions/docker/push@develop
-          with:
-            registry: ${{github.server_url}}
-            user: ${{github.repository_owner}}
-            pass: ${{secrets.DEPLOY_TOKEN}}
-            name: ${{github.repository}}
-            tag: ${{github.ref_name}}
-
-      -   name: Push with version tag
-          uses: ztimson/actions/docker/push@develop
-          if: ${{env.VERSION}}
-          with:
-            from: "${{github.server_url}}/${{github.repository}}:${{github.ref_name}}"
-            registry: ${{github.server_url}}
-            user: ${{github.repository_owner}}
-            pass: ${{secrets.DEPLOY_TOKEN}}
-            name: ${{github.repository}}
-            tag: ${{env.VERSION}}
-
-      -   name: Push with latest tag
-          uses: ztimson/actions/docker/push@develop
-          if: ${{github.ref_name}} == (git symbolic-ref refs/remotes/origin/HEAD --short | cut -c 7)
-          with:
-            from: "${{github.server_url}}/${{github.repository}}:${{github.ref_name}}"
-            registry: ${{github.server_url}}
-            user: ${{github.repository_owner}}
-            pass: ${{secrets.DEPLOY_TOKEN}}
-            name: ${{github.repository}}
-            tag: latest
+    uses: ztimson/actions/.github/workflows/docker.yaml@develop
+    with:
+        name: ztimson/utils
+        repository: ${{github.server_url}}/${{github.repository}}.git
+        pass: ${{secrets.DEPLOY_TOKEN}}
