@@ -21,7 +21,7 @@
 	},
 	"scripts": {
 		"build": "npx tsc && npx vite build",
-		"docs": "typedoc --plugin typedoc-plugin-markdown --cleanOutputDir false --outputFileStrategy modules --hidePageHeader --out ./docs --entryPoints src/**/*.ts --readme none --entryFileName Home",
+		"docs": "typedoc --cleanOutputDir false --out ./docs --entryPoints src/**/*.ts --readme none",
 		"test": "npx jest",
 		"test:coverage": "npx jest --coverage",
 		"watch": "npx vite build --watch"
@@ -32,7 +32,6 @@
 		"jest-junit": "^16.0.0",
 		"ts-jest": "^29.1.2",
 		"typedoc": "^0.26.7",
-		"typedoc-plugin-markdown": "^4.2.7",
 		"typescript": "^5.3.3",
 		"vite": "^5.0.12",
 		"vite-plugin-dts": "^3.7.2"
