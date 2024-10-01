@@ -1,6 +1,10 @@
 export type Listener = (...args: any[]) => any;
 export type TypedEvents = {[k in string | symbol]: Listener} & {'*': (event: string, ...args: any[]) => any};
 
+export type NamespaceEvents<Namespace extends string, Events extends TypedEvents> = {
+	[K in keyof Events as `${Namespace}:${Extract<K, string>}`]: Events[K];
+};
+
 export class TypedEmitter<T extends TypedEvents = TypedEvents> {
 	private static listeners: {[key: string]: Listener[]} = {};
 

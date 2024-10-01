@@ -15,3 +15,4 @@ export * from './promise-progress';
 export * from './string';
 export * from './time';
 export * from './types';
+export * from 'var-persist';

@@ -1,6 +1,6 @@
 {
 	"name": "@ztimson/utils",
-	"version": "0.16.10",
+	"version": "0.17.0",
 	"description": "Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
@@ -39,5 +39,8 @@
 	},
 	"files": [
 		"dist"
-	]
+	],
+	"dependencies": {
+		"var-persist": "^1.0.1"
+	}
 }
