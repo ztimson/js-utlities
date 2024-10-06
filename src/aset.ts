@@ -19,20 +19,22 @@ export class ASet<T> extends Array {
 	}
 
 	/**
-	 * Add single element to set if unique
-	 * @param {T} el Element to add
+	 * Add elements to set if unique
+	 * @param items
 	 */
-	add(el: T) {
-		if(!this.has(el)) this.push(el);
+	add(...items: T[]) {
+		items.filter(el => !this.has(el)).forEach(el => this.push(el));
 	}
 
 	/**
-	 * Delete element from set
-	 * @param {T} el Element that will be deleted
+	 * Delete elements from set
+	 * @param items Elements that will be deleted
 	 */
-	delete(el: T) {
-		const index = this.indexOf(el);
-		if(index != -1) this.slice(index, 1);
+	delete(...items: T[]) {
+		items.forEach(el => {
+			const index = this.indexOf(el);
+			if(index != -1) this.slice(index, 1);
+		})
 	}
 
 	/**
