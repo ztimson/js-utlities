@@ -18,6 +18,6 @@ export function gravatar(email: string, def='mp') {
  * @param {string} value String which should be escaped
  * @return {string} New escaped sequence
  */
-function escapeRegex(value: string) {
+export function escapeRegex(value: string) {
 	return value.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
 }
