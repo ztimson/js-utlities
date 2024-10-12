@@ -11,3 +11,13 @@ export function gravatar(email: string, def='mp') {
 	if(!email) return '';
 	return `https://www.gravatar.com/avatar/${md5(email)}?d=${def}`;
 }
+
+/**
+ * Escape any regex special characters to avoid misinterpretation during search
+ *
+ * @param {string} value String which should be escaped
+ * @return {string} New escaped sequence
+ */
+function escapeRegex(value: string) {
+	return value.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
+}
