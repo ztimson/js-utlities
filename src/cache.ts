@@ -1,3 +1,12 @@
+export type CacheOptions = {
+	/** Delete keys automatically after x amount of seconds */
+	ttl?: number;
+	/** Storage to persist cache */
+	storage?: Storage;
+	/** Key cache will be stored under */
+	storageKey?: string;
+}
+
 /**
  * Map of data which tracks whether it is a complete collection & offers optional expiry of cached values
  */
@@ -13,9 +22,18 @@ export class Cache<K extends string | number | symbol, T> {
 	 * Create new cache
 	 *
 	 * @param {keyof T} key Default property to use as primary key
-	 * @param {number} ttl Default expiry in milliseconds
+	 * @param options
 	 */
-	constructor(public readonly key?: keyof T, public ttl?: number) {
+	constructor(public readonly key?: keyof T, public readonly options: CacheOptions = {}) {
+		if(options.storageKey && !options.storage)
+			options.storage = localStorage;
+		if(options.storageKey && options.storage) {
+			const stored = options.storage.getItem(options.storageKey);
+			if(stored) {
+				try { Object.assign(this.store, JSON.parse(stored)); }
+				catch { }
+			}
+		}
 		return new Proxy(this, {
 			get: (target: this, prop: string | symbol) => {
 				if (prop in target) return (target as any)[prop];
@@ -76,6 +94,8 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	delete(key: K) {
 		delete this.store[key];
+		if(this.options.storageKey && this.options.storage)
+			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.cache));
 	}
 
 	/**
@@ -118,15 +138,17 @@ export class Cache<K extends string | number | symbol, T> {
 	 *
 	 * @param {K} key Key item will be cached under
 	 * @param {T} value Item to cache
-	 * @param {number | undefined} ttl Override default expiry
+	 * @param {number | undefined} ttl Override default expiry in seconds
 	 * @return {this}
 	 */
-	set(key: K, value: T, ttl = this.ttl): this {
+	set(key: K, value: T, ttl = this.options.ttl): this {
 		this.store[key] = value;
+		if(this.options.storageKey && this.options.storage)
+			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.cache));
 		if(ttl) setTimeout(() => {
 			this.complete = false;
 			this.delete(key);
-		}, ttl);
+		}, ttl * 1000);
 		return this;
 	}
 
