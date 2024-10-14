@@ -216,13 +216,13 @@ export interface IPathedEventEmitter {
 	off(listener: PathListener): void;
 	on(event: string, listener: PathListener): PathUnsubscribe;
 	once(event: string, listener?: PathListener): Promise<any>;
-	relayEvents(emitter: PathedEventEmitter): void;
+	relayEvents(emitter: PathEventEmitter): void;
 }
 
 /**
  * Event emitter that uses paths allowing listeners to listen to different combinations of modules, paths & methods
  */
-export class PathedEventEmitter implements IPathedEventEmitter{
+export class PathEventEmitter implements IPathedEventEmitter{
 	private listeners: [PathEvent, PathListener][] = [];
 
 	emit(event: string | PathEvent, ...args: any[]) {
