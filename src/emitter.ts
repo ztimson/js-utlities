@@ -1,33 +1,33 @@
-export type Listener = (...args: any[]) => any;
-export type TypedEvents = {[k in string | symbol]: Listener} & {'*': (event: string, ...args: any[]) => any};
+export type TypedListener = (...args: any[]) => any;
+export type TypedEvents = {[k in string | symbol]: TypedListener} & {'*': (event: string, ...args: any[]) => any};
 
 export type NamespaceEvents<Namespace extends string, Events extends TypedEvents> = {
 	[K in keyof Events as `${Namespace}:${Extract<K, string>}`]: Events[K];
 };
 
 export class TypedEmitter<T extends TypedEvents = TypedEvents> {
-	private static listeners: {[key: string]: Listener[]} = {};
+	private static listeners: {[key: string]: TypedListener[]} = {};
 
-	private listeners: { [key in keyof T]?: Listener[] } = {};
+	private listeners: { [key in keyof T]?: TypedListener[] } = {};
 
 	static emit(event: any, ...args: any[]) {
 		(this.listeners['*'] || []).forEach(l => l(event, ...args));
 		(this.listeners[event.toString()] || []).forEach(l => l(...args));
 	};
 
-	static off(event: any, listener: Listener) {
+	static off(event: any, listener: TypedListener) {
 		const e = event.toString();
 		this.listeners[e] = (this.listeners[e] || []).filter(l => l === listener);
 	}
 
-	static on(event: any, listener: Listener) {
+	static on(event: any, listener: TypedListener) {
 		const e = event.toString();
 		if(!this.listeners[e]) this.listeners[e] = [];
 		this.listeners[e]?.push(listener);
 		return () => this.off(event, listener);
 	}
 
-	static once(event: any, listener?: Listener): Promise<any> {
+	static once(event: any, listener?: TypedListener): Promise<any> {
 		return new Promise(res => {
 			const unsubscribe = this.on(event, <any>((...args: any) => {
 				res(args.length == 1 ? args[0] : args);

@@ -1,3 +1,4 @@
+import {PathEvent} from './path-events.ts';
 import {md5} from './string';
 
 /**
@@ -21,3 +22,6 @@ export function gravatar(email: string, def='mp') {
 export function escapeRegex(value: string) {
 	return value.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
 }
+
+export type Listener = (event: PathEvent, ...args: any[]) => any;
+export type Unsubscribe = () => void;

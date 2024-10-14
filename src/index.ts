@@ -11,6 +11,7 @@ export * from './logger';
 export * from './math';
 export * from './misc';
 export * from './objects';
+export * from './path-events';
 export * from './promise-progress';
 export * from './string';
 export * from './time';
