@@ -14,16 +14,16 @@ import {ASet} from './aset.ts';
 export type Method = '*' | 'n' | 'c' | 'r' | 'u' | 'd' | 'x';
 
 /**
- * Shorthand for creating PathedEvent from a string
+ * Shorthand for creating Event from a string
  *
  * @example
  * ```ts
- * const event: PathedEvent = PE`users/system:*`;
+ * const event: Event = PE`users/system:*`;
  * ```
  *
- * @param {TemplateStringsArray} str String that will be parsed into PathedEvent
+ * @param {TemplateStringsArray} str String that will be parsed into Event
  * @param {string} args
- * @return {PathEvent} PathedEvent object
+ * @return {PathEvent} Event object
  */
 export function PE(str: TemplateStringsArray, ...args: string[]) {
 	const combined = [];
@@ -35,7 +35,7 @@ export function PE(str: TemplateStringsArray, ...args: string[]) {
 }
 
 /**
- * Shorthand for creating PathedEvent strings, ensures paths are correct
+ * Shorthand for creating Event strings, ensures paths are correct
  *
  * @param {TemplateStringsArray} str
  * @param {string} args
@@ -53,8 +53,8 @@ export function PES(str: TemplateStringsArray, ...args: any[]) {
 }
 
 /**
- * A pathed event broken down into its core components for easy processing
- * PathedEvent Structure: `module/path/name:property:method`
+ * A  event broken down into its core components for easy processing
+ * Event Structure: `module/path/name:property:method`
  * Example: `users/system:crud` or `storage/some/path/file.txt:r`
  */
 export class PathEvent {
@@ -81,9 +81,9 @@ export class PathEvent {
 	/** Delete method specified */
 	delete!: boolean;
 
-	constructor(pathedEvent: string | PathEvent) {
-		if(typeof pathedEvent == 'object') return Object.assign(this, pathedEvent);
-		let [p, scope, method] = pathedEvent.split(':');
+	constructor(Event: string | PathEvent) {
+		if(typeof Event == 'object') return Object.assign(this, Event);
+		let [p, scope, method] = Event.split(':');
 		if(!method) method = scope || '*';
 		if(p == '*' || !p && method == '*') {
 			p = '';
@@ -104,10 +104,10 @@ export class PathEvent {
 	}
 
 	/**
-	 * Combine multiple pathed events into one parsed object. Longest path takes precedent, but all subsequent methods are
+	 * Combine multiple  events into one parsed object. Longest path takes precedent, but all subsequent methods are
 	 * combined until a "none" is reached
 	 *
-	 * @param {string | PathEvent} paths PathedEvents as strings or pre-parsed
+	 * @param {string | PathEvent} paths Events as strings or pre-parsed
 	 * @return {PathEvent} Final combined permission
 	 */
 	static combine(paths: (string | PathEvent)[]): PathEvent {
@@ -138,7 +138,7 @@ export class PathEvent {
 	/**
 	 * Squash 2 sets of paths & return true if any overlap is found
 	 *
-	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of PathedEvents as strings or pre-parsed
+	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of Events as strings or pre-parsed
 	 * @param has Target must have at least one of these path
 	 * @return {boolean} Whether there is any overlap
 	 */
@@ -157,7 +157,7 @@ export class PathEvent {
 	/**
 	 * Squash 2 sets of paths & return true if the target has all paths
 	 *
-	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of PathedEvents as strings or pre-parsed
+	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of Events as strings or pre-parsed
 	 * @param has Target must have all these paths
 	 * @return {boolean} Whether there is any overlap
 	 */
@@ -168,7 +168,7 @@ export class PathEvent {
 	/**
 	 * Same as `has` but raises an error if there is no overlap
 	 *
-	 * @param {string | string[]} target Array of PathedEvents as strings or pre-parsed
+	 * @param {string | string[]} target Array of Events as strings or pre-parsed
 	 * @param has Target must have at least one of these path
 	 */
 	static hasFatal(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): void {
@@ -178,7 +178,7 @@ export class PathEvent {
 	/**
 	 * Same as `hasAll` but raises an error if the target is missing any paths
 	 *
-	 * @param {string | string[]} target Array of PathedEvents as strings or pre-parsed
+	 * @param {string | string[]} target Array of Events as strings or pre-parsed
 	 * @param has Target must have all these paths
 	 */
 	static hasAllFatal(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): void {
@@ -186,11 +186,11 @@ export class PathEvent {
 	}
 
 	/**
-	 * Create pathed event string from its components
+	 * Create  event string from its components
 	 *
 	 * @param {string | string[]} path Event path
 	 * @param {Method} methods Event method
-	 * @return {string} String representation of PathedEvent
+	 * @return {string} String representation of Event
 	 */
 	static toString(path: string | string[], methods: Method | Method[]): string {
 		let p = makeArray(path).filter(p => p != null).join('/');
@@ -199,9 +199,9 @@ export class PathEvent {
 	}
 
 	/**
-	 * Create pathed event string from its components
+	 * Create  event string from its components
 	 *
-	 * @return {string} String representation of PathedEvent
+	 * @return {string} String representation of Event
 	 */
 	toString() {
 		return PathEvent.toString(this.fullPath, this.methods);
@@ -211,7 +211,7 @@ export class PathEvent {
 export type PathListener = (event: PathEvent, ...args: any[]) => any;
 export type PathUnsubscribe = () => void;
 
-export interface IPathedEventEmitter {
+export interface IPathEventEmitter {
 	emit(event: string, ...args: any[]): void;
 	off(listener: PathListener): void;
 	on(event: string, listener: PathListener): PathUnsubscribe;
@@ -222,7 +222,7 @@ export interface IPathedEventEmitter {
 /**
  * Event emitter that uses paths allowing listeners to listen to different combinations of modules, paths & methods
  */
-export class PathEventEmitter implements IPathedEventEmitter{
+export class PathEventEmitter implements IPathEventEmitter{
 	private listeners: [PathEvent, PathListener][] = [];
 
 	emit(event: string | PathEvent, ...args: any[]) {
@@ -250,7 +250,7 @@ export class PathEventEmitter implements IPathedEventEmitter{
 		});
 	}
 
-	relayEvents(emitter: IPathedEventEmitter) {
+	relayEvents(emitter: IPathEventEmitter) {
 		emitter.on('*', (event, ...args) => this.emit(event, ...args));
 	}
 }
