@@ -25,7 +25,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param options
 	 */
 	constructor(public readonly key?: keyof T, public readonly options: CacheOptions = {}) {
-		if(options.storageKey && !options.storage && window?.localStorage)
+		if(options.storageKey && !options.storage && window && window?.localStorage)
 			options.storage = window.localStorage;
 		if(options.storageKey && options.storage) {
 			const stored = options.storage.getItem(options.storageKey);
