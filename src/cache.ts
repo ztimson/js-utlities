@@ -88,6 +88,13 @@ export class Cache<K extends string | number | symbol, T> {
 	}
 
 	/**
+	 * Remove all keys from cache
+	 */
+	clear() {
+		this.store = <Record<K, T>>{};
+	}
+
+	/**
 	 * Delete an item from the cache
 	 *
 	 * @param {K} key Item's primary key
