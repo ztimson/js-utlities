@@ -95,7 +95,7 @@ export class Cache<K extends string | number | symbol, T> {
 	delete(key: K) {
 		delete this.store[key];
 		if(this.options.storageKey && this.options.storage)
-			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.cache));
+			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
 	}
 
 	/**
@@ -144,7 +144,7 @@ export class Cache<K extends string | number | symbol, T> {
 	set(key: K, value: T, ttl = this.options.ttl): this {
 		this.store[key] = value;
 		if(this.options.storageKey && this.options.storage)
-			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.cache));
+			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
 		if(ttl) setTimeout(() => {
 			this.complete = false;
 			this.delete(key);
