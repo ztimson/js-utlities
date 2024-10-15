@@ -75,47 +75,52 @@ export class Http {
 
 		// Send request
 		return new PromiseProgress((res, rej, prog) => {
-			fetch(url, {
-				headers,
-				method: opts.method || (opts.body ? 'POST' : 'GET'),
-				body: opts.body
-			}).then(async (resp: any) => {
-				for(let fn of [...Object.values(Http.interceptors), ...Object.values(this.interceptors)]) {
-					await new Promise<void>(res => fn(resp, () => res()));
-				}
-
-				const contentLength = resp.headers.get('Content-Length');
-				const total = contentLength ? parseInt(contentLength, 10) : 0;
-				let loaded = 0;
-
-				const reader = resp.body?.getReader();
-				const stream = new ReadableStream({
-					start(controller) {
-						function push() {
-							reader?.read().then((event: any) => {
-								if(event.done) return controller.close();
-								loaded += event.value.byteLength;
-								prog(loaded / total);
-								controller.enqueue(event.value);
-								push();
-							}).catch((error: any) => controller.error(error));
-						}
-						push();
+			try {
+				fetch(url, {
+					headers,
+					method: opts.method || (opts.body ? 'POST' : 'GET'),
+					body: opts.body
+				}).then(async (resp: any) => {
+					for(let fn of [...Object.values(Http.interceptors), ...Object.values(this.interceptors)]) {
+						await new Promise<void>(res => fn(resp, () => res()));
 					}
-				});
 
-				resp.data = new Response(stream);
-				if(opts.decode == null || opts.decode) {
-					const content = resp.headers.get('Content-Type')?.toLowerCase();
-					if(content?.includes('form')) resp.data = <T>await resp.data.formData();
-					else if(content?.includes('json')) resp.data = <T>await resp.data.json();
-					else if(content?.includes('text')) resp.data = <T>await resp.data.text();
-					else if(content?.includes('application')) resp.data = <T>await resp.data.blob();
-				}
+					const contentLength = resp.headers.get('Content-Length');
+					const total = contentLength ? parseInt(contentLength, 10) : 0;
+					let loaded = 0;
 
-				if(resp.ok) res(resp);
-				else rej(resp);
-			})
+					const reader = resp.body?.getReader();
+					const stream = new ReadableStream({
+						start(controller) {
+							function push() {
+								reader?.read().then((event: any) => {
+									if(event.done) return controller.close();
+									loaded += event.value.byteLength;
+									prog(loaded / total);
+									controller.enqueue(event.value);
+									push();
+								}).catch((error: any) => controller.error(error));
+							}
+
+							push();
+						}
+					});
+
+					resp.data = new Response(stream);
+					if(opts.decode == null || opts.decode) {
+						const content = resp.headers.get('Content-Type')?.toLowerCase();
+						if(content?.includes('form')) resp.data = <T>await resp.data.formData();
+						else if(content?.includes('json')) resp.data = <T>await resp.data.json();
+						else if(content?.includes('text')) resp.data = <T>await resp.data.text();
+						else if(content?.includes('application')) resp.data = <T>await resp.data.blob();
+					}
+
+					if(resp.ok) res(resp);
+					else rej(resp);
+				}).catch(err => rej(err));
+			} catch(err) {
+				rej(err);
+			}
 		});
 	}
 }
