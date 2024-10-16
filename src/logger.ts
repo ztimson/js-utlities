@@ -1,4 +1,5 @@
 import {TypedEmitter, TypedEvents} from './emitter';
+import {JSONSanitize} from './objects.ts';
 
 export const CliEffects = {
 	CLEAR: "\x1b[0m",
@@ -75,7 +76,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	private format(...text: string[]): string {
 		const now = new Date();
 		const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${this.pad(now.getHours().toString(), 2, '0')}:${this.pad(now.getMinutes().toString(), 2, '0')}:${this.pad(now.getSeconds().toString(), 2, '0')}.${this.pad(now.getMilliseconds().toString(), 3, '0', true)}`;
-		return `${timestamp}${this.namespace ? ` [${this.namespace}]` : ''} ${text.join(' ')}`;
+		return `${timestamp}${this.namespace ? ` [${this.namespace}]` : ''} ${text.map(JSONSanitize).join(' ')}`;
 	}
 
 	debug(...args: string[]) {
