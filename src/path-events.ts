@@ -52,6 +52,8 @@ export function PES(str: TemplateStringsArray, ...args: any[]) {
 	return PathEvent.toString(paths, <any>methods?.split(''));
 }
 
+export class PathError extends Error { }
+
 /**
  * A  event broken down into its core components for easy processing
  * Event Structure: `module/path/name:property:method`
@@ -172,7 +174,7 @@ export class PathEvent {
 	 * @param has Target must have at least one of these path
 	 */
 	static hasFatal(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): void {
-		if(!PathEvent.has(target, ...has)) throw new Error(`Requires one of: ${makeArray(has).join(', ')}`);
+		if(!PathEvent.has(target, ...has)) throw new PathError(`Requires one of: ${makeArray(has).join(', ')}`);
 	}
 
 	/**
@@ -182,7 +184,7 @@ export class PathEvent {
 	 * @param has Target must have all these paths
 	 */
 	static hasAllFatal(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): void {
-		if(!PathEvent.hasAll(target, ...has)) throw new Error(`Requires all: ${makeArray(has).join(', ')}`);
+		if(!PathEvent.hasAll(target, ...has)) throw new PathError(`Requires all: ${makeArray(has).join(', ')}`);
 	}
 
 	/**
