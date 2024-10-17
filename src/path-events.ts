@@ -69,19 +69,26 @@ export class PathEvent {
 	/** Last sagment of path */
 	name!: string;
 	/** List of methods */
-	methods!: Method[];
+	methods!: ASet<Method>;
+
 	/** All/Wildcard specified */
-	all!: boolean;
+	get all(): boolean { return this.methods.has('*') }
+	set all(v: boolean) { v ? new ASet<Method>(['*']) : this.methods.delete('*'); }
 	/** None specified */
-	none!: boolean;
+	get none(): boolean { return this.methods.has('n') }
+	set none(v: boolean) { v ? this.methods = new ASet<Method>(['n']) : this.methods.delete('n'); }
 	/** Create method specified */
-	create!: boolean;
+	get create(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('c')) }
+	set create(v: boolean) { v ? this.methods.delete('n').add('c') : this.methods.delete('c'); }
 	/** Read method specified */
-	read!: boolean;
+	get read(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('r')) }
+	set read(v: boolean) { v ? this.methods.delete('n').add('r') : this.methods.delete('r'); }
 	/** Update method specified */
-	update!: boolean;
+	get update(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('u')) }
+	set update(v: boolean) { v ? this.methods.delete('n').add('u') : this.methods.delete('u'); }
 	/** Delete method specified */
-	delete!: boolean;
+	get delete(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('d')) }
+	set delete(v: boolean) { v ? this.methods.delete('n').add('d') : this.methods.delete('d'); }
 
 	constructor(Event: string | PathEvent) {
 		if(typeof Event == 'object') return Object.assign(this, Event);
@@ -96,13 +103,7 @@ export class PathEvent {
 		this.fullPath = p;
 		this.path = temp.join('/');
 		this.name = temp.pop() || '';
-		this.methods = <Method[]>method.split('');
-		this.all = method?.includes('*');
-		this.none = method?.includes('n');
-		this.create = !method?.includes('n') && (method?.includes('*') || method?.includes('w') || method?.includes('c'));
-		this.read = !method?.includes('n') && (method?.includes('*') || method?.includes('r'));
-		this.update = !method?.includes('n') && (method?.includes('*') || method?.includes('w') || method?.includes('u'));
-		this.delete = !method?.includes('n') && (method?.includes('*') || method?.includes('w') || method?.includes('d'));
+		this.methods = new ASet(<any>method.split(''));
 	}
 
 	/**

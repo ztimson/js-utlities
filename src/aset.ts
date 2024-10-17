@@ -24,6 +24,7 @@ export class ASet<T> extends Array {
 	 */
 	add(...items: T[]) {
 		items.filter(el => !this.has(el)).forEach(el => this.push(el));
+		return this;
 	}
 
 	/**
@@ -35,6 +36,7 @@ export class ASet<T> extends Array {
 			const index = this.indexOf(el);
 			if(index != -1) this.slice(index, 1);
 		})
+		return this;
 	}
 
 	/**
