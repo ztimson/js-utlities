@@ -73,41 +73,41 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 		return !end ? padding + t : t + padding;
 	}
 
-	private format(...text: string[]): string {
+	private format(...text: any[]): string {
 		const now = new Date();
 		const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${this.pad(now.getHours().toString(), 2, '0')}:${this.pad(now.getMinutes().toString(), 2, '0')}:${this.pad(now.getSeconds().toString(), 2, '0')}.${this.pad(now.getMilliseconds().toString(), 3, '0', true)}`;
 		return `${timestamp}${this.namespace ? ` [${this.namespace}]` : ''} ${text.map(JSONSanitize).join(' ')}`;
 	}
 
-	debug(...args: string[]) {
+	debug(...args: any[]) {
 		if(Logger.LOG_LEVEL < LOG_LEVEL.DEBUG) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.DEBUG, str);
 		console.debug(CliForeground.LIGHT_GREY + str + CliEffects.CLEAR);
 	}
 
-	log(...args: string[]) {
+	log(...args: any[]) {
 		if(Logger.LOG_LEVEL < LOG_LEVEL.LOG) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.LOG, str);
 		console.log(CliEffects.CLEAR + str);
 	}
 
-	info(...args: string[]) {
+	info(...args: any[]) {
 		if(Logger.LOG_LEVEL < LOG_LEVEL.INFO) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.INFO, str);
 		console.info(CliForeground.BLUE + str + CliEffects.CLEAR);
 	}
 
-	warn(...args: string[]) {
+	warn(...args: any[]) {
 		if(Logger.LOG_LEVEL < LOG_LEVEL.WARN) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.WARN, str);
 		console.warn(CliForeground.YELLOW + str + CliEffects.CLEAR);
 	}
 
-	error(...args: string[]) {
+	error(...args: any[]) {
 		if(Logger.LOG_LEVEL < LOG_LEVEL.ERROR) return;
 		const str = this.format(...args);
 		Logger.emit(LOG_LEVEL.ERROR, str);
