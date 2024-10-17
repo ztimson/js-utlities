@@ -65,17 +65,9 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 		super();
 	}
 
-	private pad(text: any, length: number, char: string, end = false) {
-		const t = text.toString();
-		const l = length - t.length;
-		if(l <= 0) return t;
-		const padding = Array(~~(l / char.length)).fill(char).join('');
-		return !end ? padding + t : t + padding;
-	}
-
-	private format(...text: any[]): string {
+	protected format(...text: any[]): string {
 		const now = new Date();
-		const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${this.pad(now.getHours().toString(), 2, '0')}:${this.pad(now.getMinutes().toString(), 2, '0')}:${this.pad(now.getSeconds().toString(), 2, '0')}.${this.pad(now.getMilliseconds().toString(), 3, '0', true)}`;
+		const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padEnd(3, '0')}`;
 		return `${timestamp}${this.namespace ? ` [${this.namespace}]` : ''} ${text.map(t => typeof t == 'string' ? t : JSONSanitize(t, 2)).join(' ')}`;
 	}
 
