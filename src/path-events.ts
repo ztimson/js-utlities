@@ -113,7 +113,7 @@ export class PathEvent {
 	 * @param {string | PathEvent} paths Events as strings or pre-parsed
 	 * @return {PathEvent} Final combined permission
 	 */
-	static combine(paths: (string | PathEvent)[]): PathEvent {
+	static combine(...paths: (string | PathEvent)[]): PathEvent {
 		let hitNone = false;
 		const combined = paths.map(p => new PathEvent(p))
 			.toSorted((p1, p2) => {
@@ -123,18 +123,10 @@ export class PathEvent {
 				if(p.none) hitNone = true;
 				if(!acc) return p;
 				if(hitNone) return acc;
-				if(p.all) acc.all = true;
-				if(p.all || p.create) acc.create = true;
-				if(p.all || p.read) acc.read = true;
-				if(p.all || p.update) acc.update = true;
-				if(p.all || p.delete) acc.delete = true;
 				acc.methods = [...acc.methods, ...p.methods];
 				return acc;
 			}, <any>null);
-		if(combined.all) combined.methods = ['*'];
-		if(combined.none) combined.methods = ['n'];
-		combined.methods = new ASet(combined.methods); // Make unique
-		combined.raw = PES`${combined.fullPath}:${combined.methods}`;
+		combined.methods = new ASet<Method>(combined.methods);
 		return combined;
 	}
 
@@ -152,7 +144,7 @@ export class PathEvent {
 			if(!r.fullPath && r.all) return true;
 			const filtered = parsedTarget.filter(p => r.fullPath.startsWith(p.fullPath));
 			if(!filtered.length) return false;
-			const combined = PathEvent.combine(filtered);
+			const combined = PathEvent.combine(...filtered);
 			return !combined.none && (combined.all || new ASet(combined.methods).intersection(new ASet(r.methods)).length);
 		});
 	}
@@ -197,8 +189,9 @@ export class PathEvent {
 	 */
 	static toString(path: string | string[], methods: Method | Method[]): string {
 		let p = makeArray(path).filter(p => p != null).join('/');
+		p = p?.trim().replaceAll(/\/{2,}/g, '/').replaceAll(/(^\/|\/$)/g, '');
 		if(methods?.length) p += `:${makeArray(methods).map(m => m.toLowerCase()).join('')}`;
-		return p?.trim().replaceAll(/\/{2,}/g, '/').replaceAll(/(^\/|\/$)/g, '');
+		return p;
 	}
 
 	/**

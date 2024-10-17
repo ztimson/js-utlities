@@ -1,0 +1,18 @@
+<!Doctype html>
+
+<html>
+	<head>
+		<title>@ztimson/utils sandbox</title>
+	</head>
+	<body>
+		<script type="module">
+			import {PathEvent, PE} from './dist/index.mjs';
+
+			const test = PathEvent.combine(PE`storage:n`);
+			debugger;
+			console.log(test.methods.indexOf('n'));
+			test.methods.delete('n').add('c');
+			console.log(test);
+		</script>
+	</body>
+</html>

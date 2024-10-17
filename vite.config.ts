@@ -13,7 +13,7 @@ export default defineConfig({
 			}
 		},
 		emptyOutDir: true,
-		minify: true,
+		minify: false,
 		sourcemap: true
 	},
 	plugins: [dts()],

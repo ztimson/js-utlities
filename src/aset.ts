@@ -1,3 +1,5 @@
+import {isEqual} from './objects.ts';
+
 /**
  * An array which functions as a set. It guarantees unique elements
  * and provides set functions for comparisons
@@ -34,7 +36,7 @@ export class ASet<T> extends Array {
 	delete(...items: T[]) {
 		items.forEach(el => {
 			const index = this.indexOf(el);
-			if(index != -1) this.slice(index, 1);
+			if(index != -1) this.splice(index, 1);
 		})
 		return this;
 	}
@@ -55,6 +57,17 @@ export class ASet<T> extends Array {
 	 */
 	has(el: T) {
 		return this.indexOf(el) != -1;
+	}
+
+	/**
+	 * Find index number of element, or -1 if it doesn't exist. Matches by equality not reference
+	 *
+	 * @param {T} search Element to find
+	 * @param {number} fromIndex Starting index position
+	 * @return {number} Element index number or -1 if missing
+	 */
+	indexOf(search: T, fromIndex?: number): number {
+		return super.findIndex((el: T) => isEqual(el, search), fromIndex);
 	}
 
 	/**

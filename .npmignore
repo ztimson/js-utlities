@@ -1,0 +1,12 @@
+src
+tests
+.editorconfig
+.gitignore
+.gitmodules
+.npmignore
+CODEOWNERS
+Dockerfile
+index.html
+jest.config.js
+tsconfig.json
+vite.config.js
