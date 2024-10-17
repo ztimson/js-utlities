@@ -76,7 +76,7 @@ export class Logger extends TypedEmitter<LoggerEvents> {
 	private format(...text: any[]): string {
 		const now = new Date();
 		const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${this.pad(now.getHours().toString(), 2, '0')}:${this.pad(now.getMinutes().toString(), 2, '0')}:${this.pad(now.getSeconds().toString(), 2, '0')}.${this.pad(now.getMilliseconds().toString(), 3, '0', true)}`;
-		return `${timestamp}${this.namespace ? ` [${this.namespace}]` : ''} ${text.map(JSONSanitize).join(' ')}`;
+		return `${timestamp}${this.namespace ? ` [${this.namespace}]` : ''} ${text.map(t => typeof t == 'string' ? t : JSONSanitize(t, 2)).join(' ')}`;
 	}
 
 	debug(...args: any[]) {
