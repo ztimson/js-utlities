@@ -6,13 +6,9 @@
 	</head>
 	<body>
 		<script type="module">
-			import {PathEvent, PE} from './dist/index.mjs';
+			import {PathEvent} from './dist/index.mjs';
 
-			const test = PathEvent.combine(PE`storage:n`);
-			debugger;
-			console.log(test.methods.indexOf('n'));
-			test.methods.delete('n').add('c');
-			console.log(test);
+			console.log(PathEvent.filter(['storage/inventory:c', 'data:*'], `storage`));
 		</script>
 	</body>
 </html>

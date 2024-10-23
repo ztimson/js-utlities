@@ -1,5 +1,3 @@
-import {PE} from './path-events.ts';
-
 export * from './array';
 export * from './aset';
 export * from './cache';

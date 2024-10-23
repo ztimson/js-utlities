@@ -131,6 +131,23 @@ export class PathEvent {
 	}
 
 	/**
+	 * Filter a set of paths based on the target
+	 *
+	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of events that will filtered
+	 * @param filter {...PathEvent} Must container one of
+	 * @return {boolean} Whether there is any overlap
+	 */
+	static filter(target: string | PathEvent | (string | PathEvent)[], ...filter: (string | PathEvent)[]): PathEvent[] {
+		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
+		const parsedFind = makeArray(filter).map(pe => new PathEvent(pe));
+		return parsedTarget.filter(t => {
+			if(!t.fullPath && t.all) return true;
+			return !!parsedFind.find(f => t.fullPath.startsWith(f.fullPath)
+				&& (f.all || t.all || t.methods.intersection(f.methods).length));
+		});
+	}
+
+	/**
 	 * Squash 2 sets of paths & return true if any overlap is found
 	 *
 	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of Events as strings or pre-parsed
@@ -192,6 +209,16 @@ export class PathEvent {
 		p = p?.trim().replaceAll(/\/{2,}/g, '/').replaceAll(/(^\/|\/$)/g, '');
 		if(methods?.length) p += `:${makeArray(methods).map(m => m.toLowerCase()).join('')}`;
 		return p;
+	}
+
+	/**
+	 * Filter a set of paths based on this event
+	 *
+	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of events that will filtered
+	 * @return {boolean} Whether there is any overlap
+	 */
+	filter(target: string | PathEvent | (string | PathEvent)[]): PathEvent[] {
+		return PathEvent.filter(target, this);
 	}
 
 	/**
