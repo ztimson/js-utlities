@@ -162,7 +162,7 @@ export class PathEvent {
 			const filtered = parsedTarget.filter(p => r.fullPath.startsWith(p.fullPath));
 			if(!filtered.length) return false;
 			const combined = PathEvent.combine(...filtered);
-			return !combined.none && (combined.all || new ASet(combined.methods).intersection(new ASet(r.methods)).length);
+			return (!combined.none && (combined.all || r.all)) || combined.methods.intersection(r.methods).length;
 		});
 	}
 
