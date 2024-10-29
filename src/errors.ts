@@ -180,7 +180,6 @@ export class GatewayTimeoutError extends CustomError {
  * @return {CustomError} The proper error type
  */
 export function errorFromCode(code: number, message?: string) {
-	if(code >= 200 && code < 300) return null;
 	switch(code) {
 		case 400:
 			return new BadRequestError(message);

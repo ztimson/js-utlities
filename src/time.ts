@@ -1,4 +1,26 @@
 /**
+ * Like setInterval but will adjust the timeout value to account for runtime
+ * @param {Function} cb Callback function that will be ran
+ * @param {number} ms Run function ever x seconds
+ * @return {() => void}
+ */
+export function adjustedInterval(cb: Function, ms: number) {
+	let cancel = false, timeout: any = null;
+	const p = async () => {
+		if (cancel) return;
+		const start = new Date().getTime();
+		await cb();
+		const end = new Date().getTime();
+		timeout = setTimeout(() => p(), ms - (end - start) || 1);
+	};
+	p();
+	return () => {
+		cancel = true;
+		if(timeout) clearTimeout(timeout);
+	}
+}
+
+/**
  * Return date formated highest to lowest: YYYY-MM-DD H:mm AM
  *
  * @param {Date | number | string} date Date or timestamp to convert to string
