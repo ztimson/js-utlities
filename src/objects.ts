@@ -29,10 +29,10 @@ export function clean<T>(obj: T, undefinedOnly = false): Partial<T> {
  * Should be replaced by `structuredClone` once released.
  * @param {T} value Object to copy
  * @returns {T} Type
- * @deprecated Please use `structuredClone`
  */
 export function deepCopy<T>(value: T): T {
-	return structuredClone(value);
+	try {return structuredClone(value); }
+	catch { return JSON.parse(JSONSanitize(value)); }
 }
 
 /**
@@ -234,10 +234,8 @@ export function JSONAttemptParse<T>(json: string): T | string {
 export function JSONSanitize(obj: any, space?: number): string {
 	let cache: any[] = [];
 	return JSON.stringify(obj, (key, value) => {
-		if (typeof value === 'object' && value !== null) {
-			if (cache.includes(value)) return;
-			cache.push(value);
-		}
+		if(typeof value === 'object' && value !== null)
+			if(!cache.includes(value)) cache.push(value);
 		return value;
 	}, space);
 }

@@ -1,5 +1,3 @@
-import {dotNotation, flattenObj} from './objects.ts';
-
 /**
  * String of all letters
  */
@@ -44,7 +42,7 @@ export function formatBytes(bytes: number, decimals = 2) {
 export function formatPhoneNumber(number: string) {
 	const parts = /(\+?1)?.*?(\d{3}).*?(\d{3}).*?(\d{4})/g.exec(number);
 	if(!parts) throw new Error(`Number cannot be parsed: ${number}`);
-	return `${parts[1] ?? ''} (${parts[2]}) ${parts[3]}-${parts[4]}`.trim();
+	return `${parts[1] ? '+1' : ''} (${parts[2]}) ${parts[3]}-${parts[4]}`.trim();
 }
 
 /**
@@ -60,6 +58,7 @@ export function formatPhoneNumber(number: string) {
  * @param {string} str - Value that will be injected to parent
  * @param {number} index - Position to inject string at
  * @returns {string} - New string
+ * @deprecated use `strSplice()`
  */
 export function insertAt(target: string, str: string, index: number): String {
 	return `${target.slice(0, index)}${str}${target.slice(index + 1)}`;
@@ -210,6 +209,7 @@ export type ParsedUrl = {
  *
  * @param {string} url URL string that will be parsed
  * @returns {RegExpExecArray} Parts of URL
+ * @deprecated Use built-in URL object: `new URL('...')`;
  */
 export function parseUrl(url: string): ParsedUrl {
 	const processed = new RegExp(

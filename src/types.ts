@@ -15,6 +15,6 @@
  *
  * @return {Array<keyof T>} Available keys
  */
-export function tyoeKeys<T extends object>() {
+export function typeKeys<T extends object>() {
 	return Object.keys(<T>{}) as Array<keyof T>;
 }
