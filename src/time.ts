@@ -1,3 +1,5 @@
+import {strSplice} from './string.ts';
+
 /**
  * Like setInterval but will adjust the timeout value to account for runtime
  * @param {Function} cb Callback function that will be ran
@@ -21,19 +23,139 @@ export function adjustedInterval(cb: Function, ms: number) {
 }
 
 /**
- * Return date formated highest to lowest: YYYY-MM-DD H:mm AM
+ * Format date
  *
  * @param {Date | number | string} date Date or timestamp to convert to string
+ * @param {string} format How date string will be formatted, default: `YYYY-MM-DD H:mm A`
  * @return {string} Formated date
  */
-export function formatDate(date: Date | number | string): string {
+export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:mm '): string {
 	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
-	let hours = date.getHours(), postfix = 'AM';
-	if(hours >= 12) {
-		if(hours > 12) hours -= 12;
-		postfix = 'PM';
-	} else if(hours == 0) hours = 12;
-	return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}, ${hours}:${date.getMinutes().toString().padStart(2, '0')} ${postfix}`;
+
+	function day(num: number): string {
+		switch(num) {
+			case(0): return 'Sunday';
+			case(1): return 'Monday';
+			case(2): return 'Tuesday';
+			case(3): return 'Wednesday';
+			case(4): return 'Thursday';
+			case(5): return 'Friday';
+			case(6): return 'Saturday';
+			default: return 'Unknown';
+		}
+	}
+
+	function doy(date: Date) {
+		const start = new Date(`${date.getFullYear()}-01-01 0:00:00`);
+		return Math.ceil((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+	}
+
+	function month(num: number): string {
+		switch(num) {
+			case(0): return 'January';
+			case(1): return 'February';
+			case(2): return 'March';
+			case(3): return 'April';
+			case(4): return 'May';
+			case(5): return 'June';
+			case(6): return 'July';
+			case(7): return 'August';
+			case(8): return 'September';
+			case(9): return 'October';
+			case(10): return 'November';
+			case(11): return 'December';
+			default: return 'Unknown';
+		}
+	}
+
+	function suffix(num: number) {
+		let n = num.toString();
+		switch(n.at(-1)) {
+			case('1'): return num + 'st';
+			case('2'): return num + 'nd';
+			case('3'): return num + 'rd';
+			default: return num + 'th';
+		}
+	}
+
+	function tzOffset(offset: number) {
+		const hours = ~~(offset / 60);
+		const minutes = offset % 60;
+		return (offset > 0 ? '-' : '') + `${hours}:${minutes.toString().padStart(2, '0')}`;
+	}
+
+	function timezone(offset: number) {
+		const hours = offset / 60;
+		switch (hours) {
+			case -12: return "IDLW";
+			case -11: return "SST";
+			case -10: return "HST";
+			case -9: return "AKST";
+			case -8: return "PST";
+			case -7: return "MST";
+			case -6: return "CST";
+			case -5: return "EST";
+			case -4: return "AST";
+			case -3: return "ART";
+			case -2: return "FNT";
+			case -1: return "AZOT";
+			case 0: return "UTC";
+			case 1: return "CET";
+			case 2: return "EET";
+			case 3: return "MSK";
+			case 4: return "SAMT";
+			case 5: return "YEKT";
+			case 6: return "OMST";
+			case 7: return "KRAT";
+			case 8: return "CST";
+			case 9: return "JST";
+			case 10: return "AEST";
+			case 11: return "SBT";
+			case 12: return "NZST";
+			default: return '';
+		}
+	}
+
+	return format
+		// Year
+		.replaceAll('YYYY', date.getFullYear().toString())
+		.replaceAll('YY', date.getFullYear().toString().slice(2))
+		// Month
+		.replaceAll('MMMM', month(date.getMonth()))
+		.replaceAll('MMM', month(date.getMonth()).slice(0, 2))
+		.replaceAll('MM', (date.getMonth() + 1).toString().padStart(2, '0'))
+		.replaceAll('M', (date.getMonth() + 1).toString())
+		// Day
+		.replaceAll('DDD', doy(date).toString())
+		.replaceAll('DD', date.getDate().toString().padStart(2, '0'))
+		.replaceAll('Do', suffix(date.getDate()))
+		.replaceAll('D', date.getDate().toString())
+		.replaceAll('dddd', day(date.getDay()))
+		.replaceAll('ddd', day(date.getDay()).slice(0, 2))
+		.replaceAll('dd', date.getDate().toString().padStart(2, '0'))
+		.replaceAll('d', date.getDay().toString())
+		// Hour
+		.replaceAll('HH', date.getHours().toString().padStart(2, '0'))
+		.replaceAll('H', date.getHours().toString())
+		.replaceAll('hh', (date.getHours() > 12 ? date.getHours() - 12 : date.getHours()).toString().padStart(2, '0'))
+		.replaceAll('h', (date.getHours() > 12 ? date.getHours() - 12 : date.getHours()).toString())
+		// Minute
+		.replaceAll('mm', date.getMinutes().toString().padStart(2, '0'))
+		.replaceAll('m', date.getMinutes().toString())
+		// Second
+		.replaceAll('ss', date.getSeconds().toString().padStart(2, '0'))
+		.replaceAll('s', date.getSeconds().toString())
+		// Millisecond
+		.replaceAll('SSS', date.getMilliseconds().toString())
+		.replaceAll('SS', date.getMilliseconds().toString().slice(0, 1))
+		.replaceAll('S', date.getMilliseconds().toString()[0])
+		// Period/Meridian (AM/PM)
+		.replaceAll('A', date.getHours() >= 12 ? 'PM' : 'AM')
+		.replaceAll('a', date.getHours() >= 12 ? 'pm' : 'am')
+		// Timezone
+		.replaceAll('ZZ', tzOffset(date.getTimezoneOffset()).replace(':', ''))
+		.replaceAll('Z', tzOffset(date.getTimezoneOffset()))
+		.replaceAll('z', timezone(date.getTimezoneOffset()));
 }
 
 /**

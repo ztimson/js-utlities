@@ -151,6 +151,21 @@ export function randomStringBuilder(length: number, letters = false, numbers = f
 }
 
 /**
+ * Splice a string together (Similar to Array.splice)
+ *
+ * @param {string} str String that will be modified
+ * @param {number} start Start index of splice
+ * @param {number} deleteCount Number of characters to remove in splice
+ * @param {string} insert Insert new string into splice
+ * @return {string} Returned spliced string
+ */
+export function strSplice(str: string, start: number, deleteCount: number, insert = '') {
+	const before = str.slice(0, start);
+	const after = str.slice(start + deleteCount);
+	return before + insert + after;
+}
+
+/**
  * Find all substrings that match a given pattern.
  *
  * Roughly based on `String.prototype.matchAll`.
