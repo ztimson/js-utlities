@@ -25,7 +25,7 @@ export type Method = '*' | 'n' | 'c' | 'r' | 'u' | 'd' | 'x';
  * @param {string} args
  * @return {PathEvent} Event object
  */
-export function PE(str: TemplateStringsArray, ...args: string[]) {
+export function PE(str: TemplateStringsArray, ...args: any[]) {
 	const combined = [];
 	for(let i = 0; i < str.length || i < args.length; i++) {
 		if(str[i]) combined.push(str[i]);
@@ -92,7 +92,7 @@ export class PathEvent {
 
 	constructor(Event: string | PathEvent) {
 		if(typeof Event == 'object') return Object.assign(this, Event);
-		let [p, scope, method] = Event.split(':');
+		let [p, scope, method] = Event.replaceAll(/\/{2,}/g, '/').split(':');
 		if(!method) method = scope || '*';
 		if(p == '*' || !p && method == '*') {
 			p = '';
