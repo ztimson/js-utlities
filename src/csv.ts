@@ -1,20 +1,39 @@
 import {ASet} from './aset.ts';
 import {dotNotation, flattenObj, JSONSanitize} from './objects.ts';
+import {LETTER_LIST} from './string.ts';
 
 export function fromCsv<T = any>(csv: string, hasHeaders=true): T[] {
 	const row = csv.split('\n');
 	let headers: any = hasHeaders ? row.splice(0, 1)[0] : null;
 	if(headers) headers = headers.match(/(?:[^,"']+|"[^"]*"|'[^']*')+/g);
 	return <T[]>row.map(r => {
-		const props: string[] = <any>r.match(/(?:[^,"']+|"[^"]*"|'[^']*')+/g);
+		function parseLine(line: string): (string | null)[] {
+			const parts = line.split(','), columns: string[] = [];
+			let quoted = false;
+			for(const p of parts) {
+				if(quoted) columns[columns.length - 1] = columns.at(-1) + ',' + p;
+				else columns.push(p);
+				if(/[^"]"$/g.test(p)) {
+					quoted = false;
+				} else if(/^"[^"]/g.test(p)) {
+					quoted = true;
+				}
+			}
+			return columns;
+		}
+
+		const props = parseLine(r);
 		const h = headers || (Array(props.length).fill(null).map((r, i) => {
 			let letter = '';
 			const first = i / 26;
-			if(first > 1) letter += 
-			i % 26
-			i
+			if(first > 1) letter += LETTER_LIST[Math.floor(first - 1)];
+			letter += LETTER_LIST[i % 26];
+			return letter;
 		}));
-		return h.reduce((acc: any, h: any, i: number) => ({...acc, [h]: props[i]}), {})
+		return h.reduce((acc: any, h: any, i: number) => {
+			dotNotation(acc, h, props[i]);
+			return acc;
+		}, {});
 	})
 }
 
