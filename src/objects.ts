@@ -91,7 +91,6 @@ export function dotNotation<T>(obj: any, prop: string, set?: T): T | undefined {
 	}, obj);
 }
 
-
 /**
  * Convert object into URL encoded query string
  *
@@ -128,8 +127,9 @@ export function encodeQuery(data: any): string {
 export function flattenObj(obj: any, parent?: any, result: any = {}) {
 	if(typeof obj === "object" && !Array.isArray(obj)) {
 		for(const key of Object.keys(obj)) {
-			const propName = parent ? parent + '.' + key : key;
-			if(typeof obj[key] === 'object') {
+			const propName = parent ? `${parent}.${key}` : key;
+			if(typeof obj[key] === 'object' && obj[key] != null && !Array.isArray(obj[key])) {
+				console.log(propName, );
 				flattenObj(obj[key], propName, result);
 			} else {
 				result[propName] = obj[key];
@@ -216,11 +216,11 @@ export function mixin(target: any, constructors: any[]) {
 /**
  * Parse JSON but return the original string if it fails
  *
- * @param {string} json JSON string to parse
+ * @param {any} json JSON string to parse
  * @return {string | T} Object if successful, original string otherwise
  */
-export function JSONAttemptParse<T>(json: string): T | string {
-	try { return JSON.parse(json); }
+export function JSONAttemptParse<T1, T2>(json: T2): T1 | T2 {
+	try { return JSON.parse(<any>json); }
 	catch { return json; }
 }
 
