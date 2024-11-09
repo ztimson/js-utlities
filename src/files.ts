@@ -53,6 +53,21 @@ export function fileBrowser(options: {accept?: string, multiple?: boolean} = {})
 }
 
 /**
+ * Extract text from a file
+ *
+ * @param file File to extract text from
+ * @return {Promise<string | null>} File contents
+ */
+export function fileText(file: any): Promise<string | null> {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(<string>reader.result);
+		reader.onerror = () => reject(reader.error);
+		reader.readAsText(file);
+	});
+}
+
+/**
  * Create timestamp intended for filenames from a date
  *
  * @param {string} name Name of file, `{{TIMESTAMP}}` will be replaced
