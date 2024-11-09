@@ -1,22 +1,22 @@
 /**
  * String of all letters
  */
-const LETTER_LIST = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+export const LETTER_LIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 /**
  * String of all numbers
  */
-const NUMBER_LIST = '0123456789';
+export const NUMBER_LIST = '0123456789';
 
 /**
  * String of all symbols
  */
-const SYMBOL_LIST = '~`!@#$%^&*()_-+={[}]|\\:;"\'<,>.?/';
+export const SYMBOL_LIST = '~`!@#$%^&*()_-+={[}]|\\:;"\'<,>.?/';
 
 /**
  * String of all letters, numbers & symbols
  */
-const CHAR_LIST = LETTER_LIST + NUMBER_LIST + SYMBOL_LIST;
+export const CHAR_LIST = LETTER_LIST + LETTER_LIST.toLowerCase() + NUMBER_LIST + SYMBOL_LIST;
 
 /**
  * Convert number of bytes into a human-readable size
