@@ -6,14 +6,10 @@
 	</head>
 	<body>
 		<script type="module">
-			import {fromCsv, toCsv} from './dist/index.mjs';
+			import {adjustTz, formatDate} from './dist/index.mjs';
 
-			const csv = '_id,any,boolean,date,file,foreignKey,formula,javaScript,number,string,_createdBy,_createdDate,_updatedBy,_updatedDate\n' +
-				'34,,true,,,,,,,,system,2024-11-09T12:06:50.023Z,system,2024-11-09T17:44:42.512Z\n' +
-				'37,,,,,,,,,,system,2024-11-09T18:53:21.793Z,system,2024-11-09T18:53:21.793Z\n' +
-				'38,,,,,,,,,,system,2024-11-09T18:53:21.796Z,system,2024-11-09T18:53:21.796Z';
-
-			console.log(fromCsv(csv));
+			console.log(formatDate(new Date(), 'HH:mm:ss z'));
+			console.log(formatDate(adjustTz(new Date(), 0), 'HH:mm:ss z', 'UTC'));
 		</script>
 	</body>
 </html>

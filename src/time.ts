@@ -1,5 +1,3 @@
-import {strSplice} from './string.ts';
-
 /**
  * Like setInterval but will adjust the timeout value to account for runtime
  * @param {Function} cb Callback function that will be ran
@@ -22,14 +20,21 @@ export function adjustedInterval(cb: Function, ms: number) {
 	}
 }
 
+export function adjustTz(date: Date, offset: number) {
+	const currentOffset = date.getTimezoneOffset();
+	offset = currentOffset - offset * 60;
+	return new Date(date.getTime() + offset * 60000);
+}
+
 /**
  * Format date
  *
  * @param {Date | number | string} date Date or timestamp to convert to string
  * @param {string} format How date string will be formatted, default: `YYYY-MM-DD H:mm A`
+ * @param tz Override timezone, can be either string or number
  * @return {string} Formated date
  */
-export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:mm '): string {
+export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:mm', tz?: any): string {
 	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
 
 	function day(num: number): string {
@@ -85,9 +90,8 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 	}
 
 	function timezone(date: Date): string {
-		const formatter = new Intl.DateTimeFormat('en-US', {timeZoneName: 'short'});
-		const formattedDate = formatter.format(date);
-		return formattedDate.split(' ').pop() || '';
+		return new Intl.DateTimeFormat('en-US', {timeZoneName: 'short'})
+			.format(date).split(' ').pop() || '';
 	}
 
 	return format
@@ -120,16 +124,28 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 		.replaceAll('ss', date.getSeconds().toString().padStart(2, '0'))
 		.replaceAll('s', date.getSeconds().toString())
 		// Millisecond
-		.replaceAll('SSS', date.getMilliseconds().toString())
-		.replaceAll('SS', date.getMilliseconds().toString().slice(0, 1))
+		.replaceAll('SSS', date.getMilliseconds().toString().padEnd(3, '0'))
+		.replaceAll('SS', date.getMilliseconds().toString().slice(0, 1).padEnd(2, '0'))
 		.replaceAll('S', date.getMilliseconds().toString()[0])
 		// Period/Meridian (AM/PM)
 		.replaceAll('A', date.getHours() >= 12 ? 'PM' : 'AM')
 		.replaceAll('a', date.getHours() >= 12 ? 'pm' : 'am')
 		// Timezone
-		.replaceAll('ZZ', tzOffset(date.getTimezoneOffset()).replace(':', ''))
-		.replaceAll('Z', tzOffset(date.getTimezoneOffset()))
-		.replaceAll('z', timezone(date));
+		.replaceAll('ZZ', tzOffset(isNaN(tz) ? date.getTimezoneOffset() : tz).replace(':', ''))
+		.replaceAll('Z', tzOffset(isNaN(tz) ? date.getTimezoneOffset() : tz))
+		.replaceAll('z', typeof tz == 'string' ? tz : timezone(date));
+}
+
+/**
+ * Run a function immediately & repeat every x ms
+ *
+ * @param {() => any} fn Callback function
+ * @param {number} interval Repeat in ms
+ * @return {number} Clear Interval ID
+ */
+export function instantInterval(fn: () => any, interval: number) {
+	fn();
+	return setInterval(fn, interval);
 }
 
 /**
