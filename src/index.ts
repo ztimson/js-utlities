@@ -13,6 +13,7 @@ export * from './misc';
 export * from './objects';
 export * from './path-events';
 export * from './promise-progress';
+export * from './search';
 export * from './string';
 export * from './time';
 export * from './types';
