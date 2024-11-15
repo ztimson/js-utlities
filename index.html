@@ -8,12 +8,12 @@
 		<script type="module">
 			import {fromCsv, toCsv} from './dist/index.mjs';
 
-			const csv = '' +
-				'_id,any,boolean,date,file,foreignKey,formula,javaScript,number,string,_createdBy,_createdDate,_updatedBy,_updatedDate\n' +
-				'48,"test,test,test",,,,,,,,,system,2024-11-09T19:05:04.932Z,system,2024-11-09T19:05:04.932Z\n' +
-				'49,,,,,,,,,,system,2024-11-09T19:05:04.933Z,system,2024-11-09T19:05:04.933Z';
+			const csv = '_id,any,boolean,date,file,foreignKey,formula,javaScript,number,string,_createdBy,_createdDate,_updatedBy,_updatedDate\n' +
+				'34,,true,,,,,,,,system,2024-11-09T12:06:50.023Z,system,2024-11-09T17:44:42.512Z\n' +
+				'37,,,,,,,,,,system,2024-11-09T18:53:21.793Z,system,2024-11-09T18:53:21.793Z\n' +
+				'38,,,,,,,,,,system,2024-11-09T18:53:21.796Z,system,2024-11-09T18:53:21.796Z';
 
-			console.log(fromCsv(csv, false));
+			console.log(fromCsv(csv));
 		</script>
 	</body>
 </html>

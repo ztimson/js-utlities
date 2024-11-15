@@ -84,36 +84,10 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 		return (offset > 0 ? '-' : '') + `${hours}:${minutes.toString().padStart(2, '0')}`;
 	}
 
-	function timezone(offset: number) {
-		const hours = offset / 60;
-		switch (hours) {
-			case -12: return "IDLW";
-			case -11: return "SST";
-			case -10: return "HST";
-			case -9: return "AKST";
-			case -8: return "PST";
-			case -7: return "MST";
-			case -6: return "CST";
-			case -5: return "EST";
-			case -4: return "AST";
-			case -3: return "ART";
-			case -2: return "FNT";
-			case -1: return "AZOT";
-			case 0: return "UTC";
-			case 1: return "CET";
-			case 2: return "EET";
-			case 3: return "MSK";
-			case 4: return "SAMT";
-			case 5: return "YEKT";
-			case 6: return "OMST";
-			case 7: return "KRAT";
-			case 8: return "CST";
-			case 9: return "JST";
-			case 10: return "AEST";
-			case 11: return "SBT";
-			case 12: return "NZST";
-			default: return '';
-		}
+	function timezone(date: Date): string {
+		const formatter = new Intl.DateTimeFormat('en-US', {timeZoneName: 'short'});
+		const formattedDate = formatter.format(date);
+		return formattedDate.split(' ').pop() || '';
 	}
 
 	return format
@@ -155,7 +129,7 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 		// Timezone
 		.replaceAll('ZZ', tzOffset(date.getTimezoneOffset()).replace(':', ''))
 		.replaceAll('Z', tzOffset(date.getTimezoneOffset()))
-		.replaceAll('z', timezone(date.getTimezoneOffset()));
+		.replaceAll('z', timezone(date));
 }
 
 /**
