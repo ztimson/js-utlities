@@ -100,7 +100,7 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 		.replaceAll('YY', date.getFullYear().toString().slice(2))
 		// Month
 		.replaceAll('MMMM', month(date.getMonth()))
-		.replaceAll('MMM', month(date.getMonth()).slice(0, 2))
+		.replaceAll('MMM', month(date.getMonth()).slice(0, 3))
 		.replaceAll('MM', (date.getMonth() + 1).toString().padStart(2, '0'))
 		.replaceAll('M', (date.getMonth() + 1).toString())
 		// Day
