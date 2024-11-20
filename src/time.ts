@@ -48,6 +48,7 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 		['MSK', 3],
 		['AST', 4],
 		['PKT', 5],
+		['IST', 5.5],
 		['BST', 6],
 		['ICT', 7],
 		['CST', 8],
