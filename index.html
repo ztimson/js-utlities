@@ -6,10 +6,11 @@
 	</head>
 	<body>
 		<script type="module">
-			import {adjustTz, formatDate} from './dist/index.mjs';
+			import {formatDate} from './dist/index.mjs';
 
-			console.log(formatDate(new Date(), 'HH:mm:ss z'));
-			console.log(formatDate(adjustTz(new Date(), 0), 'HH:mm:ss z', 'UTC'));
+			console.log(formatDate(new Date(), 'HH:mm:ss z', 5));
+			console.log(formatDate(new Date(), 'HH:mm:ss z', 0));
+			console.log(formatDate(new Date(), 'HH:mm:ss z', -5));
 		</script>
 	</body>
 </html>

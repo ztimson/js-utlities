@@ -20,12 +20,6 @@ export function adjustedInterval(cb: Function, ms: number) {
 	}
 }
 
-export function adjustTz(date: Date, offset: number) {
-	const currentOffset = date.getTimezoneOffset();
-	const adjustedOffset = offset * 60;
-	return new Date(date.getTime() + (currentOffset - adjustedOffset) * 60000);
-}
-
 /**
  * Format date
  *
@@ -34,8 +28,42 @@ export function adjustTz(date: Date, offset: number) {
  * @param tz Override timezone, can be either string or number
  * @return {string} Formated date
  */
-export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:mm', tz?: any): string {
-	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
+export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:mm', tz?: string | number): string {
+	const timezones = [
+		['IDLW', -12],
+		['SST', -11],
+		['HST', -10],
+		['AKST', -9],
+		['PST', -8],
+		['MST', -7],
+		['CST', -6],
+		['EST', -5],
+		['AST', -4],
+		['BRT', -3],
+		['MAT', -2],
+		['AZOT', -1],
+		['UTC', 0],
+		['CET', 1],
+		['EET', 2],
+		['MSK', 3],
+		['AST', 4],
+		['PKT', 5],
+		['BST', 6],
+		['ICT', 7],
+		['CST', 8],
+		['JST', 9],
+		['AEST', 10],
+		['SBT', 11],
+		['FJT', 12],
+		['TOT', 13],
+		['LINT', 14]
+	];
+
+	function adjustTz(date: Date, gmt: number) {
+		const currentOffset = date.getTimezoneOffset();
+		const adjustedOffset = gmt * 60;
+		return new Date(date.getTime() + (adjustedOffset + currentOffset) * 60000);
+	}
 
 	function day(num: number): string {
 		switch(num) {
@@ -89,10 +117,14 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 		return (offset > 0 ? '-' : '') + `${hours}:${minutes.toString().padStart(2, '0')}`;
 	}
 
-	function timezone(date: Date): string {
-		return new Intl.DateTimeFormat('en-US', {timeZoneName: 'short'})
-			.format(date).split(' ').pop() || '';
-	}
+	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
+
+	// Handle timezones
+	let t!: [string, number];
+	if(tz == null) tz = -(date.getTimezoneOffset() / 60);
+	t = <any>timezones.find(t => isNaN(<any>tz) ? t[0] == tz : t[1] == tz);
+	if(!t) throw new Error(`Unknown timezone: ${tz}`);
+	date = adjustTz(date, t[1]);
 
 	return format
 		// Year
@@ -131,9 +163,9 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 		.replaceAll('A', date.getHours() >= 12 ? 'PM' : 'AM')
 		.replaceAll('a', date.getHours() >= 12 ? 'pm' : 'am')
 		// Timezone
-		.replaceAll('ZZ', tzOffset(isNaN(tz) ? date.getTimezoneOffset() : tz).replace(':', ''))
-		.replaceAll('Z', tzOffset(isNaN(tz) ? date.getTimezoneOffset() : tz))
-		.replaceAll('z', typeof tz == 'string' ? tz : timezone(date));
+		.replaceAll('ZZ', tzOffset(t[1] * 60).replace(':', ''))
+		.replaceAll('Z', tzOffset(t[1] * 60))
+		.replaceAll('z', typeof tz == 'string' ? tz : (<any>t)[0]);
 }
 
 /**
