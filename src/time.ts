@@ -22,8 +22,8 @@ export function adjustedInterval(cb: Function, ms: number) {
 
 export function adjustTz(date: Date, offset: number) {
 	const currentOffset = date.getTimezoneOffset();
-	offset = currentOffset - offset * 60;
-	return new Date(date.getTime() + offset * 60000);
+	const adjustedOffset = offset * 60;
+	return new Date(date.getTime() + (currentOffset - adjustedOffset) * 60000);
 }
 
 /**
