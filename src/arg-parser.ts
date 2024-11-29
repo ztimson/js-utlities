@@ -14,8 +14,6 @@ export type Arg<T = any> = {
 }
 
 export class ArgParser {
-	static readonly helpArg: Arg = {name: 'help', desc: 'Display command\'s help message', flags: ['-h', '--help'], default: false};
-
 	commands: ArgParser[] = [];
 	args: Arg[] = [];
 	flags: Arg[] = [];
@@ -37,7 +35,8 @@ export class ArgParser {
 		// Arguments
 		this.commands = argList.filter(arg => arg instanceof ArgParser);
 		this.args = <Arg[]>argList.filter(arg => !(arg instanceof ArgParser) && !arg.flags?.length);
-		this.flags = <Arg[]>[...argList.filter(arg => !(arg instanceof ArgParser) && arg.flags && arg.flags.length), ...this.flags];
+		this.flags = <Arg[]>[...argList.filter(arg => !(arg instanceof ArgParser) && arg.flags && arg.flags.length),
+			{name: 'help', desc: 'Display command\'s help message', flags: ['-h', '--help'], default: false}];
 		this.defaults = argList.reduce((acc, arg: any) => ({...acc, [arg.name]: arg['extras'] ? [] : (arg.default ?? null)}), {});
 
 		// Examples
@@ -125,18 +124,18 @@ export class ArgParser {
 		// Description
 		let msg = `\n\n${opts.message || this.desc}`;
 		// Examples
-		msg += '\n\nUsage:\t' + this.examples.map(ex => `run ${this.name} ${ex}`).join('\n\t\t');
+		msg += '\n\nUsage:\t' + this.examples.map(ex => `${this.name} ${ex}`).join('\n\t');
 		// Arguments
-		if(this.args.length) msg += '\n\n\t\t' + this.args.map(arg =>
-			`${arg.name.toUpperCase()}${spacer(arg.name)}${arg.desc}`).join('\n\t\t');
+		if(this.args.length) msg += '\n\n\t' + this.args.map(arg =>
+			`${arg.name.toUpperCase()}${spacer(arg.name)}${arg.desc}`).join('\n\t');
 		// Flags
-		msg += '\n\nOptions:\n\t\t' + this.flags.map(flag => {
+		msg += '\n\nOptions:\n\t' + this.flags.map(flag => {
 			const flags = flag.flags?.join(', ') || '';
 			return `${flags}${spacer(flags)}${flag.desc}`;
-		}).join('\n\t\t');
+		}).join('\n\t');
 		// Commands
-		if(this.commands.length) msg += '\n\nCommands:\n\t\t' + this.commands.map(command =>
-			`${command.name}${spacer(command.name)}${command.desc}`).join('\n\t\t');
+		if(this.commands.length) msg += '\n\nCommands:\n\t' + this.commands.map(command =>
+			`${command.name}${spacer(command.name)}${command.desc}`).join('\n\t');
 		return `${msg}\n\n`;
 	}
 }
