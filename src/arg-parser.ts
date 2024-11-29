@@ -14,6 +14,8 @@ export type Arg<T = any> = {
 }
 
 export class ArgParser {
+	static readonly helpArg: Arg = {name: 'help', desc: 'Display command\'s help message', flags: ['-h', '--help'], default: false};
+
 	commands: ArgParser[] = [];
 	args: Arg[] = [];
 	flags: Arg[] = [];
