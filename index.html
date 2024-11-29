@@ -6,11 +6,31 @@
 	</head>
 	<body>
 		<script type="module">
-			import {formatDate} from './dist/index.mjs';
+			import {ArgParser} from './dist/index.mjs';
 
-			console.log(formatDate(new Date(), 'HH:mm:ss z', 5));
-			console.log(formatDate(new Date(), 'HH:mm:ss z', 0));
-			console.log(formatDate(new Date(), 'HH:mm:ss z', -5));
+			const hostname = 'test';
+			const argParser = new ArgParser('botnet-manager.js', 'Connect & manage a network of servers to launch distributed attacks.', [
+				new ArgParser('copy', 'Copy file & dependencies to botnet', [
+					{name: 'file', desc: 'File to copy', default: false},
+					{name: 'control', desc: 'Copy to master server', flags: ['-c', '--control'], default: false},
+					{name: 'noDeps', desc: 'Skip copying dependencies', flags: ['-d', '--no-deps'], default: false},
+					{name: 'slave', desc: 'Copy to slave servers', flags: ['-s', '--slave'], default: false},
+				]),
+				new ArgParser('join', 'Connect server as a botnet slave', [
+					{name: 'device', desc: 'Device to connect, defaults to the current machine', optional: true, default: hostname}
+				]),
+				new ArgParser('kill', 'Kill any scripts running on the botnet'),
+				new ArgParser('leave', 'Disconnect worker node from swarm', [
+					{name: 'device', desc: 'Device to disconnect, defaults to the current machine', optional: true, default: hostname}
+				]),
+				new ArgParser('run', 'Copy & run script on the botnet', [
+					{name: 'script', desc: 'Script to copy & execute', type: 'string'},
+					{name: 'args', desc: 'Arguments for script. Forward the current target with: {{TARGET}}', optional: true, extras: true},
+				]),
+				new ArgParser('start', 'Start this server as the botnet manager'),
+				{name: 'silent', desc: 'Suppress program output', flags: ['-s', '--silent'], default: false},
+			]);
+			console.log(argParser.help({}));
 		</script>
 	</body>
 </html>

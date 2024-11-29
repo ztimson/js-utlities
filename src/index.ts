@@ -1,3 +1,4 @@
+export * from './arg-parser';
 export * from './array';
 export * from './aset';
 export * from './cache';
