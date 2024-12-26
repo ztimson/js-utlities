@@ -2,6 +2,7 @@ export * from './arg-parser';
 export * from './array';
 export * from './aset';
 export * from './cache';
+export * from './color';
 export * from './csv';
 export * from './files';
 export * from './emitter';
