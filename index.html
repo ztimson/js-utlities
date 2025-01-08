@@ -6,11 +6,9 @@
 	</head>
 	<body>
 		<script type="module">
-			import {PES, PathEvent} from './dist/index.mjs';
-			const perm = PES`storage/test/john-flag.png:r`;
-			const perms = [ 'logs/Momentum:c', 'storage/test:r', 'data/Repos:r', 'email:c' ];
+			import {formatDate} from './dist/index.mjs';
 
-			console.log(PathEvent.filter(perms, perm));
+			console.log(formatDate('D MMM, YYYY'));
 		</script>
 	</body>
 </html>

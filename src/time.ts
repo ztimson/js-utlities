@@ -23,12 +23,12 @@ export function adjustedInterval(cb: Function, ms: number) {
 /**
  * Format date
  *
- * @param {Date | number | string} date Date or timestamp to convert to string
  * @param {string} format How date string will be formatted, default: `YYYY-MM-DD H:mm A`
- * @param tz Override timezone, can be either string or number
+ * @param {Date | number | string} date Date or timestamp, defaults to now
+ * @param tz Set timezone offset
  * @return {string} Formated date
  */
-export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:mm', tz?: string | number): string {
+export function formatDate(format = 'YYYY-MM-DD H:mm', date: Date | number | string = new Date(), tz?: string | number): string {
 	const timezones = [
 		['IDLW', -12],
 		['SST', -11],
@@ -67,16 +67,7 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 	}
 
 	function day(num: number): string {
-		switch(num) {
-			case(0): return 'Sunday';
-			case(1): return 'Monday';
-			case(2): return 'Tuesday';
-			case(3): return 'Wednesday';
-			case(4): return 'Thursday';
-			case(5): return 'Friday';
-			case(6): return 'Saturday';
-			default: return 'Unknown';
-		}
+		return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][num] || 'Unknown';
 	}
 
 	function doy(date: Date) {
@@ -85,30 +76,16 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 	}
 
 	function month(num: number): string {
-		switch(num) {
-			case(0): return 'January';
-			case(1): return 'February';
-			case(2): return 'March';
-			case(3): return 'April';
-			case(4): return 'May';
-			case(5): return 'June';
-			case(6): return 'July';
-			case(7): return 'August';
-			case(8): return 'September';
-			case(9): return 'October';
-			case(10): return 'November';
-			case(11): return 'December';
-			default: return 'Unknown';
-		}
+		return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][num] || 'Unknown';
 	}
 
 	function suffix(num: number) {
-		let n = num.toString();
-		switch(n.at(-1)) {
-			case('1'): return num + 'st';
-			case('2'): return num + 'nd';
-			case('3'): return num + 'rd';
-			default: return num + 'th';
+		if (num % 100 >= 11 && num % 100 <= 13) return `${num}th`;
+		switch (num % 10) {
+			case 1: return `${num}st`;
+			case 2: return `${num}nd`;
+			case 3: return `${num}rd`;
+			default: return `${num}th`;
 		}
 	}
 
@@ -127,46 +104,36 @@ export function formatDate(date: Date | number | string, format = 'YYYY-MM-DD H:
 	if(!t) throw new Error(`Unknown timezone: ${tz}`);
 	date = adjustTz(date, t[1]);
 
-	return format
-		// Year
-		.replaceAll('YYYY', date.getFullYear().toString())
-		.replaceAll('YY', date.getFullYear().toString().slice(2))
-		// Month
-		.replaceAll('MMMM', month(date.getMonth()))
-		.replaceAll('MMM', month(date.getMonth()).slice(0, 3))
-		.replaceAll('MM', (date.getMonth() + 1).toString().padStart(2, '0'))
-		.replaceAll('M', (date.getMonth() + 1).toString())
-		// Day
-		.replaceAll('DDD', doy(date).toString())
-		.replaceAll('DD', date.getDate().toString().padStart(2, '0'))
-		.replaceAll('Do', suffix(date.getDate()))
-		.replaceAll('D', date.getDate().toString())
-		.replaceAll('dddd', day(date.getDay()))
-		.replaceAll('ddd', day(date.getDay()).slice(0, 2))
-		.replaceAll('dd', date.getDate().toString().padStart(2, '0'))
-		.replaceAll('d', date.getDay().toString())
-		// Hour
-		.replaceAll('HH', date.getHours().toString().padStart(2, '0'))
-		.replaceAll('H', date.getHours().toString())
-		.replaceAll('hh', (date.getHours() > 12 ? date.getHours() - 12 : date.getHours()).toString().padStart(2, '0'))
-		.replaceAll('h', (date.getHours() > 12 ? date.getHours() - 12 : date.getHours()).toString())
-		// Minute
-		.replaceAll('mm', date.getMinutes().toString().padStart(2, '0'))
-		.replaceAll('m', date.getMinutes().toString())
-		// Second
-		.replaceAll('ss', date.getSeconds().toString().padStart(2, '0'))
-		.replaceAll('s', date.getSeconds().toString())
-		// Millisecond
-		.replaceAll('SSS', date.getMilliseconds().toString().padEnd(3, '0'))
-		.replaceAll('SS', date.getMilliseconds().toString().slice(0, 1).padEnd(2, '0'))
-		.replaceAll('S', date.getMilliseconds().toString()[0])
-		// Period/Meridian (AM/PM)
-		.replaceAll('A', date.getHours() >= 12 ? 'PM' : 'AM')
-		.replaceAll('a', date.getHours() >= 12 ? 'pm' : 'am')
-		// Timezone
-		.replaceAll('ZZ', tzOffset(t[1] * 60).replace(':', ''))
-		.replaceAll('Z', tzOffset(t[1] * 60))
-		.replaceAll('z', typeof tz == 'string' ? tz : (<any>t)[0]);
+	// Token mapping
+	const tokens: Record<string, string> = {
+		'YYYY': date.getFullYear().toString(),
+		'YY': date.getFullYear().toString().slice(2),
+		'MMMM': month(date.getMonth()),
+		'MMM': month(date.getMonth()).slice(0, 3),
+		'MM': (date.getMonth() + 1).toString().padStart(2, '0'),
+		'M': (date.getMonth() + 1).toString(),
+		'DDD': doy(date).toString(),
+		'DD': date.getDate().toString().padStart(2, '0'),
+		'Do': suffix(date.getDate()),
+		'D': date.getDate().toString(),
+		'dddd': day(date.getDay()),
+		'ddd': day(date.getDay()).slice(0, 3),
+		'HH': date.getHours().toString().padStart(2, '0'),
+		'H': date.getHours().toString(),
+		'hh': (date.getHours() % 12 || 12).toString().padStart(2, '0'),
+		'h': (date.getHours() % 12 || 12).toString(),
+		'mm': date.getMinutes().toString().padStart(2, '0'),
+		'm': date.getMinutes().toString(),
+		'ss': date.getSeconds().toString().padStart(2, '0'),
+		's': date.getSeconds().toString(),
+		'SSS': date.getMilliseconds().toString().padStart(3, '0'),
+		'A': date.getHours() >= 12 ? 'PM' : 'AM',
+		'a': date.getHours() >= 12 ? 'pm' : 'am',
+		'ZZ': tzOffset(t[1] * 60).replace(':', ''),
+		'Z': tzOffset(t[1] * 60),
+		'z': typeof tz == 'string' ? tz : (<any>t)[0]
+	};
+	return format.replace(/YYYY|YY|MMMM|MMM|MM|M|DDD|DD|Do|D|dddd|ddd|HH|H|hh|h|mm|m|ss|s|SSS|A|a|ZZ|Z|z/g, token => tokens[token]);
 }
 
 /**
