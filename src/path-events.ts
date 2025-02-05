@@ -142,8 +142,9 @@ export class PathEvent {
 		const parsedFind = makeArray(filter).map(pe => new PathEvent(pe));
 		return parsedTarget.filter(t => {
 			if(!t.fullPath && t.all) return true;
-			return !!parsedFind.find(f => t.fullPath.startsWith(f.fullPath)
-				&& (f.all || t.all || t.methods.intersection(f.methods).length));
+			return !!parsedFind.find(f =>
+				(t.fullPath.startsWith(f.fullPath) || f.fullPath.startsWith(t.fullPath)) &&
+				(f.all || t.all || t.methods.intersection(f.methods).length));
 		});
 	}
 
