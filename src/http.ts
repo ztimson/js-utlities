@@ -22,6 +22,22 @@ export type HttpDefaults = {
 	url?: string;
 }
 
+class HttpResponse<T = any> extends Response {
+	data?: T
+	ok!: boolean;
+	redirected!: boolean;
+	type!: ResponseType;
+	url!: string;
+
+	constructor(resp: Response, stream: ReadableStream) {
+		super(stream, {headers: resp.headers, status: resp.status, statusText: resp.statusText});
+		this.ok = resp.ok;
+		this.redirected = resp.redirected;
+		this.type = resp.type;
+		this.url = resp.url;
+	}
+}
+
 export class Http {
 	private static interceptors: {[key: string]: HttpInterceptor} = {};
 
@@ -101,18 +117,17 @@ export class Http {
 									push();
 								}).catch((error: any) => controller.error(error));
 							}
-
 							push();
 						}
 					});
 
-					resp.data = new Response(stream);
-					if(opts.decode == null || opts.decode) {
+					resp = new HttpResponse<T>(resp, stream);
+					if(opts.decode !== false) {
 						const content = resp.headers.get('Content-Type')?.toLowerCase();
-						if(content?.includes('form')) resp.data = <T>await resp.data.formData();
-						else if(content?.includes('json')) resp.data = <T>await resp.data.json();
-						else if(content?.includes('text')) resp.data = <T>await resp.data.text();
-						else if(content?.includes('application')) resp.data = <T>await resp.data.blob();
+						if(content?.includes('form')) resp.data = <T>await resp.formData();
+						else if(content?.includes('json')) resp.data = <T>await resp.json();
+						else if(content?.includes('text')) resp.data = <T>await resp.text();
+						else if(content?.includes('application')) resp.data = <T>await resp.blob();
 					}
 
 					if(resp.ok) res(resp);
