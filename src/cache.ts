@@ -1,3 +1,5 @@
+import {deepCopy} from './objects.ts';
+
 export type CacheOptions = {
 	/** Delete keys automatically after x amount of seconds */
 	ttl?: number;
@@ -36,12 +38,12 @@ export class Cache<K extends string | number | symbol, T> {
 		}
 		return new Proxy(this, {
 			get: (target: this, prop: string | symbol) => {
-				if (prop in target) return (target as any)[prop];
-				return target.store[prop as K];
+				if(prop in target) return (target as any)[prop];
+				return deepCopy(target.store[prop as K]);
 			},
 			set: (target: this, prop: string | symbol, value: any) => {
-				if (prop in target) (target as any)[prop] = value;
-				else target.store[prop as K] = value;
+				if(prop in target) (target as any)[prop] = value;
+				else this.set(prop as K, value);
 				return true;
 			}
 		});
@@ -58,7 +60,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {T[]} Array of items
 	 */
 	all(): T[] {
-		return Object.values(this.store);
+		return deepCopy(Object.values(this.store));
 	}
 
 	/**
@@ -119,7 +121,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {T} Cached item
 	 */
 	get(key: K): T {
-		return this.store[key];
+		return deepCopy(this.store[key]);
 	}
 
 	/**
@@ -137,7 +139,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {Record<K, T>}
 	 */
 	map(): Record<K, T> {
-		return structuredClone(this.store);
+		return deepCopy(this.store);
 	}
 
 	/**
