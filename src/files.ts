@@ -1,6 +1,7 @@
 import {makeArray} from './array.ts';
 import {JSONAttemptParse} from './objects.ts';
 import {PromiseProgress} from './promise-progress';
+import {formatDate} from './time.ts';
 
 /**
  * Download blob as a file
@@ -76,7 +77,7 @@ export function fileText(file: any): Promise<string | null> {
  */
 export function timestampFilename(name?: string, date: Date | number | string = new Date()) {
 	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
-	const timestamp = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}-${date.getMinutes().toString().padStart(2, '0')}-${date.getSeconds().toString().padStart(2, '0')}`;
+	const timestamp = formatDate('YYYY-MM-DD_HH:mm:ss', date);
 	return name ? name.replace('{{TIMESTAMP}}', timestamp) : timestamp;
 }
 
