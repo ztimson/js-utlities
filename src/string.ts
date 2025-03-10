@@ -19,6 +19,16 @@ export const SYMBOL_LIST = '~`!@#$%^&*()_-+={[}]|\\:;"\'<,>.?/';
 export const CHAR_LIST = LETTER_LIST + LETTER_LIST.toLowerCase() + NUMBER_LIST + SYMBOL_LIST;
 
 /**
+ * Converts text to camel case
+ */
+export function camelCase(text?: string) {
+	if(!text) return '';
+	text = text.replaceAll(/^[0-9]+/g, '')
+		.replaceAll(/[^a-zA-Z0-9]+(\w?)/g, (...args) => args[1]?.toUpperCase() || '');
+	return text[0].toLowerCase() + text.slice(1);
+}
+
+/**
  * Convert number of bytes into a human-readable size
  *
  * @param {number} bytes Number of bytes
