@@ -23,29 +23,29 @@ export function fromCsv<T = any>(csv: string, hasHeaders = true): T[] {
 					i++;
 				} else inQuotes = !inQuotes;
 			} else if (char === ',' && !inQuotes) {
-				columns.push(current);
+				columns.push(current.trim()); // Trim column values
 				current = '';
 			} else current += char;
 		}
-		columns.push(current);
+		columns.push(current.trim()); // Trim last column value
 		return columns.map(col => col.replace(/^"|"$/g, '').replace(/""/g, '"'));
 	}
 
-	// Split rows
+	// Normalize line endings and split rows
 	const rows = [];
 	let currentRow = '', inQuotes = false;
-	for (const char of csv) {
+	for (const char of csv.replace(/\r\n/g, '\n')) { // Normalize \r\n to \n
 		if (char === '"') inQuotes = !inQuotes;
 		if (char === '\n' && !inQuotes) {
-			rows.push(currentRow);
+			rows.push(currentRow.trim()); // Trim row
 			currentRow = '';
 		} else currentRow += char;
 	}
-	if(currentRow) rows.push(currentRow);
+	if (currentRow) rows.push(currentRow.trim()); // Trim last row
 
-	// Figure out headers
+	// Extract headers
 	let headers: any = hasHeaders ? rows.splice(0, 1)[0] : null;
-	if (headers) headers = headers.match(/(?:[^,"']+|"(?:[^"]|"")*"|'(?:[^']|'')*')+/g);
+	if (headers) headers = headers.match(/(?:[^,"']+|"(?:[^"]|"")*"|'(?:[^']|'')*')+/g)?.map((h: any) => h.trim());
 
 	// Parse rows
 	return <T[]>rows.map(r => {
@@ -63,6 +63,7 @@ export function fromCsv<T = any>(csv: string, hasHeaders = true): T[] {
 		}, {});
 	});
 }
+
 
 /**
  * Convert an array of objects to a CSV string
