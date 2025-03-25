@@ -10,16 +10,16 @@ import {LETTER_LIST} from './string.ts';
  * @param hasHeaders First line of CSV contains headers
  * @return {T[]} Array of parsed objects
  */
-export function fromCsv<T = any>(csv: string, hasHeaders=true): T[] {
+export function fromCsv<T = any>(csv: string, hasHeaders = true): T[] {
 	function parseLine(line: string): (string | null)[] {
 		const columns: string[] = [];
 		let current = '', inQuotes = false;
-		for(let i = 0; i < line.length; i++) {
+		for (let i = 0; i < line.length; i++) {
 			const char = line[i];
 			const nextChar = line[i + 1];
 			if (char === '"') {
 				if (inQuotes && nextChar === '"') {
-					current += '"';
+					current += '"'; // Handle escaped quotes
 					i++;
 				} else inQuotes = !inQuotes;
 			} else if (char === ',' && !inQuotes) {
@@ -31,15 +31,29 @@ export function fromCsv<T = any>(csv: string, hasHeaders=true): T[] {
 		return columns.map(col => col.replace(/^"|"$/g, '').replace(/""/g, '"'));
 	}
 
-	const row = csv.split(/\r?\n/);
-	let headers: any = hasHeaders ? row.splice(0, 1)[0] : null;
-	if(headers) headers = headers.match(/(?:[^,"']+|"(?:[^"]|"")*"|'(?:[^']|'')*')+/g);
-	return <T[]>row.map(r => {
+	// Split rows
+	const rows = [];
+	let currentRow = '', inQuotes = false;
+	for (const char of csv) {
+		if (char === '"') inQuotes = !inQuotes;
+		if (char === '\n' && !inQuotes) {
+			rows.push(currentRow);
+			currentRow = '';
+		} else currentRow += char;
+	}
+	if(currentRow) rows.push(currentRow);
+
+	// Figure out headers
+	let headers: any = hasHeaders ? rows.splice(0, 1)[0] : null;
+	if (headers) headers = headers.match(/(?:[^,"']+|"(?:[^"]|"")*"|'(?:[^']|'')*')+/g);
+
+	// Parse rows
+	return <T[]>rows.map(r => {
 		const props = parseLine(r);
-		const h = headers || (Array(props.length).fill(null).map((r, i) => {
+		const h = headers || (Array(props.length).fill(null).map((_, i) => {
 			let letter = '';
 			const first = i / 26;
-			if(first > 1) letter += LETTER_LIST[Math.floor(first - 1)];
+			if (first > 1) letter += LETTER_LIST[Math.floor(first - 1)];
 			letter += LETTER_LIST[i % 26];
 			return letter;
 		}));
@@ -65,7 +79,7 @@ export function toCsv(target: any, flatten=true) {
 		...t.map(row => headers.map((h: string) => {
 			const value = dotNotation<any>(row, h);
 			if(value == null) return '';
-			if(typeof value == 'object') return `"${JSONSanitize(value).replaceAll('`', '""')}"`;
+			if(typeof value == 'object') return `"${JSONSanitize(value).replaceAll('"', '""')}"`;
 			if(typeof value == 'string' &&  /[\n"]/g.test(value)) return `"${value.replaceAll('"', '""')}"`;
 			return value;
 		}).join(','))
