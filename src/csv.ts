@@ -81,7 +81,7 @@ export function toCsv(target: any, flatten=true) {
 			const value = dotNotation<any>(row, h);
 			if(value == null) return '';
 			if(typeof value == 'object') return `"${JSONSanitize(value).replaceAll('"', '""')}"`;
-			if(typeof value == 'string' &&  /[\n"]/g.test(value)) return `"${value.replaceAll('"', '""')}"`;
+			if(typeof value == 'string' &&  /[\n",]/g.test(value)) return `"${value.replaceAll('"', '""')}"`;
 			return value;
 		}).join(','))
 	].join('\n');
