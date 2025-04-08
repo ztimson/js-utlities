@@ -19,12 +19,10 @@ export const SYMBOL_LIST = '~`!@#$%^&*()_-+={[}]|\\:;"\'<,>.?/';
 export const CHAR_LIST = LETTER_LIST + LETTER_LIST.toLowerCase() + NUMBER_LIST + SYMBOL_LIST;
 
 /**
- * Converts text to camel case
+ * Converts text to camelCase
  */
-export function camelCase(text?: string) {
-	if(!text) return '';
-	text = text.replaceAll(/^[0-9]+/g, '')
-		.replaceAll(/[^a-zA-Z0-9]+(\w?)/g, (...args) => args[1]?.toUpperCase() || '');
+export function camelCase(str?: string) {
+	const text = pascalCase(str);
 	return text[0].toLowerCase() + text.slice(1);
 }
 
@@ -75,6 +73,17 @@ export function insertAt(target: string, str: string, index: number): String {
 }
 
 /**
+ * Converts text to kebab-case
+ */
+export function kebabCase(str: string) {
+	if(!str) return '';
+	return str.replaceAll(/(^[^a-zA-Z]+|[^a-zA-Z0-9-_])/g, '')
+		.replaceAll(/([A-Z]|[0-9]+)/g, (...args) => `-${args[0].toLowerCase()}`)
+		.replaceAll(/([0-9])([a-z])/g, (...args) => `${args[1]}-${args[2]}`)
+		.replaceAll(/[^a-z0-9]+(\w?)/g, (...args) => `-${args[1] ?? ''}`).toLowerCase();
+}
+
+/**
  * Add padding to string
  *
  * @example
@@ -94,6 +103,18 @@ export function insertAt(target: string, str: string, index: number): String {
 export function pad(text: any, length: number, char: string = ' ', start = true) {
 	if(start) return text.toString().padStart(length, char);
 	return text.toString().padEnd(length, char);
+}
+
+/**
+ * Convert text to PascalCase
+ * @param {string} str
+ * @return {string}
+ */
+export function pascalCase(str?: string) {
+	if(!str) return '';
+	const text = str.replaceAll(/(^[^a-zA-Z]+|[^a-zA-Z0-9-_])/g, '')
+		.replaceAll(/[^a-zA-Z0-9]+(\w?)/g, (...args) => args[1]?.toUpperCase() || '');
+	return text[0].toUpperCase() + text.slice(1);
 }
 
 /**
@@ -157,6 +178,17 @@ export function randomStringBuilder(length: number, letters = false, numbers = f
 		} while(!c);
 		return c;
 	}).join('');
+}
+
+/**
+ * Converts text to snake_case
+ */
+export function snakeCase(str?: string) {
+	if(!str) return '';
+	return str.replaceAll(/(^[^a-zA-Z]+|[^a-zA-Z0-9-_])/g, '')
+		.replaceAll(/([A-Z]|[0-9]+)/g, (...args) => `_${args[0].toLowerCase()}`)
+		.replaceAll(/([0-9])([a-z])/g, (...args) => `${args[1]}_${args[2]}`)
+		.replaceAll(/[^a-z0-9]+(\w?)/g, (...args) => `_${args[1] ?? ''}`).toLowerCase();
 }
 
 /**
