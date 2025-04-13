@@ -30,7 +30,13 @@ class HttpResponse<T = any> extends Response {
 	url!: string;
 
 	constructor(resp: Response, stream: ReadableStream) {
-		super(stream, {headers: resp.headers, status: resp.status, statusText: resp.statusText});
+		const body = [204, 205, 304].includes(resp.status) ? null : stream;
+		super(body, {
+			headers: resp.headers,
+			status: resp.status,
+			statusText: resp.statusText,
+		});
+
 		this.ok = resp.ok;
 		this.redirected = resp.redirected;
 		this.type = resp.type;
