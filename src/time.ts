@@ -95,7 +95,7 @@ export function formatDate(format = 'YYYY-MM-DD H:mm', date: Date | number | str
 		return (offset > 0 ? '-' : '') + `${hours}:${minutes.toString().padStart(2, '0')}`;
 	}
 
-	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
+	if(typeof date == 'number' || typeof date == 'string' || date == null) date = new Date(date);
 
 	// Handle timezones
 	let t!: [string, number];
