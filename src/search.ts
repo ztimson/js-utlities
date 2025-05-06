@@ -1,4 +1,4 @@
-import {dotNotation, JSONAttemptParse} from '@ztimson/utils';
+import {dotNotation, JSONAttemptParse} from './objects.ts';
 
 export function search(rows: any[], search: string, regex?: boolean, transform: Function = (r: any) => r) {
 	if(!rows) return [];

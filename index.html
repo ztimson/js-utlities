@@ -1,15 +1,104 @@
-<!Doctype html>
-
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
-		<title>@ztimson/utils sandbox</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>About Us | OurTrainingRoom</title>
+		<style>
+			body {
+				margin: 0;
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+				background-color: #fdfdfd;
+				color: #333;
+				line-height: 1.6;
+			}
+			header {
+				background: #004080;
+				color: #fff;
+				padding: 2rem 1rem;
+				text-align: center;
+			}
+			header h1 {
+				margin: 0;
+				font-size: 2.5rem;
+			}
+			main {
+				max-width: 800px;
+				margin: 2rem auto;
+				padding: 0 1rem;
+			}
+			section {
+				margin-bottom: 2rem;
+			}
+			h2 {
+				color: #004080;
+				margin-bottom: 0.5rem;
+			}
+			ul {
+				padding-left: 1.25rem;
+			}
+			footer {
+				text-align: center;
+				font-size: 0.9rem;
+				color: #777;
+				padding: 2rem 1rem;
+				background: #f1f1f1;
+				margin-top: 4rem;
+			}
+		</style>
 	</head>
 	<body>
-		<script type="module">
-			import {PathEvent} from './dist/index.mjs';
+		<header>
+			<h1>About Us</h1>
+			<p>Empowering Learning Through Innovation</p>
+		</header>
 
-			console.log(PathEvent.filter(['payments/ztimson:cr', 'logs/momentum:c', 'data/Testing:r'], 'data'));
-			console.log(PathEvent.filter(['data/Submissions/Test:r'], 'data/Submissions/Test/test.html'));
-		</script>
+		<main>
+			<section>
+				<p>
+					E-learning has evolved significantly since its inception. Today, there's a shift towards
+					blended learning services, integrating online activities with practical, real-world applications.
+				</p>
+			</section>
+
+			<section>
+				<h2>What We Do</h2>
+				<p>At <strong>OurTrainingRoom.com</strong>, we specialize in content management and professional development training tailored for:</p>
+				<ul>
+					<li>School Boards</li>
+					<li>Municipalities</li>
+					<li>Hospitals</li>
+					<li>Large Corporations</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2>Our Roots</h2>
+				<p>
+					Our parent company, <strong>The Auxilium Group</strong>, is a leader in online data management.
+					The formation of OurTrainingRoom.com was a natural progression to deliver state-of-the-art front-end e-learning programs.
+				</p>
+			</section>
+
+			<section>
+				<h2>Our Approach</h2>
+				<p>
+					Built on principles of quality and continuous improvement, our diverse delivery range continues to grow.
+					We set new trends by enhancing our existing products and attentively listening to our clients and their employees.
+					This unique approach has solidified our position in the industry, making a substantial impact for our clients.
+				</p>
+			</section>
+
+			<section>
+				<h2>Have a Question?</h2>
+				<p>
+					We value your inquiries and are here to assist you. Please reach out with any questions or feedback.
+				</p>
+			</section>
+		</main>
+
+		<footer>
+			&copy; 2025 OurTrainingRoom.com. All rights reserved.
+		</footer>
 	</body>
 </html>
