@@ -2,6 +2,17 @@ import {PathEvent} from './path-events.ts';
 import {md5} from './string';
 
 /**
+ * Run a stringified function with arguments asynchronously
+ * @param {object} args Map of key/value arguments
+ * @param {string} fn Function as string
+ * @return {Promise<T>} Function string response
+ */
+export function asyncFunction<T>(args: object, fn: string): Promise<T> {
+	const keys = Object.keys(args);
+	return new Function(...keys, `return (async (${keys.join(',')}) => { ${fn} })(${keys.join(',')})`)(...keys.map(k => (<any>args)[k]));
+}
+
+/**
  * Get profile image from Gravatar
  *
  * @param {string} email Account email address
