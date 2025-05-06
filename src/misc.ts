@@ -5,11 +5,12 @@ import {md5} from './string';
  * Run a stringified function with arguments asynchronously
  * @param {object} args Map of key/value arguments
  * @param {string} fn Function as string
- * @return {Promise<T>} Function string response
+ * @param {boolean} async Run with async (returns a promise)
+ * @return {T | Promise<T>} Function return result
  */
-export function asyncFunction<T>(args: object, fn: string): Promise<T> {
+export function fn<T>(args: object, fn: string, async: boolean = false): T {
 	const keys = Object.keys(args);
-	return new Function(...keys, `return (async (${keys.join(',')}) => { ${fn} })(${keys.join(',')})`)(...keys.map(k => (<any>args)[k]));
+	return new Function(...keys, `return (${async ? 'async ' : ''}(${keys.join(',')}) => { ${fn} })(${keys.join(',')})`)(...keys.map(k => (<any>args)[k]));
 }
 
 /**
