@@ -22,7 +22,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Create new cache
-	 *
 	 * @param {keyof T} key Default property to use as primary key
 	 * @param options
 	 */
@@ -56,7 +55,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Get all cached items
-	 *
 	 * @return {T[]} Array of items
 	 */
 	all(): T[] {
@@ -65,7 +63,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Add a new item to the cache. Like set, but finds key automatically
-	 *
 	 * @param {T} value Item to add to cache
 	 * @param {number | undefined} ttl Override default expiry
 	 * @return {this}
@@ -78,12 +75,12 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Add several rows to the cache
-	 *
 	 * @param {T[]} rows Several items that will be cached using the default key
 	 * @param complete Mark cache as complete & reliable, defaults to true
 	 * @return {this}
 	 */
 	addAll(rows: T[], complete = true): this {
+		this.clear();
 		rows.forEach(r => this.add(r));
 		this.complete = complete;
 		return this;
@@ -98,7 +95,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Delete an item from the cache
-	 *
 	 * @param {K} key Item's primary key
 	 */
 	delete(key: K) {
@@ -126,7 +122,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Get a list of cached keys
-	 *
 	 * @return {K[]} Array of keys
 	 */
 	keys(): K[] {
@@ -135,7 +130,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Get map of cached items
-	 *
 	 * @return {Record<K, T>}
 	 */
 	map(): Record<K, T> {
@@ -144,7 +138,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Add an item to the cache manually specifying the key
-	 *
 	 * @param {K} key Key item will be cached under
 	 * @param {T} value Item to cache
 	 * @param {number | undefined} ttl Override default expiry in seconds
@@ -163,7 +156,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Get all cached items
-	 *
 	 * @return {T[]} Array of items
 	 */
 	values = this.all();

@@ -109,7 +109,6 @@ export function encodeQuery(data: any): string {
 	).join('&');
 }
 
-
 /**
  * Recursively flatten a nested object, while maintaining key structure
  *
