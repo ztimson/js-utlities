@@ -19,3 +19,4 @@ export * from './search';
 export * from './string';
 export * from './time';
 export * from './types';
+export * from 'var-persist';

@@ -1,6 +1,6 @@
 {
 	"name": "@ztimson/utils",
-	"version": "0.24.3",
+	"version": "0.24.4",
 	"description": "Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
@@ -25,6 +25,9 @@
 		"test": "npx jest",
 		"test:coverage": "npx jest --coverage",
 		"watch": "npx vite build --watch"
+	},
+	"dependencies": {
+		"var-persist": "^1.0.1"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.12",
