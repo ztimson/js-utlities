@@ -31,7 +31,7 @@ export function PE(str: TemplateStringsArray, ...args: any[]) {
 		if(str[i]) combined.push(str[i]);
 		if(args[i]) combined.push(args[i]);
 	}
-	return new PathEvent(combined.join(''));
+	return new PathEvent(combined.join('/'));
 }
 
 /**
@@ -79,16 +79,16 @@ export class PathEvent {
 	set none(v: boolean) { v ? this.methods = new ASet<Method>(['n']) : this.methods.delete('n'); }
 	/** Create method specified */
 	get create(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('c')) }
-	set create(v: boolean) { v ? this.methods.delete('n').add('c') : this.methods.delete('c'); }
+	set create(v: boolean) { v ? this.methods.delete('n').delete('*').add('c') : this.methods.delete('c'); }
 	/** Read method specified */
 	get read(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('r')) }
-	set read(v: boolean) { v ? this.methods.delete('n').add('r') : this.methods.delete('r'); }
+	set read(v: boolean) { v ? this.methods.delete('n').delete('*').add('r') : this.methods.delete('r'); }
 	/** Update method specified */
 	get update(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('u')) }
-	set update(v: boolean) { v ? this.methods.delete('n').add('u') : this.methods.delete('u'); }
+	set update(v: boolean) { v ? this.methods.delete('n').delete('*').add('u') : this.methods.delete('u'); }
 	/** Delete method specified */
 	get delete(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('d')) }
-	set delete(v: boolean) { v ? this.methods.delete('n').add('d') : this.methods.delete('d'); }
+	set delete(v: boolean) { v ? this.methods.delete('n').delete('*').add('d') : this.methods.delete('d'); }
 
 	constructor(Event: string | PathEvent) {
 		if(typeof Event == 'object') return Object.assign(this, Event);

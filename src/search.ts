@@ -1,4 +1,4 @@
-import {dotNotation, JSONAttemptParse} from './objects.ts';
+import {dotNotation, JSONAttemptParse, JSONSerialize} from './objects.ts';
 
 export function search(rows: any[], search: string, regex?: boolean, transform: Function = (r: any) => r) {
 	if(!rows) return [];
@@ -13,12 +13,18 @@ export function search(rows: any[], search: string, regex?: boolean, transform: 
 				catch { return false; }
 			}).length
 		} else {
-			return testCondition(search, r);
+			return logicTest(r, search);
 		}
 	});
 }
 
-export function testCondition(condition: string, row: any) {
+/**
+ * Test an object against a logic condition. By default values are checked
+ * @param {string} condition
+ * @param {object} target
+ * @return {boolean}
+ */
+export function logicTest(target: object, condition: string): boolean {
 	const evalBoolean = (a: any, op: string, b: any): boolean => {
 		switch(op) {
 			case '=':
@@ -40,11 +46,11 @@ export function testCondition(condition: string, row: any) {
 			// Boolean operator
 			const prop = /(\S+)\s*(==?|!=|>=|>|<=|<)\s*(\S+)/g.exec(p);
 			if(prop) {
-				const key = Object.keys(row).find(k => k.toLowerCase() == prop[1].toLowerCase());
-				return evalBoolean(dotNotation<any>(row, key || prop[1]),  prop[2], JSONAttemptParse(prop[3]));
+				const key = Object.keys(target).find(k => k.toLowerCase() == prop[1].toLowerCase());
+				return evalBoolean(dotNotation<any>(target, key || prop[1]),  prop[2], JSONAttemptParse(prop[3]));
 			}
 			// Case-sensitive
-			const v = Object.values(row).map(v => typeof v == 'object' && v != null ? JSON.stringify(v) : v).join('');
+			const v = Object.values(target).map(JSONSerialize).join('');
 			if(/[A-Z]/g.test(condition)) return v.includes(p);
 			// Case-insensitive
 			return v.toLowerCase().includes(p);

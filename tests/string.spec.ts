@@ -1,4 +1,5 @@
-import {matchAll, randomString, randomStringBuilder} from "../src";
+import {matchAll, parseUrl, randomString, randomStringBuilder} from "../src";
+
 
 describe('String Utilities', () => {
 	describe('randomString', () => {
@@ -46,5 +47,29 @@ describe('String Utilities', () => {
 		test('using string', () => expect(matchAll('fooBar fooBar FooBar', 'fooBar').length).toBe(2));
 		test('using regex', () => expect(matchAll('fooBar fooBar FooBar', /fooBar/g).length).toBe(2));
 		test('using malformed regex', () => expect(() => matchAll('fooBar fooBar FooBar', /fooBar/)).toThrow());
+	});
+
+	describe('urlParser', () => {
+		test('localhost', () => {
+			const parsed = parseUrl('http://localhost:4200/some/path?q1=test1&q2=test2#frag');
+			expect(parsed.protocol).toStrictEqual('http');
+			expect(parsed.host).toStrictEqual('localhost:4200');
+			expect(parsed.domain).toStrictEqual('localhost');
+			expect(parsed.port).toStrictEqual(4200);
+			expect(parsed.path).toStrictEqual('/some/path');
+			expect(parsed.query).toStrictEqual({q1: 'test1', q2: 'test2'});
+			expect(parsed.fragment).toStrictEqual('frag');
+		});
+
+		test('subdomains', () => {
+			const parsed = parseUrl('https://sub.domain.example.com/some/path?q1=test1&q2=test2#frag');
+			expect(parsed.protocol).toStrictEqual('https');
+			expect(parsed.host).toStrictEqual('sub.domain.example.com');
+			expect(parsed.domain).toStrictEqual('example.com');
+			expect(parsed.subdomain).toStrictEqual('sub.domain');
+			expect(parsed.path).toStrictEqual('/some/path');
+			expect(parsed.query).toStrictEqual({q1: 'test1', q2: 'test2'});
+			expect(parsed.fragment).toStrictEqual('frag');
+		});
 	});
 });
