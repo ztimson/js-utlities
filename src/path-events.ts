@@ -90,9 +90,9 @@ export class PathEvent {
 	get delete(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('d')) }
 	set delete(v: boolean) { v ? this.methods.delete('n').delete('*').add('d') : this.methods.delete('d'); }
 
-	constructor(Event: string | PathEvent) {
-		if(typeof Event == 'object') return Object.assign(this, Event);
-		let [p, scope, method] = Event.replaceAll(/\/{2,}/g, '/').split(':');
+	constructor(e: string | PathEvent) {
+		if(typeof e == 'object') return Object.assign(this, e);
+		let [p, scope, method] = e.replaceAll(/\/{2,}/g, '/').split(':');
 		if(!method) method = scope || '*';
 		if(p == '*' || !p && method == '*') {
 			p = '';
@@ -100,14 +100,14 @@ export class PathEvent {
 		}
 		let temp = p.split('/').filter(p => !!p);
 		this.module = temp.splice(0, 1)[0]?.toLowerCase() || '';
-		this.fullPath = p;
 		this.path = temp.join('/');
+		this.fullPath = `${this.module}${this.module && this.path ? '/' : ''}${this.path}`;
 		this.name = temp.pop() || '';
 		this.methods = new ASet(<any>method.split(''));
 	}
 
 	/**
-	 * Combine multiple  events into one parsed object. Longest path takes precedent, but all subsequent methods are
+	 * Combine multiple events into one parsed object. Longest path takes precedent, but all subsequent methods are
 	 * combined until a "none" is reached
 	 *
 	 * @param {string | PathEvent} paths Events as strings or pre-parsed
@@ -199,14 +199,14 @@ export class PathEvent {
 	}
 
 	/**
-	 * Create  event string from its components
+	 * Create event string from its components
 	 *
 	 * @param {string | string[]} path Event path
 	 * @param {Method} methods Event method
 	 * @return {string} String representation of Event
 	 */
 	static toString(path: string | string[], methods: Method | Method[]): string {
-		let p = makeArray(path).filter(p => p != null).join('/');
+		let p = makeArray(path).filter(p => !!p).join('/');
 		p = p?.trim().replaceAll(/\/{2,}/g, '/').replaceAll(/(^\/|\/$)/g, '');
 		if(methods?.length) p += `:${makeArray(methods).map(m => m.toLowerCase()).join('')}`;
 		return p;

@@ -30,6 +30,14 @@ export class ASet<T> extends Array {
 	}
 
 	/**
+	 * Remove all elements
+	 */
+	clear() {
+		this.splice(0, this.length);
+		return this;
+	}
+
+	/**
 	 * Delete elements from set
 	 * @param items Elements that will be deleted
 	 */
