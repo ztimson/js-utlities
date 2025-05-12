@@ -7,16 +7,20 @@ export type CacheOptions = {
 	storage?: Storage;
 	/** Key cache will be stored under */
 	storageKey?: string;
+	/** Keep or delete cached items once expired, defaults to delete */
+	expiryPolicy?: 'delete' | 'keep';
 }
+
+export type CachedValue<T> = T | {_expired?: boolean};
 
 /**
  * Map of data which tracks whether it is a complete collection & offers optional expiry of cached values
  */
 export class Cache<K extends string | number | symbol, T> {
-	private store = <Record<K, T>>{};
+	private store: Record<K, T> = <any>{};
 
 	/** Support index lookups */
-	[key: string | number | symbol]: T | any;
+	[key: string | number | symbol]: CachedValue<T> | any;
 	/** Whether cache is complete */
 	complete = false;
 
@@ -38,7 +42,7 @@ export class Cache<K extends string | number | symbol, T> {
 		return new Proxy(this, {
 			get: (target: this, prop: string | symbol) => {
 				if(prop in target) return (target as any)[prop];
-				return deepCopy(target.store[prop as K]);
+				return this.get(prop as K, true);
 			},
 			set: (target: this, prop: string | symbol, value: any) => {
 				if(prop in target) (target as any)[prop] = value;
@@ -57,8 +61,9 @@ export class Cache<K extends string | number | symbol, T> {
 	 * Get all cached items
 	 * @return {T[]} Array of items
 	 */
-	all(): T[] {
-		return deepCopy(Object.values(this.store));
+	all(expired?: boolean): CachedValue<T>[] {
+		return deepCopy<any>(Object.values(this.store)
+			.filter((v: any) => expired || !v._expired));
 	}
 
 	/**
@@ -90,7 +95,8 @@ export class Cache<K extends string | number | symbol, T> {
 	 * Remove all keys from cache
 	 */
 	clear() {
-		this.store = <Record<K, T>>{};
+		this.complete = false;
+		this.store = <any>{};
 	}
 
 	/**
@@ -107,8 +113,9 @@ export class Cache<K extends string | number | symbol, T> {
 	 * Return cache as an array of key-value pairs
 	 * @return {[K, T][]} Key-value pairs array
 	 */
-	entries(): [K, T][] {
-		return <[K, T][]>Object.entries(this.store);
+	entries(expired?: boolean): [K, CachedValue<T>][] {
+		return deepCopy<any>(Object.entries(this.store)
+			.filter((v: any) => expired || !v._expired));
 	}
 
 	/**
@@ -116,24 +123,31 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param {K} key Key to lookup
 	 * @return {T} Cached item
 	 */
-	get(key: K): T {
-		return deepCopy(this.store[key]);
+	get(key: K, expired?: boolean): T | null {
+		const cached = deepCopy<any>(this.store[key] ?? null);
+		if(expired || !cached._expired) return cached;
+		return null;
 	}
 
 	/**
 	 * Get a list of cached keys
 	 * @return {K[]} Array of keys
 	 */
-	keys(): K[] {
-		return <K[]>Object.keys(this.store);
+	keys(expired?: boolean): K[] {
+		return <K[]>Object.keys(this.store)
+			.filter(k => expired || !(<any>this.store)[k]._expired);
 	}
 
 	/**
 	 * Get map of cached items
 	 * @return {Record<K, T>}
 	 */
-	map(): Record<K, T> {
-		return deepCopy(this.store);
+	map(expired?: boolean): Record<K, CachedValue<T>> {
+		const copy: any = deepCopy(this.store);
+		if(!expired) Object.keys(copy).forEach(k => {
+			if(copy[k]._expired) delete copy[k]
+		});
+		return copy;
 	}
 
 	/**
@@ -144,12 +158,16 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {this}
 	 */
 	set(key: K, value: T, ttl = this.options.ttl): this {
+		if(this.options.expiryPolicy == 'keep') delete (<any>this.store[key])._expired;
 		this.store[key] = value;
 		if(this.options.storageKey && this.options.storage)
 			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
 		if(ttl) setTimeout(() => {
 			this.complete = false;
-			this.delete(key);
+			if(this.options.expiryPolicy == 'keep') (<any>this.store[key])._expired = true;
+			else this.delete(key);
+			if(this.options.storageKey && this.options.storage)
+				this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
 		}, ttl * 1000);
 		return this;
 	}

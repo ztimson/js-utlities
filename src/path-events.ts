@@ -223,7 +223,7 @@ export class PathEvent {
 	}
 
 	/**
-	 * Create  event string from its components
+	 * Create event string from its components
 	 *
 	 * @return {string} String representation of Event
 	 */
@@ -235,11 +235,12 @@ export class PathEvent {
 export type PathListener = (event: PathEvent, ...args: any[]) => any;
 export type PathUnsubscribe = () => void;
 
+export type Event = string | PathEvent;
 export interface IPathEventEmitter {
-	emit(event: string, ...args: any[]): void;
+	emit(event: Event, ...args: any[]): void;
 	off(listener: PathListener): void;
-	on(event: string, listener: PathListener): PathUnsubscribe;
-	once(event: string, listener?: PathListener): Promise<any>;
+	on(event: Event | Event[], listener: PathListener): PathUnsubscribe;
+	once(event: Event | Event[], listener?: PathListener): Promise<any>;
 	relayEvents(emitter: PathEventEmitter): void;
 }
 
@@ -249,8 +250,10 @@ export interface IPathEventEmitter {
 export class PathEventEmitter implements IPathEventEmitter{
 	private listeners: [PathEvent, PathListener][] = [];
 
-	emit(event: string | PathEvent, ...args: any[]) {
-		const parsed = new PathEvent(event);
+	constructor(public readonly prefix: string = '') { }
+
+	emit(event: Event, ...args: any[]) {
+		const parsed = new PathEvent(`${this.prefix}/${typeof event == 'string' ? event : event.toString()}`);
 		this.listeners.filter(l => PathEvent.has(l[0], event))
 			.forEach(async l => l[1](parsed, ...args));
 	};
@@ -259,12 +262,15 @@ export class PathEventEmitter implements IPathEventEmitter{
 		this.listeners = this.listeners.filter(l => l[1] != listener);
 	}
 
-	on(event: string | string[], listener: PathListener): PathUnsubscribe {
-		makeArray(event).forEach(e => this.listeners.push([new PathEvent(e), listener]));
+	on(event: Event | Event[], listener: PathListener): PathUnsubscribe {
+		makeArray(event).forEach(e => this.listeners.push([
+			new PathEvent(`${this.prefix}/${typeof e == 'string' ? event : event.toString()}`),
+			listener
+		]));
 		return () => this.off(listener);
 	}
 
-	once(event: string | string[], listener?: PathListener): Promise<any> {
+	once(event: Event | Event[], listener?: PathListener): Promise<any> {
 		return new Promise(res => {
 			const unsubscribe = this.on(event, (event: PathEvent, ...args: any[]) => {
 				res(args.length < 2 ? args[0] : args);
