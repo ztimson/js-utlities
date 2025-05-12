@@ -22,6 +22,6 @@ export function typeKeys<T extends object>() {
 /**
  * Mark all properties as writable
  */
-type Writable<T> = {
+export type Writable<T> = {
 	-readonly [P in keyof T]: T[P]
 };
