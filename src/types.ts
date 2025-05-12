@@ -18,3 +18,10 @@
 export function typeKeys<T extends object>() {
 	return Object.keys(<T>{}) as Array<keyof T>;
 }
+
+/**
+ * Mark all properties as writable
+ */
+type Writable<T> = {
+	-readonly [P in keyof T]: T[P]
+};
