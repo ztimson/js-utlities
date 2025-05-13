@@ -57,6 +57,11 @@ export class Cache<K extends string | number | symbol, T> {
 		return <K>value[this.key];
 	}
 
+	private save() {
+		if(this.options.storageKey && this.options.storage)
+			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
+	}
+
 	/**
 	 * Get all cached items
 	 * @return {T[]} Array of items
@@ -105,8 +110,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	delete(key: K) {
 		delete this.store[key];
-		if(this.options.storageKey && this.options.storage)
-			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
+		this.save();
 	}
 
 	/**
@@ -116,6 +120,16 @@ export class Cache<K extends string | number | symbol, T> {
 	entries(expired?: boolean): [K, CachedValue<T>][] {
 		return deepCopy<any>(Object.entries(this.store)
 			.filter((v: any) => expired || !v._expired));
+	}
+
+	/**
+	 * Manually expire a cached item
+	 * @param {K} key Key to expire
+	 */
+	expire(key: K) {
+		this.complete = false;
+		if(this.options.expiryPolicy == 'keep') (<any>this.store[key])._expired = true;
+		else this.delete(key);
 	}
 
 	/**
@@ -160,14 +174,10 @@ export class Cache<K extends string | number | symbol, T> {
 	set(key: K, value: T, ttl = this.options.ttl): this {
 		if(this.options.expiryPolicy == 'keep') delete (<any>this.store[key])._expired;
 		this.store[key] = value;
-		if(this.options.storageKey && this.options.storage)
-			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
+		this.save();
 		if(ttl) setTimeout(() => {
-			this.complete = false;
-			if(this.options.expiryPolicy == 'keep') (<any>this.store[key])._expired = true;
-			else this.delete(key);
-			if(this.options.storageKey && this.options.storage)
-				this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
+			this.expire(key);
+			this.save();
 		}, ttl * 1000);
 		return this;
 	}
