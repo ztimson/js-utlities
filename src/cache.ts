@@ -172,7 +172,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {this}
 	 */
 	set(key: K, value: T, ttl = this.options.ttl): this {
-		if(this.options.expiryPolicy == 'keep') delete (<any>this.store[key])._expired;
+		if(this.options.expiryPolicy == 'keep') delete (<any>value)._expired;
 		this.store[key] = value;
 		this.save();
 		if(ttl) setTimeout(() => {
