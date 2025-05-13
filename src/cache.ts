@@ -11,7 +11,7 @@ export type CacheOptions = {
 	expiryPolicy?: 'delete' | 'keep';
 }
 
-export type CachedValue<T> = T | {_expired?: boolean};
+export type CachedValue<T> = T & {_expired?: boolean};
 
 /**
  * Map of data which tracks whether it is a complete collection & offers optional expiry of cached values
