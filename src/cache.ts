@@ -119,7 +119,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	entries(expired?: boolean): [K, CachedValue<T>][] {
 		return deepCopy<any>(Object.entries(this.store)
-			.filter((v: any) => expired || !v._expired));
+			.filter((v: any) => expired || !v?._expired));
 	}
 
 	/**
@@ -139,7 +139,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	get(key: K, expired?: boolean): T | null {
 		const cached = deepCopy<any>(this.store[key] ?? null);
-		if(expired || !cached._expired) return cached;
+		if(expired || !cached?._expired) return cached;
 		return null;
 	}
 
