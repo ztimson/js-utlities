@@ -35,5 +35,14 @@ export function escapeRegex(value: string) {
 	return value.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
 }
 
+/**
+ * Represents a function that listens for events and handles them accordingly.
+ *
+ * @param {PathEvent} event - The event object containing data related to the triggered event.
+ * @param {...any} args - Additional arguments that may be passed to the listener.
+ * @returns {any} The return value of the listener, which can vary based on implementation.
+ */
 export type Listener = (event: PathEvent, ...args: any[]) => any;
+
+/** Represents a function that can be called to unsubscribe from an event, stream, or observer */
 export type Unsubscribe = () => void;

@@ -14,7 +14,7 @@
 export function clean<T>(obj: T, undefinedOnly = false): Partial<T> {
 	if(obj == null) throw new Error("Cannot clean a NULL value");
 	if(Array.isArray(obj)) {
-		obj = <any>obj.filter(o => o != null);
+		obj = <any>obj.filter(o => undefinedOnly ? o !== undefined : o != null);
 	} else {
 		Object.entries(obj).forEach(([key, value]) => {
 			if((undefinedOnly && value === undefined) || (!undefinedOnly && value == null)) delete (<any>obj)[key];
@@ -128,7 +128,6 @@ export function flattenObj(obj: any, parent?: any, result: any = {}) {
 		for(const key of Object.keys(obj)) {
 			const propName = parent ? `${parent}.${key}` : key;
 			if(typeof obj[key] === 'object' && obj[key] != null && !Array.isArray(obj[key])) {
-				console.log(propName, );
 				flattenObj(obj[key], propName, result);
 			} else {
 				result[propName] = obj[key];
@@ -242,10 +241,12 @@ export function JSONSerialize<T1>(obj: T1): T1 | string {
  * @return {string} JSON string
  */
 export function JSONSanitize(obj: any, space?: number): string {
-	let cache: any[] = [];
+	const cache: any[] = [];
 	return JSON.stringify(obj, (key, value) => {
-		if(typeof value === 'object' && value !== null)
-			if(!cache.includes(value)) cache.push(value);
+		if (typeof value === 'object' && value !== null) {
+			if (cache.includes(value)) return '[Circular]';
+			cache.push(value);
+		}
 		return value;
 	}, space);
 }

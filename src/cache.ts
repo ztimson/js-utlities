@@ -99,18 +99,20 @@ export class Cache<K extends string | number | symbol, T> {
 	/**
 	 * Remove all keys from cache
 	 */
-	clear() {
+	clear(): this {
 		this.complete = false;
 		this.store = <any>{};
+		return this;
 	}
 
 	/**
 	 * Delete an item from the cache
 	 * @param {K} key Item's primary key
 	 */
-	delete(key: K) {
+	delete(key: K): this {
 		delete this.store[key];
 		this.save();
+		return this;
 	}
 
 	/**
@@ -126,10 +128,11 @@ export class Cache<K extends string | number | symbol, T> {
 	 * Manually expire a cached item
 	 * @param {K} key Key to expire
 	 */
-	expire(key: K) {
+	expire(key: K): this {
 		this.complete = false;
 		if(this.options.expiryPolicy == 'keep') (<any>this.store[key])._expired = true;
 		else this.delete(key);
+		return this;
 	}
 
 	/**
@@ -137,7 +140,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param {K} key Key to lookup
 	 * @return {T} Cached item
 	 */
-	get(key: K, expired?: boolean): T | null {
+	get(key: K, expired?: boolean): CachedValue<T> | null {
 		const cached = deepCopy<any>(this.store[key] ?? null);
 		if(expired || !cached?._expired) return cached;
 		return null;
@@ -178,7 +181,7 @@ export class Cache<K extends string | number | symbol, T> {
 		if(ttl) setTimeout(() => {
 			this.expire(key);
 			this.save();
-		}, ttl * 1000);
+		}, (ttl || 0) * 1000);
 		return this;
 	}
 

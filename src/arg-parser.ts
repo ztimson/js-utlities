@@ -72,10 +72,11 @@ export class ArgParser {
 					extras.push(arg);
 					continue;
 				}
-				const value = argDef.default === false ? true :
-							  argDef.default === true ? false :
-							  queue.splice(queue.findIndex(q => q[0] != '-'), 1)[0] ||
-							  argDef.default;
+				const value = combined[1] != null ? combined [1] :
+					argDef.default === false ? true :
+					argDef.default === true ? false :
+					queue.splice(queue.findIndex(q => q[0] != '-'), 1)[0] ||
+					argDef.default;
 				if(value == null) parsed['_error'].push(`Option missing value: ${argDef.name || combined[0]}`);
 				parsed[argDef.name] = value;
 			} else { // Command

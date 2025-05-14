@@ -1,5 +1,14 @@
 import {dotNotation, JSONAttemptParse, JSONSerialize} from './objects.ts';
 
+/**
+ * Filters an array of objects based on a search term and optional regex checking.
+ *
+ * @param {Array} rows Array of objects to filter
+ * @param {string} search The logic string or regext to filter on
+ * @param {boolean} [regex=false] Treat search expression as regex
+ * @param {Function} [transform=(r) => r] - Transform rows before filtering
+ * @return {Array} The filtered array of objects that matched search
+ */
 export function search(rows: any[], search: string, regex?: boolean, transform: Function = (r: any) => r) {
 	if(!rows) return [];
 	return rows.filter(r => {

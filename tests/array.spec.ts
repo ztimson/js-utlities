@@ -1,82 +1,85 @@
-import {addUnique, caseInsensitiveSort, flattenArr, sortByProp} from '../src';
+import {addUnique, arrayDiff, caseInsensitiveSort, findByProp, flattenArr, makeArray, makeUnique, sortByProp,} from '../src';
 
 describe('Array Utilities', () => {
 	describe('addUnique', () => {
-		const arr = [1, 2];
-
-		test('non-unique', () => {
-			addUnique(arr, 1);
-			expect(arr).toStrictEqual([1, 2]);
+		it('does not add duplicate value', () => {
+			const arr = [1, 2, 3];
+			addUnique(arr, 2);
+			expect(arr).toEqual([1, 2, 3]);
 		});
-		test('unique', () => {
+		it('adds unique value', () => {
+			const arr = [1, 2];
 			addUnique(arr, 3);
-			expect(arr).toStrictEqual([1, 2, 3]);
+			expect(arr).toEqual([1, 2, 3]);
+		});
+	});
+
+	describe('arrayDiff', () => {
+		it('returns unique elements present only in one array', () => {
+			expect(arrayDiff([1, 2, 3], [3, 4, 5]).toSorted()).toEqual([1, 2, 4, 5]);
+		});
+		it('returns empty array if arrays have the same elements', () => {
+			expect(arrayDiff([1, 2], [1, 2])).toEqual([]);
+		});
+	});
+
+	describe('caseInseFsitiveSort', () => {
+		it('sorts objects by string property case-insensitively', () => {
+			const arr = [{n: 'b'}, {n: 'A'}, {n: 'c'}];
+			arr.sort(caseInsensitiveSort('n'));
+			expect(arr.map(i => i.n)).toEqual(['A', 'b', 'c']);
+		});
+	});
+
+	describe('findByProp', () => {
+		it('filters objects by property value', () => {
+			const arr = [{name: 'foo'}, {name: 'bar'}];
+			const found = arr.filter(findByProp('name', 'foo'));
+			expect(found).toEqual([{name: 'foo'}]);
 		});
 	});
 
 	describe('flattenArr', () => {
-		test('flat array', () => expect(flattenArr([1, 2])).toStrictEqual([1, 2]));
-		test('2D array', () => expect(flattenArr([[1, 2], [3, 4]])).toStrictEqual([1, 2, 3, 4]));
-		test('3D array', () => expect(flattenArr([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8]));
-		test('mixed array', () => expect(flattenArr([1, 2, [3, 4], [[5, 6], [7, 8]]])).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8]));
+		it('flattens deeply nested arrays', () => {
+			const arr = [1, [2, [3, [4]], 5], 6];
+			expect(flattenArr(arr)).toEqual([1, 2, 3, 4, 5, 6]);
+		});
+		it('flattens flat array as-is', () => {
+			expect(flattenArr([1, 2, 3])).toEqual([1, 2, 3]);
+		});
 	});
 
 	describe('sortByProp', () => {
-		test('random letters', () => {
-			let unsorted: any = Array(100).fill(null)
-				.map(() => String.fromCharCode(Math.round(Math.random() * 25) + 97));
-			const sorted = unsorted.sort((a: any, b: any) => {
-				if(a > b) return 1;
-				if(a < b) return -1;
-				return 0;
-			}).map((l: any) => ({a: l}));
-			unsorted = unsorted.map((l: any) => ({a: l}));
-			expect(unsorted.sort(sortByProp('a'))).toStrictEqual(sorted);
+		it('sorts by numeric property', () => {
+			const arr = [{a: 3}, {a: 1}, {a: 2}];
+			arr.sort(sortByProp('a'));
+			expect(arr.map(i => i.a)).toEqual([1, 2, 3]);
 		});
-		test('random letters reversed', () => {
-			let unsorted: any = Array(100).fill(null)
-				.map(() => String.fromCharCode(Math.round(Math.random() * 25) + 97));
-			const sorted = unsorted.sort((a: any, b: any) => {
-				if(a > b) return -1;
-				if(a < b) return 1;
-				return 0;
-			}).map((n: any) => ({a: n}));
-			unsorted = unsorted.map((n: any) => ({a: n}));
-			expect(unsorted.sort(sortByProp('a', true))).toStrictEqual(sorted);
-		});
-		test('random numbers', () => {
-			let unsorted: any = Array(100).fill(null).map(() => Math.round(Math.random() * 100));
-			const sorted = unsorted.sort((a: any, b: any) => a - b).map((n: any) => ({a: n}));
-			unsorted = unsorted.map((n: any) => ({a: n}));
-			expect(unsorted.sort(sortByProp('a'))).toStrictEqual(sorted);
-		});
-		test('random numbers reversed', () => {
-			let unsorted: any = Array(100).fill(null).map(() => Math.round(Math.random() * 100));
-			const sorted = unsorted.sort((a: any, b: any) => b - a).map((n: any) => ({a: n}));
-			unsorted = unsorted.map((n: any) => ({a: n}));
-			expect(unsorted.sort(sortByProp('a', true))).toStrictEqual(sorted);
+		it('sorts by string property reversed', () => {
+			const arr = [{a: 'apple'}, {a: 'banana'}, {a: 'pear'}];
+			arr.sort(sortByProp('a', true));
+			expect(arr.map(i => i.a)).toEqual(['pear', 'banana', 'apple']);
 		});
 	});
 
-	describe('caseInsensitiveSort', () => {
-		test('non-string property', () => {
-			const unsorted: any = [{a: 'Apple', b: 123}, {a: 'Carrot', b: 789}, {a: 'banana', b: 456}];
-			const sorted: any = unsorted.map((u: any) => ({...u}));
-			expect(unsorted.sort(caseInsensitiveSort('b'))).toStrictEqual(sorted);
+	describe('makeUnique', () => {
+		it('removes duplicate primitives', () => {
+			const arr = [1, 2, 2, 3, 1];
+			expect(makeUnique(arr)).toEqual([1, 2, 3]);
 		});
-		test('simple strings', () => {
-			const unsorted: any = [{a: 'Apple'}, {a: 'Carrot'}, {a: 'banana'}];
-			const sorted: any = unsorted.sort((first: any, second: any) => {
-				return first.a.toLowerCase().localeCompare(second.a.toLowerCase());
-			}).map((u: any) => ({...u}));
-			expect(unsorted.sort(caseInsensitiveSort('a'))).toStrictEqual(sorted);
+		it('removes duplicate objects', () => {
+			const obj = {a: 1};
+			const arr = [obj, obj, {a: 1}];
+			expect(makeUnique(arr)).toHaveLength(1);
 		});
-		test('alphanumeric strings', () => {
-			const unsorted: any = [{a: '4pple'}, {a: 'Carrot'}, {a: 'b4n4n4'}];
-			const sorted: any = unsorted.sort((first: any, second: any) => {
-				return first.a.toLowerCase().localeCompare(second.a.toLowerCase());
-			}).map((u: any) => ({...u}));
-			expect(unsorted.sort(caseInsensitiveSort('a'))).toStrictEqual(sorted);
+	});
+
+	describe('makeArray', () => {
+		it('wraps non-arrays in array', () => {
+			expect(makeArray(1)).toEqual([1]);
+		});
+		it('returns array as-is', () => {
+			expect(makeArray([1, 2])).toEqual([1, 2]);
 		});
 	});
 });

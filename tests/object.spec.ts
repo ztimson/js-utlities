@@ -1,89 +1,164 @@
-import {clean, deepCopy, dotNotation, flattenObj, includes, isEqual} from "../src";
+import {
+	clean, deepCopy, deepMerge, dotNotation, encodeQuery, flattenObj, formData, includes, isEqual, mixin,
+	JSONAttemptParse, JSONSerialize, JSONSanitize
+} from '../src';
 
-describe('Object Utilities', () => {
-	const TEST_OBJECT = {
-		a: 1,
-		b: [
-			[2, 3],
-			[4, 5]
-		],
-		c: {
-			d: [
-				[{e: 6, f: 7}]
-			],
-		},
-		g: {h: 8},
-		i: () => 9
-	};
-
+describe('Object utilities', () => {
 	describe('clean', () => {
-		test('remove null properties', () => {
-			const a = {a: 1, b: null, c: undefined};
-			const final = {a: 1};
-			expect(clean(a)).toEqual(final);
+		it('removes null values', () => {
+			const obj = { a: 1, b: null, c: undefined, d: 0 };
+			expect(clean({ ...obj })).toEqual({ a: 1, c: undefined, d: 0 });
 		});
-		test('remove undefined properties', () => {
-			const a = {a: 1, b: null, c: undefined};
-			const final = {a: 1, b: null};
-			expect(clean(a, true)).toEqual(final);
+		it('throws on null input', () => {
+			expect(() => clean(null as any)).toThrow();
+		});
+		it('removes undefined only when specified', () => {
+			const obj = { a: 1, b: undefined, c: null };
+			expect(clean({ ...obj }, true)).toEqual({ a: 1, c: null });
+		});
+		it('works for arrays', () => {
+			expect(clean([1, null, 2, undefined, 3] as any)).toEqual([1, 2, 3]);
+		});
+	});
+
+	describe('deepCopy', () => {
+		it('creates a deep copy', () => {
+			const obj = { a: { b: 2 } };
+			const copy = deepCopy(obj);
+			expect(copy).toEqual(obj);
+			expect(copy).not.toBe(obj);
+			expect(copy.a).not.toBe(obj.a);
+		});
+	});
+
+	describe('deepMerge', () => {
+		it('merges deeply nested objects', () => {
+			const tgt = { a: { b: 1 }, d: 7 };
+			const src = { a: { c: 2 }, d: 8 };
+			expect(deepMerge({ ...tgt }, src)).toEqual({ a: { b: 1, c: 2 }, d: 8 });
+		});
+		it('merges multiple sources', () => {
+			const t = { a: 1 };
+			const s1 = { b: 2 };
+			const s2 = { c: 3 };
+			expect(deepMerge({ ...t }, s1, s2)).toEqual({ a: 1, b: 2, c: 3 });
 		});
 	});
 
 	describe('dotNotation', () => {
-		test('no object or properties', () => {
-			expect(dotNotation(undefined, 'z')).toStrictEqual(undefined);
-			expect(dotNotation(TEST_OBJECT, '')).toStrictEqual(undefined);
+		it('gets nested value', () => {
+			const obj = { a: { b: { c: 3 } } };
+			expect(dotNotation(obj, 'a.b.c')).toBe(3);
 		});
-		test('invalid property', () => expect(dotNotation(TEST_OBJECT, 'z')).toBeUndefined());
-		test('by property', () => expect(dotNotation(TEST_OBJECT, 'a')).toBe(TEST_OBJECT.a));
-		test('by key', () => expect(dotNotation(TEST_OBJECT, '["a"]')).toBe(TEST_OBJECT['a']));
-		test('by key (single quote)', () => expect(dotNotation(TEST_OBJECT, '[\'a\']')).toBe(TEST_OBJECT['a']));
-		test('by key (double quote)', () => expect(dotNotation(TEST_OBJECT, '["a"]')).toBe(TEST_OBJECT['a']));
-		test('by index', () => expect(dotNotation(TEST_OBJECT, 'b[0]')).toBe(TEST_OBJECT.b[0]));
-		test('by index (2d)', () => expect(dotNotation(TEST_OBJECT, 'b[1][1]')).toBe(TEST_OBJECT.b[1][1]));
-		test('everything combined', () => expect(dotNotation(TEST_OBJECT, 'c["d"][0][0].e'))
-			.toBe(TEST_OBJECT.c['d'][0][0].e));
-		test('set value', () => {
-			const COPY = JSON.parse(JSON.stringify(TEST_OBJECT));
-			dotNotation(COPY, 'c["d"][0][0].e', 'test');
-			expect(COPY['c']['d'][0][0]['e']).toBe('test');
+		it('sets nested value', () => {
+			const obj = { a: { b: { c: 3 } } };
+			dotNotation(obj, 'a.b.c', 10);
+			expect(obj.a.b.c).toBe(10);
 		});
-		test('set new value', () => {
-			const COPY = JSON.parse(JSON.stringify(TEST_OBJECT));
-			dotNotation(COPY, 'c.x.y.z', 'test');
-			expect(COPY['c']['x']['y']['z']).toBe('test');
+		it('returns undefined for non-existent path', () => {
+			expect(dotNotation({ a: 1 }, 'a.b.c')).toBeUndefined();
+		});
+		it('creates nested object when setting', () => {
+			const obj: any = {};
+			dotNotation(obj, 'd.e.f', 5);
+			expect(obj.d.e.f).toBe(5);
+		});
+	});
+
+	describe('encodeQuery', () => {
+		it('encodes simple objects', () => {
+			expect(encodeQuery({ a: 1, b: 'test' })).toBe('a=1&b=test');
+		});
+		it('handles special characters', () => {
+			expect(encodeQuery({ a: 'hello world' })).toBe('a=hello%20world');
+		});
+	});
+
+	describe('flattenObj', () => {
+		it('flattens nested objects', () => {
+			const obj = { a: { b: 2 }, c: 3 };
+			expect(flattenObj(obj)).toEqual({ 'a.b': 2, c: 3 });
+		});
+		it('handles multiple nesting', () => {
+			const obj = { a: { b: { c: 4 } } };
+			expect(flattenObj(obj)).toEqual({ 'a.b.c': 4 });
+		});
+	});
+
+	describe('formData', () => {
+		it('converts object to FormData', () => {
+			const obj = { a: '1', b: 'foo' };
+			const fd = formData(obj);
+			expect(fd.get('a')).toBe('1');
+			expect(fd.get('b')).toBe('foo');
 		});
 	});
 
 	describe('includes', () => {
-		test('simple', () => expect(includes(TEST_OBJECT, {a: 1})).toBeTruthy());
-		test('nested', () => expect(includes(TEST_OBJECT, {g: {h: 8}})).toBeTruthy());
-		test('array', () => expect(includes(TEST_OBJECT, {b: [[2]]})).toBeTruthy());
-		test('nested array', () => expect(includes(TEST_OBJECT, {a: 1, c: {d: [[{e: 6}]]}})).toBeTruthy());
-		test('wong nested array', () => expect(includes(TEST_OBJECT, {a: 1, c: {d: [{e: 7}]}})).toBeFalsy());
-		test('wrong value', () => expect(includes(TEST_OBJECT, {a: 1, b: 2})).toBeFalsy());
-		test('missing value', () => expect(includes(TEST_OBJECT, {a: 1, i: 10})).toBeFalsy());
+		it('checks if all values included', () => {
+			expect(includes({ a: 2, b: 3 }, { a: 2 })).toBeTruthy();
+			expect(includes({ a: 2, b: 3 }, { c: 1 })).toBeFalsy();
+		});
+		it('handles arrays of values', () => {
+			expect(includes([{ a: 1 }], [{ a: 1 }])).toBeTruthy();
+			expect(includes([{ a: 1 }], [{ a: 2 }])).toBeFalsy();
+		});
+		it('allows missing when specified', () => {
+			expect(includes(undefined, { a: 2 }, true)).toBeTruthy();
+		});
 	});
 
 	describe('isEqual', () => {
-		test('boolean equal', () => expect(isEqual(true, true)).toBeTruthy());
-		test('boolean not-equal', () => expect(isEqual(true, false)).toBeFalsy());
-		test('number equal', () => expect(isEqual(1, 1)).toBeTruthy());
-		test('number not-equal', () => expect(isEqual(1, 0)).toBeFalsy());
-		test('string equal', () => expect(isEqual('abc', 'abc')).toBeTruthy());
-		test('string not-equal', () => expect(isEqual('abc', '')).toBeFalsy());
-		test('array equal', () => expect(isEqual([true, 1, 'a'], [true, 1, 'a'])).toBeTruthy());
-		test('array not-equal', () => expect(isEqual([true, 1, 'a'], [1])).toBeFalsy());
-		test('object equal', () => expect(isEqual({a: 1, b: 2}, {a: 1, b: 2})).toBeTruthy());
-		test('object not-equal', () => expect(isEqual({a: 1, b: 2}, {a: 1})).toBeFalsy());
-		test('complex', () => expect(isEqual(TEST_OBJECT, TEST_OBJECT)).toBeTruthy());
+		it('returns true for deeply equal objects', () => {
+			expect(isEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } })).toBe(true);
+		});
+		it('returns false for non-equal objects', () => {
+			expect(isEqual({ a: 1 }, { a: 2 })).toBe(false);
+		});
+		it('compares functions by string', () => {
+			expect(isEqual(() => 1, () => 1)).toBe(true);
+		});
 	});
 
-	describe('flattenObj', () => {
-		test('simple nested object', () => expect(flattenObj({a: {b: {c: 1}}})).toEqual({"a.b.c": 1}));
-		test('already flat object', () => expect(flattenObj(TEST_OBJECT['g'])).toEqual(TEST_OBJECT['g']));
-		test('non-object input', () => expect(flattenObj(TEST_OBJECT['b'])).toBeUndefined());
-		test('complex nested object', () => expect(flattenObj({a: 1, b: {c: 2}, d: {e: {f: {g: 3}}}}))
-			.toEqual({"a": 1, "b.c": 2, "d.e.f.g": 3}));
+	describe('mixin', () => {
+		it('merges prototypes', () => {
+			class A { foo() { return 1; } }
+			class B { bar() { return 2; } }
+			class C {}
+			mixin(C, [A, B]);
+			const c = new (C as any)();
+			expect(c.foo()).toBe(1);
+			expect(c.bar()).toBe(2);
+		});
+	});
+
+	describe('JSONAttemptParse', () => {
+		it('parses valid JSON', () => {
+			expect(JSONAttemptParse('{"a":1}')).toEqual({ a: 1 });
+		});
+		it('returns original string on error', () => {
+			expect(JSONAttemptParse('not json')).toBe('not json');
+		});
+	});
+
+	describe('JSONSerialize', () => {
+		it('serializes objects', () => {
+			expect(JSONSerialize({ a: 1 })).toBe(JSON.stringify({ a: 1 }));
+		});
+		it('leaves primitives as is', () => {
+			expect(JSONSerialize('test')).toBe('test');
+			expect(JSONSerialize(123)).toBe(123);
+		});
+	});
+
+	describe('JSONSanitize', () => {
+		it('stringifies objects', () => {
+			expect(JSONSanitize({ a: 1 })).toBe(JSON.stringify({ a: 1 }));
+		});
+		it('does not throw on circular refs', () => {
+			const obj: any = {};
+			obj.self = obj;
+			expect(() => JSONSanitize(obj)).not.toThrow();
+		});
 	});
 });

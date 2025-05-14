@@ -23,7 +23,7 @@ export const CHAR_LIST = LETTER_LIST + LETTER_LIST.toLowerCase() + NUMBER_LIST +
  */
 export function camelCase(str?: string) {
 	const text = pascalCase(str);
-	return text[0].toLowerCase() + text.slice(1);
+	return !text ? '' : text[0].toLowerCase() + text.slice(1);
 }
 
 /**
@@ -110,12 +110,13 @@ export function pad(text: any, length: number, char: string = ' ', start = true)
  * @param {string} str
  * @return {string}
  */
-export function pascalCase(str?: string) {
+export function pascalCase(str?: string): string {
 	if(!str) return '';
-	const text = str.replaceAll(/(^[^a-zA-Z]+|[^a-zA-Z0-9-_])/g, '')
-		.replaceAll(/[^a-zA-Z0-9]+(\w?)/g, (...args) => args[1]?.toUpperCase() || '');
-	return text[0].toUpperCase() + text.slice(1);
+	return str.match(/[a-zA-Z0-9]+/g)
+		?.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+		.join('') ?? '';
 }
+
 
 /**
  * Generate a random hexadecimal value

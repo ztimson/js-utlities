@@ -120,6 +120,7 @@ export class PathEvent {
 				const l1 = p1.fullPath.length, l2 = p2.fullPath.length;
 				return l1 < l2 ? 1 : (l1 > l2 ? -1 : 0);
 			}).reduce((acc, p) => {
+				if(acc && !acc.fullPath.startsWith(p.fullPath)) return acc;
 				if(p.none) hitNone = true;
 				if(!acc) return p;
 				if(hitNone) return acc;
@@ -253,8 +254,8 @@ export class PathEventEmitter implements IPathEventEmitter{
 	constructor(public readonly prefix: string = '') { }
 
 	emit(event: Event, ...args: any[]) {
-		const parsed = new PathEvent(`${this.prefix}/${typeof event == 'string' ? event : event.toString()}`);
-		this.listeners.filter(l => PathEvent.has(l[0], event))
+		const parsed = new PathEvent(`${this.prefix}/${new PathEvent(event).toString()}`);
+		this.listeners.filter(l => PathEvent.has(l[0], `${this.prefix}/${event}`))
 			.forEach(async l => l[1](parsed, ...args));
 	};
 
@@ -264,7 +265,7 @@ export class PathEventEmitter implements IPathEventEmitter{
 
 	on(event: Event | Event[], listener: PathListener): PathUnsubscribe {
 		makeArray(event).forEach(e => this.listeners.push([
-			new PathEvent(`${this.prefix}/${typeof e == 'string' ? event : event.toString()}`),
+			new PathEvent(`${this.prefix}/${new PathEvent(e).toString()}`),
 			listener
 		]));
 		return () => this.off(listener);

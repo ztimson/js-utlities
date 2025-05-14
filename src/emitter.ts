@@ -17,7 +17,7 @@ export class TypedEmitter<T extends TypedEvents = TypedEvents> {
 
 	static off(event: any, listener: TypedListener) {
 		const e = event.toString();
-		this.listeners[e] = (this.listeners[e] || []).filter(l => l === listener);
+		this.listeners[e] = (this.listeners[e] || []).filter(l => l != listener);
 	}
 
 	static on(event: any, listener: TypedListener) {
@@ -43,7 +43,7 @@ export class TypedEmitter<T extends TypedEvents = TypedEvents> {
 	};
 
 	off<K extends keyof T = string>(event: K, listener: T[K]) {
-		this.listeners[event] = (this.listeners[event] || []).filter(l => l === listener);
+		this.listeners[event] = (this.listeners[event] || []).filter(l => l != listener);
 	}
 
 	on<K extends keyof T = string>(event: K, listener: T[K]) {

@@ -1,3 +1,4 @@
+import {ASet} from './aset.ts';
 import {dotNotation, isEqual} from './objects';
 
 /**
@@ -28,10 +29,7 @@ export function addUnique<T>(array: T[], el: T): T[] {
  * @deprecated Use ASet to perform Set operations on arrays
  */
 export function arrayDiff(a: any[], b: any[]): any[] {
-	return makeUnique([
-		...a.filter(v1 => !b.includes((v2: any) => isEqual(v1, v2))),
-		...b.filter(v1 => !a.includes((v2: any) => isEqual(v1, v2))),
-	]);
+	return new ASet(a).symmetricDifference(new ASet(b));
 }
 
 /**

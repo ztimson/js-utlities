@@ -7,24 +7,29 @@
  * ```
  *
  * @param {number} num Number to convert
+ * @param maxDen
  * @return {string} Fraction with remainder
  */
-export function dec2Frac(num: number) {
-	const gcd = (a: number, b: number): number => {
-		if (b < 0.0000001) return a;
-		return gcd(b, ~~(a % b));
-	};
-
-	const len = num.toString().length - 2;
-	let denominator = Math.pow(10, len);
-	let numerator = num * denominator;
-	const divisor = gcd(numerator, denominator);
-	numerator = ~~(numerator / divisor);
-	denominator = ~~(denominator / divisor)
-	const remainder = ~~(numerator / denominator);
-	numerator -= remainder * denominator;
-	return `${remainder ? remainder + ' ' : ''}${~~(numerator)}/${~~(denominator)}`;
+export function dec2Frac(num: number, maxDen=1000): string {
+	let sign = Math.sign(num);
+	num = Math.abs(num);
+	if (Number.isInteger(num)) return (sign * num) + "";
+	let closest = { n: 0, d: 1, diff: Math.abs(num) };
+	for (let d = 1; d <= maxDen; d++) {
+		let n = Math.round(num * d);
+		let diff = Math.abs(num - n / d);
+		if (diff < closest.diff) {
+			closest = { n, d, diff };
+			if (diff < 1e-8) break; // Close enough
+		}
+	}
+	let integer = Math.floor(closest.n / closest.d);
+	let numerator = closest.n - integer * closest.d;
+	return (sign < 0 ? '-' : '') +
+		(integer ? integer + ' ' : '') +
+		(numerator ? numerator + '/' + closest.d : '');
 }
+
 
 /**
  * Convert fraction to decimal number
