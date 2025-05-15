@@ -1,4 +1,4 @@
-import {Collection} from './database.ts';
+import {Collection} from './collection.ts';
 import {deepCopy, JSONSanitize} from './objects.ts';
 
 export type CacheOptions = {

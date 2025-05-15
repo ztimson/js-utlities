@@ -34,7 +34,6 @@ export class Collection<K extends IDBValidKey, T> {
 	}
 
 	put(key: K, value: T): Promise<void> {
-		debugger;
 		return this.tx(this.collection, store => store.put(value, key));
 	}
 
