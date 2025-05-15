@@ -1,0 +1,15 @@
+<html>
+	<body>
+		<script type="module">
+			import {Cache, Collection} from './dist/index.mjs';
+
+			const cache = new Cache('id', {
+				ttl: 60,
+				storage: new Collection('test', 'test'),
+				expiryPolicy: 'delete'
+			});
+
+			cache.add({id: 1, name: 'zak', age: 27});
+		</script>
+	</body>
+</html>

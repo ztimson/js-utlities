@@ -1,10 +1,11 @@
-import {deepCopy} from './objects.ts';
+import {Collection} from './database.ts';
+import {deepCopy, JSONSanitize} from './objects.ts';
 
 export type CacheOptions = {
 	/** Delete keys automatically after x amount of seconds */
 	ttl?: number;
 	/** Storage to persist cache */
-	storage?: Storage;
+	storage?: Storage | Collection<any, any>;
 	/** Key cache will be stored under */
 	storageKey?: string;
 	/** Keep or delete cached items once expired, defaults to delete */
@@ -30,13 +31,15 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param options
 	 */
 	constructor(public readonly key?: keyof T, public readonly options: CacheOptions = {}) {
-		if(options.storageKey && !options.storage && typeof(Storage) !== 'undefined')
-			options.storage = localStorage;
-		if(options.storageKey && options.storage) {
-			const stored = options.storage.getItem(options.storageKey);
-			if(stored) {
-				try { Object.assign(this.store, JSON.parse(stored)); }
-				catch { }
+		if(options.storageKey && !options.storage && typeof(Storage) !== 'undefined') options.storage = localStorage;
+		if(options.storage) {
+			if(options.storage instanceof Collection) {
+				(async () => {
+					(await options.storage?.getAll()).forEach((v: any) => this.add(v));
+				})()
+			} else if(options.storageKey) {
+				const stored = options.storage?.getItem(options.storageKey);
+				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
 			}
 		}
 		return new Proxy(this, {
@@ -57,9 +60,14 @@ export class Cache<K extends string | number | symbol, T> {
 		return <K>value[this.key];
 	}
 
-	private save() {
-		if(this.options.storageKey && this.options.storage)
-			this.options.storage.setItem(this.options.storageKey, JSON.stringify(this.store));
+	private save(key: K) {
+		if(this.options.storage) {
+			if(this.options.storage instanceof Collection) {
+				this.options.storage.put(key, this.store[key]);
+			} else if(this.options.storageKey) {
+				this.options.storage.setItem(this.options.storageKey, JSONSanitize(this.store));
+			}
+		}
 	}
 
 	/**
@@ -111,7 +119,7 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	delete(key: K): this {
 		delete this.store[key];
-		this.save();
+		this.save(key);
 		return this;
 	}
 
@@ -177,10 +185,10 @@ export class Cache<K extends string | number | symbol, T> {
 	set(key: K, value: T, ttl = this.options.ttl): this {
 		if(this.options.expiryPolicy == 'keep') delete (<any>value)._expired;
 		this.store[key] = value;
-		this.save();
+		this.save(key);
 		if(ttl) setTimeout(() => {
 			this.expire(key);
-			this.save();
+			this.save(key);
 		}, (ttl || 0) * 1000);
 		return this;
 	}
