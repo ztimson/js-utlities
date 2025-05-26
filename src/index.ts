@@ -4,7 +4,7 @@ export * from './aset';
 export * from './cache';
 export * from './color';
 export * from './csv';
-export * from './collection';
+export * from './database';
 export * from './files';
 export * from './emitter';
 export * from './errors';

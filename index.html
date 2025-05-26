@@ -1,15 +1,29 @@
 <html>
 	<body>
 		<script type="module">
-			import {Cache, Collection} from './dist/index.mjs';
+			import {Cache, Database} from './dist/index.mjs';
+
+			const db = new Database('test', ['test', 'test2', 'test3']);
 
 			const cache = new Cache('id', {
 				ttl: 60,
-				storage: new Collection('test', 'test'),
+				storage: db.table('test'),
 				expiryPolicy: 'delete'
 			});
 
-			cache.add({id: 1, name: 'zak', age: 27});
+			const cache2 = new Cache('id', {
+				ttl: 60,
+				storage: db.table('test2'),
+				expiryPolicy: 'delete'
+			});
+
+			const cache3 = new Cache('id', {
+				ttl: 60,
+				storage: db.table('test3'),
+				expiryPolicy: 'delete'
+			});
+
+			console.log(cache3.all());
 		</script>
 	</body>
 </html>

@@ -1,11 +1,11 @@
-import {Collection} from './collection.ts';
+import {Table} from './database.ts';
 import {deepCopy, JSONSanitize} from './objects.ts';
 
 export type CacheOptions = {
 	/** Delete keys automatically after x amount of seconds */
 	ttl?: number;
 	/** Storage to persist cache */
-	storage?: Storage | Collection<any, any>;
+	storage?: Storage | Table<any, any>;
 	/** Key cache will be stored under */
 	storageKey?: string;
 	/** Keep or delete cached items once expired, defaults to delete */
@@ -33,10 +33,11 @@ export class Cache<K extends string | number | symbol, T> {
 	constructor(public readonly key?: keyof T, public readonly options: CacheOptions = {}) {
 		if(options.storageKey && !options.storage && typeof(Storage) !== 'undefined') options.storage = localStorage;
 		if(options.storage) {
-			if(options.storage instanceof Collection) {
-				(async () => {
-					(await options.storage?.getAll()).forEach((v: any) => this.add(v));
-				})()
+			if(options.storage instanceof Table) {
+				(async () => (await options.storage?.getAll()).forEach((v: any) => {
+					console.log(v);
+					this.add(v)
+				}))()
 			} else if(options.storageKey) {
 				const stored = options.storage?.getItem(options.storageKey);
 				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
@@ -62,7 +63,7 @@ export class Cache<K extends string | number | symbol, T> {
 
 	private save(key: K) {
 		if(this.options.storage) {
-			if(this.options.storage instanceof Collection) {
+			if(this.options.storage instanceof Table) {
 				this.options.storage.put(key, this.store[key]);
 			} else if(this.options.storageKey) {
 				this.options.storage.setItem(this.options.storageKey, JSONSanitize(this.store));
@@ -138,14 +139,17 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	expire(key: K): this {
 		this.complete = false;
-		if(this.options.expiryPolicy == 'keep') (<any>this.store[key])._expired = true;
-		else this.delete(key);
+		if(this.options.expiryPolicy == 'keep') {
+			(<any>this.store[key])._expired = true;
+			this.save(key);
+		} else this.delete(key);
 		return this;
 	}
 
 	/**
 	 * Get item from the cache
 	 * @param {K} key Key to lookup
+	 * @param expired Include expired items
 	 * @return {T} Cached item
 	 */
 	get(key: K, expired?: boolean): CachedValue<T> | null {
