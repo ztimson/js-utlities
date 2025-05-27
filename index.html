@@ -3,27 +3,7 @@
 		<script type="module">
 			import {Cache, Database} from './dist/index.mjs';
 
-			const db = new Database('test', ['test', 'test2', 'test3']);
-
-			const cache = new Cache('id', {
-				ttl: 60,
-				storage: db.table('test'),
-				expiryPolicy: 'delete'
-			});
-
-			const cache2 = new Cache('id', {
-				ttl: 60,
-				storage: db.table('test2'),
-				expiryPolicy: 'delete'
-			});
-
-			const cache3 = new Cache('id', {
-				ttl: 60,
-				storage: db.table('test3'),
-				expiryPolicy: 'delete'
-			});
-
-			console.log(cache3.all());
+			const db = new Database('test', []);
 		</script>
 	</body>
 </html>

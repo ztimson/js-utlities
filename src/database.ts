@@ -1,3 +1,5 @@
+import {ASet} from './aset.ts';
+
 export type TableOptions = {
 	name: string;
 	key?: string;
@@ -9,12 +11,13 @@ export class Database {
 	constructor(public readonly database: string, public readonly tables: (string | TableOptions)[], public version?: number) {
 		this.connection = new Promise((resolve, reject) => {
 			const req = indexedDB.open(this.database, this.version);
+			const tableNames = new ASet(tables.map(t => (typeof t == 'object' ? t.name : t).toString()));
 
 			req.onerror = () => reject(req.error);
 
 			req.onsuccess = () => {
 				const db = req.result;
-				if(tables.find(s => !db.objectStoreNames.contains(typeof s === 'string' ? s : s.name))) {
+				if(tableNames.symmetricDifference(new ASet(Array.from(db.objectStoreNames))).length) {
 					db.close();
 					Object.assign(this, new Database(this.database, this.tables, db.version + 1));
 				} else {
@@ -25,14 +28,11 @@ export class Database {
 
 			req.onupgradeneeded = () => {
 				const db = req.result;
-				Array.from(db.objectStoreNames)
-					.filter(s => !this.tables.find(t => typeof t === 'string' ? t : t.name == s))
-					.forEach(name => db.deleteObjectStore(name));
-				tables.filter(t => !db.objectStoreNames.contains(typeof t === 'string' ? t : t.name))
-					.forEach(t => {db.createObjectStore(typeof t === 'string' ? t : t.name, {
-						keyPath: typeof t === 'string' ? undefined : t.key
-					});
-				});
+				const existingTables = new ASet(Array.from(db.objectStoreNames));
+				console.log('delete', existingTables.difference(tableNames));
+				existingTables.difference(tableNames).forEach(name => db.deleteObjectStore(name));
+				console.log('create', tableNames.difference(existingTables));
+				tableNames.difference(existingTables).forEach(name => db.createObjectStore(name));
 			};
 		});
 	}
@@ -41,18 +41,18 @@ export class Database {
 		return this.tables.some(t => (typeof t === 'string' ? name === t : name === t.name));
 	}
 
-	table<K extends IDBValidKey = any, T = any>(name: string): Table<K, T> {
-		return new Table<K, T>(this, name);
+	table<K extends IDBValidKey = any, T = any>(name: any): Table<K, T> {
+		return new Table<K, T>(this, name.toString());
 	}
 }
 
 export class Table<K extends IDBValidKey = any, T = any> {
 	constructor(private readonly database: Database, public readonly name: string) {}
 
-	async tx<R>(schema: string, fn: (store: IDBObjectStore) => IDBRequest, readonly = false): Promise<R> {
+	async tx<R>(table: string, fn: (store: IDBObjectStore) => IDBRequest, readonly = false): Promise<R> {
 		const db = await this.database.connection;
-		const tx = db.transaction(schema, readonly ? 'readonly' : 'readwrite');
-		const store = tx.objectStore(schema);
+		const tx = db.transaction(table, readonly ? 'readonly' : 'readwrite');
+		const store = tx.objectStore(table);
 		return new Promise<R>((resolve, reject) => {
 			const request = fn(store);
 			request.onsuccess = () => resolve(request.result as R); // ✅ explicit cast
