@@ -12,7 +12,10 @@ export class Database {
 	constructor(public readonly database: string, tables: (string | TableOptions)[], public version?: number) {
 		this.connection = new Promise((resolve, reject) => {
 			const req = indexedDB.open(this.database, this.version);
-			this.tables = tables.map(t => typeof t == 'object' ? t : {name: t});
+			this.tables = tables.map(t => {
+				t = typeof t == 'object' ? t : {name: t};
+				return {...t, name: t.name.toString()};
+			});
 			const tableNames = new ASet(this.tables.map(t => t.name));
 
 			req.onerror = () => reject(req.error);

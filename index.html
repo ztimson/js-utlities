@@ -3,7 +3,8 @@
 		<script type="module">
 			import {Cache, Database} from './dist/index.mjs';
 
-			const db = new Database('test', []);
+			const db = new Database('test', [123]);
+			window['table'] = db.table(123);
 		</script>
 	</body>
 </html>
