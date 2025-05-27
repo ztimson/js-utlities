@@ -29,9 +29,7 @@ export class Database {
 			req.onupgradeneeded = () => {
 				const db = req.result;
 				const existingTables = new ASet(Array.from(db.objectStoreNames));
-				console.log('delete', existingTables.difference(tableNames));
 				existingTables.difference(tableNames).forEach(name => db.deleteObjectStore(name));
-				console.log('create', tableNames.difference(existingTables));
 				tableNames.difference(existingTables).forEach(name => db.createObjectStore(name));
 			};
 		});
