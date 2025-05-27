@@ -7,11 +7,13 @@ export type TableOptions = {
 
 export class Database {
 	connection!: Promise<IDBDatabase>;
+	tables!: TableOptions[];
 
-	constructor(public readonly database: string, public readonly tables: (string | TableOptions)[], public version?: number) {
+	constructor(public readonly database: string, tables: (string | TableOptions)[], public version?: number) {
 		this.connection = new Promise((resolve, reject) => {
 			const req = indexedDB.open(this.database, this.version);
-			const tableNames = new ASet(tables.map(t => (typeof t == 'object' ? t.name : t).toString()));
+			this.tables = tables.map(t => typeof t == 'object' ? t : {name: t});
+			const tableNames = new ASet(this.tables.map(t => t.name));
 
 			req.onerror = () => reject(req.error);
 
@@ -35,8 +37,8 @@ export class Database {
 		});
 	}
 
-	includes(name: string): boolean {
-		return this.tables.some(t => (typeof t === 'string' ? name === t : name === t.name));
+	includes(name: any): boolean {
+		return !!this.tables.find(t => t.name == name.toString());
 	}
 
 	table<K extends IDBValidKey = any, T = any>(name: any): Table<K, T> {
