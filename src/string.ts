@@ -21,10 +21,12 @@ export const CHAR_LIST = LETTER_LIST + LETTER_LIST.toLowerCase() + NUMBER_LIST +
 /**
  * Converts text to camelCase
  */
-export function camelCase(str?: string) {
-	const text = pascalCase(str);
-	return !text ? '' : text[0].toLowerCase() + text.slice(1);
+export function camelCase(str?: string): string {
+	if(!str) return '';
+	const pascal = pascalCase(str);
+	return pascal.charAt(0).toLowerCase() + pascal.slice(1);
 }
+
 
 /**
  * Convert number of bytes into a human-readable size
@@ -75,13 +77,11 @@ export function insertAt(target: string, str: string, index: number): String {
 /**
  * Converts text to kebab-case
  */
-export function kebabCase(str: string) {
+export function kebabCase(str?: string): string {
 	if(!str) return '';
-	return str.replaceAll(/(^[^a-zA-Z]+|[^a-zA-Z0-9-_])/g, '')
-		.replaceAll(/([A-Z]|[0-9]+)/g, (...args) => `-${args[0].toLowerCase()}`)
-		.replaceAll(/([0-9])([a-z])/g, (...args) => `${args[1]}-${args[2]}`)
-		.replaceAll(/[^a-z0-9]+(\w?)/g, (...args) => `-${args[1] ?? ''}`).toLowerCase();
+	return wordSegments(str).map(w => w.toLowerCase()).join("-");
 }
+
 
 /**
  * Add padding to string
@@ -112,10 +112,11 @@ export function pad(text: any, length: number, char: string = ' ', start = true)
  */
 export function pascalCase(str?: string): string {
 	if(!str) return '';
-	return str.match(/[a-zA-Z0-9]+/g)
-		?.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-		.join('') ?? '';
+	return wordSegments(str)
+		.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+		.join('');
 }
+
 
 
 /**
@@ -184,13 +185,11 @@ export function randomStringBuilder(length: number, letters = false, numbers = f
 /**
  * Converts text to snake_case
  */
-export function snakeCase(str?: string) {
+export function snakeCase(str?: string): string {
 	if(!str) return '';
-	return str.replaceAll(/(^[^a-zA-Z]+|[^a-zA-Z0-9-_])/g, '')
-		.replaceAll(/([A-Z]|[0-9]+)/g, (...args) => `_${args[0].toLowerCase()}`)
-		.replaceAll(/([0-9])([a-z])/g, (...args) => `${args[1]}_${args[2]}`)
-		.replaceAll(/[^a-z0-9]+(\w?)/g, (...args) => `_${args[1] ?? ''}`).toLowerCase();
+	return wordSegments(str).map(w => w.toLowerCase()).join("_");
 }
+
 
 /**
  * Splice a string together (Similar to Array.splice)
@@ -297,6 +296,23 @@ export function md5(d: string)  {
 	function safe_add(d:any,_:any){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}
 	function bit_rol(d:any,_:any){return d<<_|d>>>32-_
 }
+
+/**
+ * Splits a string into logical word segments
+ */
+export function wordSegments(str?: string): string[] {
+	if (!str) return [];
+	return str
+		.replace(/([a-z])([A-Z])/g, "$1 $2")
+		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+		.replace(/([0-9]+)([a-zA-Z])/g, "$1 $2")
+		.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2")
+		.replace(/[_\-\s]+/g, " ")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+}
+
 
 /**
  * Check if email is valid

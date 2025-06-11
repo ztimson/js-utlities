@@ -59,7 +59,8 @@ describe('String Utilities', () => {
 
 	describe('kebabCase', () => {
 		it('converts to kebab-case', () => {
-			expect(kebabCase('HelloWorldTest')).toContain('-hello');
+			expect(kebabCase('hello world')).toBe('hello-world');
+			expect(kebabCase('HelloWorld')).toContain('hello-world');
 			expect(kebabCase('')).toBe('');
 		});
 	});
