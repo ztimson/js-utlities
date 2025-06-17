@@ -3,8 +3,17 @@
 		<script type="module">
 			import {Cache, Database} from './dist/index.mjs';
 
-			const db = new Database('test', [123]);
-			window['table'] = db.table(123);
+			const db = new Database('test');
+			db.connection.then(() => {
+				console.log(db.tables);
+			});
+
+			const table = window.table = await db.createTable('test2');
+			table.add({ name: 'Alice', age: 30 });
+			table.add({ name: 'Bob', age: 24 });
+			table.add({ name: 'Carol', age: 30 });
+
+			console.log(db.tables);
 		</script>
 	</body>
 </html>
