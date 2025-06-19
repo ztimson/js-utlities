@@ -1,5 +1,5 @@
 import {Table} from './database.ts';
-import {deepCopy, JSONSanitize} from './objects.ts';
+import {deepCopy, includes, JSONSanitize} from './objects.ts';
 
 export type CacheOptions = {
 	/** Delete keys automatically after x amount of seconds */
@@ -141,6 +141,16 @@ export class Cache<K extends string | number | symbol, T> {
 			this.save(key);
 		} else this.delete(key);
 		return this;
+	}
+
+	/**
+	 * Find the first cached item to match a filter
+	 * @param {Partial<T>} filter Partial item to match
+	 * @param {Boolean} expired Include expired items, defaults to false
+	 * @returns {T | undefined} Cached item or undefined if nothing matched
+	 */
+	find(filter: Partial<T>, expired?: boolean): T | undefined {
+		return <T>Object.values(this.store).find((row: any) => (expired || !row._expired) && includes(row, filter));
 	}
 
 	/**
