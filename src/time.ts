@@ -190,3 +190,35 @@ export async function sleepWhile(fn : () => boolean | Promise<boolean>, checkInt
 export function timeUntil(date: Date | number): number {
 	return (date instanceof Date ? date.getTime() : date) - (new Date()).getTime();
 }
+
+
+/**
+ * Convert a timezone string (e.g., "America/Toronto") to its current UTC offset in minutes.
+ * @param {string} tz - Timezone string, e.g. "America/Toronto"
+ * @param {Date} [date=new Date()] - The date for which you want the offset (default is now)
+ * @returns {number} - Offset in minutes (e.g., -240)
+ */
+export function timezoneOffset(tz: string, date: Date = new Date()): number {
+	const dtf = new Intl.DateTimeFormat('en-US', {
+		timeZone: tz,
+		hour12: false,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+	const parts = dtf.formatToParts(date);
+	const get = (type: string) => Number(parts.find(v => v.type === type)?.value);
+	const y = get('year');
+	const mo = get('month');
+	const d = get('day');
+	const h = get('hour');
+	const m = get('minute');
+	const s = get('second');
+
+	const asUTC = Date.UTC(y, mo - 1, d, h, m, s);
+	const asLocal = date.getTime();
+	return Math.round((asLocal - asUTC) / 60000);
+}

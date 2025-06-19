@@ -48,7 +48,7 @@ export function PES(str: TemplateStringsArray, ...args: any[]) {
 		if(str[i]) combined.push(str[i]);
 		if(args[i]) combined.push(args[i]);
 	}
-	const [paths, methods] = combined.join('').split(':');
+	const [paths, methods] = combined.join('/').split(':');
 	return PathEvent.toString(paths, <any>methods?.split(''));
 }
 
@@ -254,8 +254,8 @@ export class PathEventEmitter implements IPathEventEmitter{
 	constructor(public readonly prefix: string = '') { }
 
 	emit(event: Event, ...args: any[]) {
-		const parsed = new PathEvent(`${this.prefix}/${new PathEvent(event).toString()}`);
-		this.listeners.filter(l => PathEvent.has(l[0], `${this.prefix}/${event}`))
+		const parsed = PE`${this.prefix}/${event}`;
+		this.listeners.filter(l => PathEvent.has(l[0], parsed))
 			.forEach(async l => l[1](parsed, ...args));
 	};
 
