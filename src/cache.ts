@@ -34,7 +34,12 @@ export class Cache<K extends string | number | symbol, T> {
 		if(options.storageKey && !options.storage && typeof(Storage) !== 'undefined') options.storage = localStorage;
 		if(options.storage) {
 			if(options.storage instanceof Table) {
-				(async () => (await options.storage?.getAll()).forEach((v: any) => this.add(v)))()
+				(async () => (await options.storage?.getAll()).forEach((v: any) => {
+					if(v) {
+						try { this.add(v) }
+						catch { }
+					}
+				}))()
 			} else if(options.storageKey) {
 				const stored = options.storage?.getItem(options.storageKey);
 				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
@@ -55,6 +60,7 @@ export class Cache<K extends string | number | symbol, T> {
 
 	private getKey(value: T): K {
 		if(!this.key) throw new Error('No key defined');
+		if(value[this.key] === undefined) throw new Error(`${this.key.toString()} Doesn't exist on ${JSON.stringify(value, null, 2)}`);
 		return <K>value[this.key];
 	}
 
