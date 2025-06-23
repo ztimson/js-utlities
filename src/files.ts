@@ -77,7 +77,7 @@ export function fileText(file: any): Promise<string | null> {
  */
 export function timestampFilename(name?: string, date: Date | number | string = new Date()) {
 	if(typeof date == 'number' || typeof date == 'string') date = new Date(date);
-	const timestamp = formatDate('YYYY-MM-DD_HH:mm:ss', date);
+	const timestamp = formatDate('YYYY-MM-DD_HH-mm', date);
 	return name ? name.replace('{{TIMESTAMP}}', timestamp) : timestamp;
 }
 
