@@ -140,13 +140,10 @@ export class PathEvent {
 	 */
 	static filter(target: string | PathEvent | (string | PathEvent)[], ...filter: (string | PathEvent)[]): PathEvent[] {
 		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
-		const parsedFind = makeArray(filter).map(pe => new PathEvent(pe));
-		return parsedTarget.filter(t => {
-			if(!t.fullPath && t.all) return true;
-			return !!parsedFind.find(f =>
-				(t.fullPath.startsWith(f.fullPath) || f.fullPath.startsWith(t.fullPath)) &&
-				(f.all || t.all || t.methods.intersection(f.methods).length));
-		});
+		const parsedFilter = makeArray(filter).map(pe => new PathEvent(pe));
+		return parsedTarget.filter(t => !!parsedFilter.find(f =>
+				(t.fullPath == '*' || f.fullPath == '*' || t.fullPath.startsWith(f.fullPath) || f.fullPath.startsWith(t.fullPath)) &&
+				(f.all || t.all || t.methods.intersection(f.methods).length)));
 	}
 
 	/**
@@ -157,15 +154,12 @@ export class PathEvent {
 	 * @return {boolean} Whether there is any overlap
 	 */
 	static has(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): boolean {
-		const parsedRequired = makeArray(has).map(pe => new PathEvent(pe));
 		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
-		return !!parsedRequired.find(r => {
-			if(!r.fullPath && r.all) return true;
-			const filtered = parsedTarget.filter(p => r.fullPath.startsWith(p.fullPath));
-			if(!filtered.length) return false;
-			const combined = PathEvent.combine(...filtered);
-			return (!combined.none && (combined.all || r.all)) || combined.methods.intersection(r.methods).length;
-		});
+		const parsedRequired = makeArray(has).map(pe => new PathEvent(pe));
+		return !!parsedRequired.find(r => !!parsedTarget.find(t =>
+				(r.fullPath == '*' || t.fullPath == '*' || r.fullPath.startsWith(t.fullPath) || t.fullPath.startsWith(r.fullPath)) &&
+				(r.all || t.all || r.methods.intersection(t.methods).length)
+		));
 	}
 
 	/**

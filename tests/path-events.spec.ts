@@ -103,11 +103,9 @@ describe('Path Events', () => {
 		});
 
 		it('has returns true for overlapping', () => {
-			const events = [
-				new PathEvent('users/sys:cr'),
-			];
-			expect(PathEvent.has(events, 'users/sys:r')).toBe(true);
-			expect(PathEvent.has(events, 'users/nope:r')).toBe(false);
+			const events = [new PathEvent('users/sys:cr')];
+			expect(PathEvent.has(events, 'users/sys:r')).toBeTruthy();
+			expect(PathEvent.has(events, 'users/nope:r')).toBeFalsy();
 		});
 
 		it('hasAll returns true only if all overlap', () => {
