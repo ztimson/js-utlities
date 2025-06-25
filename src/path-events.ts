@@ -157,7 +157,7 @@ export class PathEvent {
 		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
 		const parsedRequired = makeArray(has).map(pe => new PathEvent(pe));
 		return !!parsedRequired.find(r => !!parsedTarget.find(t =>
-				(r.fullPath == '*' || t.fullPath == '*' || r.fullPath.startsWith(t.fullPath) || t.fullPath.startsWith(r.fullPath)) &&
+				(r.fullPath == '*' || t.fullPath == '*' || r.fullPath.startsWith(t.fullPath)) &&
 				(r.all || t.all || r.methods.intersection(t.methods).length)
 		));
 	}
