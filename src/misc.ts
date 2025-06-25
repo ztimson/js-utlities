@@ -2,6 +2,16 @@ import {PathEvent} from './path-events.ts';
 import {md5} from './string';
 
 /**
+ * Escape any regex special characters to avoid misinterpretation during search
+ *
+ * @param {string} value String which should be escaped
+ * @return {string} New escaped sequence
+ */
+export function escapeRegex(value: string) {
+	return value.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
+}
+
+/**
  * Run a stringified function with arguments asynchronously
  * @param {object} args Map of key/value arguments
  * @param {string} fn Function as string
@@ -26,13 +36,15 @@ export function gravatar(email: string, def='mp') {
 }
 
 /**
- * Escape any regex special characters to avoid misinterpretation during search
- *
- * @param {string} value String which should be escaped
- * @return {string} New escaped sequence
+ * Convert IPv6 to v4 because who uses that, NAT4Life
+ * @param {string} ip IPv6 address, e.g. 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+ * @returns {string | null} IPv4 address, e.g. 172.16.58.3
  */
-export function escapeRegex(value: string) {
-	return value.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
+export function ipV6ToV4(ip: string) {
+	if(!ip) return null;
+	const ipv4 = ip.split(':').splice(-1)[0];
+	if(ipv4 == '1') return '127.0.0.1';
+	return ipv4;
 }
 
 /**
