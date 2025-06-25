@@ -27,7 +27,7 @@ describe('Path Events', () => {
 
 	describe('PathEvent', () => {
 		it('parses event string', () => {
-			const pe = new PathEvent('Users/system:cr');
+			const pe = new PathEvent('users/system:cr');
 			expect(pe.module).toBe('users');
 			expect(pe.fullPath).toBe('users/system');
 			expect(pe.name).toBe('system');
