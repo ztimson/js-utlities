@@ -99,7 +99,7 @@ export class PathEvent {
 			method = '*';
 		}
 		let temp = p.split('/').filter(p => !!p);
-		this.module = temp.splice(0, 1)[0]?.toLowerCase() || '';
+		this.module = temp.splice(0, 1)[0] || '';
 		this.path = temp.join('/');
 		this.fullPath = `${this.module}${this.module && this.path ? '/' : ''}${this.path}`;
 		this.name = temp.pop() || '';
@@ -265,7 +265,7 @@ export class PathEventEmitter implements IPathEventEmitter{
 
 	on(event: Event | Event[], listener: PathListener): PathUnsubscribe {
 		makeArray(event).forEach(e => this.listeners.push([
-			new PathEvent(`${this.prefix}/${new PathEvent(e).toString()}`),
+			new PathEvent(`${this.prefix}/${e}`),
 			listener
 		]));
 		return () => this.off(listener);
