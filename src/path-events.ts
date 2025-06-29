@@ -141,9 +141,13 @@ export class PathEvent {
 	static filter(target: string | PathEvent | (string | PathEvent)[], ...filter: (string | PathEvent)[]): PathEvent[] {
 		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
 		const parsedFilter = makeArray(filter).map(pe => new PathEvent(pe));
-		return parsedTarget.filter(t => !!parsedFilter.find(f =>
-				(t.fullPath == '*' || f.fullPath == '*' || t.fullPath.startsWith(f.fullPath) || f.fullPath.startsWith(t.fullPath)) &&
-				(f.all || t.all || t.methods.intersection(f.methods).length)));
+		return parsedTarget.filter(t => !!parsedFilter.find(r => {
+			const wildcard = r.fullPath == '*' || t.fullPath == '*';
+			const p1 = r.fullPath.slice(0, r.fullPath.indexOf('*')), p2 = t.fullPath.slice(0, t.fullPath.indexOf('*'))
+			const scope = p1.startsWith(p2) || p2.startsWith(p1);
+			const methods = r.all || t.all || r.methods.intersection(t.methods).length;
+			return (wildcard || scope) && methods;
+		}));
 	}
 
 	/**
@@ -156,10 +160,13 @@ export class PathEvent {
 	static has(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): boolean {
 		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
 		const parsedRequired = makeArray(has).map(pe => new PathEvent(pe));
-		return !!parsedRequired.find(r => !!parsedTarget.find(t =>
-				(r.fullPath == '*' || t.fullPath == '*' || r.fullPath.startsWith(t.fullPath)) &&
-				(r.all || t.all || r.methods.intersection(t.methods).length)
-		));
+		return !!parsedRequired.find(r => !!parsedTarget.find(t => {
+			const wildcard = r.fullPath == '*' || t.fullPath == '*';
+			const p1 = r.fullPath.slice(0, r.fullPath.indexOf('*')), p2 = t.fullPath.slice(0, t.fullPath.indexOf('*'))
+			const scope = p1.startsWith(p2);
+			const methods = r.all || t.all || r.methods.intersection(t.methods).length;
+			return (wildcard || scope) && methods;
+		}));
 	}
 
 	/**
@@ -205,6 +212,44 @@ export class PathEvent {
 		p = p?.trim().replaceAll(/\/{2,}/g, '/').replaceAll(/(^\/|\/$)/g, '');
 		if(methods?.length) p += `:${makeArray(methods).map(m => m.toLowerCase()).join('')}`;
 		return p;
+	}
+
+	/**
+	 * Squash 2 sets of paths & return true if any overlap is found
+	 *
+	 * @param has Target must have at least one of these path
+	 * @return {boolean} Whether there is any overlap
+	 */
+	has(...has: (string | PathEvent)[]): boolean {
+		return PathEvent.has(this, ...has);
+	}
+
+	/**
+	 * Squash 2 sets of paths & return true if the target has all paths
+	 *
+	 * @param has Target must have all these paths
+	 * @return {boolean} Whether there is any overlap
+	 */
+	hasAll(...has: (string | PathEvent)[]): boolean {
+		return PathEvent.hasAll(this, ...has);
+	}
+
+	/**
+	 * Same as `has` but raises an error if there is no overlap
+	 *
+	 * @param has Target must have at least one of these path
+	 */
+	hasFatal(...has: (string | PathEvent)[]): void {
+		return PathEvent.hasFatal(this, ...has);
+	}
+
+	/**
+	 * Same as `hasAll` but raises an error if the target is missing any paths
+	 *
+	 * @param has Target must have all these paths
+	 */
+	hasAllFatal(...has: (string | PathEvent)[]): void {
+		return PathEvent.hasAllFatal(this, ...has);
 	}
 
 	/**
