@@ -24,6 +24,8 @@ export class Cache<K extends string | number | symbol, T> {
 	[key: string | number | symbol]: CachedValue<T> | any;
 	/** Whether cache is complete */
 	complete = false;
+	/** Await initial loading */
+	loading!: Promise<void>;
 
 	/**
 	 * Create new cache
@@ -31,15 +33,21 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param options
 	 */
 	constructor(public readonly key?: keyof T, public readonly options: CacheOptions = {}) {
+		let resolve: any;
+		this.loading = new Promise(r => resolve = r);
 		if(options.storageKey && !options.storage && typeof(Storage) !== 'undefined') options.storage = localStorage;
 		if(options.storage) {
 			if(options.storage instanceof Table) {
-				(async () => this.addAll(await options.storage?.getAll(), false))()
+				(async () => {
+					this.addAll(await options.storage?.getAll(), false);
+					resolve();
+				})()
 			} else if(options.storageKey) {
 				const stored = options.storage?.getItem(options.storageKey);
 				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
+				resolve();
 			}
-		}
+		} else resolve();
 		return new Proxy(this, {
 			get: (target: this, prop: string | symbol) => {
 				if(prop in target) return (target as any)[prop];
