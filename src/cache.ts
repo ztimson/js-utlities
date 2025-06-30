@@ -67,10 +67,18 @@ export class Cache<K extends string | number | symbol, T> {
 		return <K>value[this.key];
 	}
 
-	private save(key: K) {
+	private save(key?: K) {
 		if(this.options.storage) {
 			if(this.options.storage instanceof Table) {
-				this.options.storage.put(key, this.store[key]);
+				if(key == null) {
+					const rows = this.entries();
+					rows.forEach(([k, v]) => this.options.storage?.put(k, v));
+					this.options.storage.getAllKeys().then(keys => {
+						rows.map(([k]) => k).filter(k => !keys.includes(k))
+							.forEach(k => this.options.storage?.delete(k));
+					})
+				} else if(this.store[key] === undefined) this.options.storage.delete(key);
+				else this.options.storage.put(key, this.store[key]);
 			} else if(this.options.storageKey) {
 				this.options.storage.setItem(this.options.storageKey, JSONSanitize(this.store));
 			}
@@ -117,6 +125,7 @@ export class Cache<K extends string | number | symbol, T> {
 	clear(): this {
 		this.complete = false;
 		this.store = <any>{};
+		this.save();
 		return this;
 	}
 
