@@ -34,7 +34,7 @@ export class Cache<K extends string | number | symbol, T> {
 		if(options.storageKey && !options.storage && typeof(Storage) !== 'undefined') options.storage = localStorage;
 		if(options.storage) {
 			if(options.storage instanceof Table) {
-				(async () => this.addAll(await options.storage?.getAll()))()
+				(async () => this.addAll(await options.storage?.getAll(), false))()
 			} else if(options.storageKey) {
 				const stored = options.storage?.getItem(options.storageKey);
 				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
