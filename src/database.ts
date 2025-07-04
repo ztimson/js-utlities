@@ -1,5 +1,6 @@
 import {findByProp} from './array.ts';
 import {ASet} from './aset.ts';
+import {sleepWhile} from './time.ts';
 
 export type TableOptions = {
 	name: string;
@@ -7,10 +8,23 @@ export type TableOptions = {
 	autoIncrement?: boolean;
 };
 
+class AsyncLock {
+	private p = Promise.resolve();
+	run<T>(fn: () => Promise<T>): Promise<T> {
+		const res = this.p.then(fn, fn);
+		this.p = res.then(() => {}, () => {});
+		return res;
+}
+	}
+
 export class Database {
+	private schemaLock = new AsyncLock();
+	private upgrading = false;
+
 	connection!: Promise<IDBDatabase>;
-	ready = false;
 	tables!: TableOptions[];
+
+	get ready() { return !this.upgrading; }
 
 	constructor(public readonly database: string, tables?: (string | TableOptions)[], public version?: number) {
 		this.connection = new Promise((resolve, reject) => {
@@ -26,7 +40,7 @@ export class Database {
 				const db = req.result;
 				const existing = Array.from(db.objectStoreNames);
 				if(!tables) this.tables = existing.map(t => {
-					const tx = db.transaction(t, 'readonly', )
+					const tx = db.transaction(t, 'readonly');
 					const store = tx.objectStore(t);
 					return {name: t, key: <string>store.keyPath};
 				});
@@ -39,10 +53,11 @@ export class Database {
 					this.version = db.version;
 					resolve(db);
 				}
-				this.ready = true;
+				this.upgrading = false;
 			};
 
 			req.onupgradeneeded = () => {
+				this.upgrading = true;
 				const db = req.result;
 				const existingTables = new ASet(Array.from(db.objectStoreNames));
 				if(tables) {
@@ -52,7 +67,7 @@ export class Database {
 						const t = this.tables.find(findByProp('name', name));
 						db.createObjectStore(name, {
 							keyPath: t?.key,
-							autoIncrement: t?.autoIncrement || !t?.key
+							autoIncrement: t?.autoIncrement || !t?.key,
 						});
 					});
 				}
@@ -60,22 +75,30 @@ export class Database {
 		});
 	}
 
+	waitForUpgrade = () => sleepWhile(() => this.upgrading);
+
 	async createTable<K extends IDBValidKey = any, T = any>(table: string | TableOptions): Promise<Table<K, T>> {
-		if(typeof table == 'string') table = {name: table};
-		const conn = await this.connection;
-		if(!this.includes(table.name)) {
-			conn.close();
-			Object.assign(this, new Database(this.database, [...this.tables, table], (this.version ?? 0) + 1));
-		}
-		return this.table<K, T>(table.name);
+		return this.schemaLock.run(async () => {
+			if(typeof table == 'string') table = { name: table };
+			const conn = await this.connection;
+			if(!this.includes(table.name)) {
+				conn.close();
+				Object.assign(this, new Database(this.database, [...this.tables, table], (this.version ?? 0) + 1));
+				await this.connection;
+			}
+			return this.table<K, T>(table.name);
+		});
 	}
 
 	async deleteTable(table: string | TableOptions): Promise<void> {
-		if(typeof table == 'string') table = {name: table};
-		if(!this.includes(table.name)) return;
-		const conn = await this.connection;
-		conn.close();
-		Object.assign(this, new Database(this.database, this.tables.filter(t => t.name != table.name), (this.version ?? 0) + 1));
+		return this.schemaLock.run(async () => {
+			if(typeof table == 'string') table = { name: table };
+			if(!this.includes(table.name)) return;
+			const conn = await this.connection;
+			conn.close();
+			Object.assign(this, new Database(this.database, this.tables.filter(t => t.name != (<TableOptions>table).name), (this.version ?? 0) + 1));
+			await this.connection;
+		});
 	}
 
 	includes(name: any): boolean {
@@ -96,12 +119,13 @@ export class Table<K extends IDBValidKey = any, T = any> {
 	}
 
 	async tx<R>(table: string, fn: (store: IDBObjectStore) => IDBRequest, readonly = false): Promise<R> {
+		await this.database.waitForUpgrade();
 		const db = await this.database.connection;
 		const tx = db.transaction(table, readonly ? 'readonly' : 'readwrite');
 		const store = tx.objectStore(table);
 		return new Promise<R>((resolve, reject) => {
 			const request = fn(store);
-			request.onsuccess = () => resolve(request.result as R); // ✅ explicit cast
+			request.onsuccess = () => resolve(request.result as R);
 			request.onerror = () => reject(request.error);
 		});
 	}
