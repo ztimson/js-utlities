@@ -1,5 +1,5 @@
 [submodule "docs"]
 	path = docs
-	url = git@git.zakscode.com:ztimson/utils.wiki.git
+	url = ../utils.wiki.git
 	branch = master
 	ignore = all
