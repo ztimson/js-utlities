@@ -71,12 +71,12 @@ export class Cache<K extends string | number | symbol, T> {
 		if(this.options.storage) {
 			if(this.options.storage instanceof Table) {
 				if(key == null) {
-					const rows = this.entries();
-					rows.forEach(([k, v]) => this.options.storage?.put(k, v));
-					this.options.storage.getAllKeys().then(keys => {
-						rows.map(([k]) => k).filter(k => !keys.includes(k))
-							.forEach(k => this.options.storage?.delete(k));
-					})
+					let rows: any = this.entries();
+					rows.forEach(([k, v]: [string, any]) => this.options.storage?.put(k, v));
+					rows = rows.map(([k]: [string]) => k);
+					this.options.storage.getAllKeys().then(keys =>
+						keys.filter(k => !rows.includes(k))
+							.forEach(k => this.options.storage?.delete(k)));
 				} else if(this.store[key] === undefined) this.options.storage.delete(key);
 				else this.options.storage.put(key, this.store[key]);
 			} else if(this.options.storageKey) {
