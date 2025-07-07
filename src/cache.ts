@@ -80,7 +80,7 @@ export class Cache<K extends string | number | symbol, T> {
 			if(persists.storage?.constructor.name == 'Database') {
 				(<Database>persists.storage).createTable({name: persists.key, key: <string>this.key}).then(table => {
 					if(key) {
-						table.set(key, this.get(key));
+						table.set(this.get(key), key);
 					} else {
 						table.clear();
 						this.all().forEach(row => table.add(row));
