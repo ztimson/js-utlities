@@ -71,12 +71,9 @@ export class PathEvent {
 	/** List of methods */
 	methods!: ASet<Method>;
 
-	/** Internal cache for PathEvent instances to avoid redundant parsing */
-	private static pathEventCache: Map<string, PathEvent> = new Map();
-
 	/** All/Wildcard specified */
 	get all(): boolean { return this.methods.has('*') }
-	set all(v: boolean) { v ? this.methods = new ASet<Method>(['*']) : this.methods.delete('*'); }
+	set all(v: boolean) { v ? new ASet<Method>(['*']) : this.methods.delete('*'); }
 	/** None specified */
 	get none(): boolean { return this.methods.has('n') }
 	set none(v: boolean) { v ? this.methods = new ASet<Method>(['n']) : this.methods.delete('n'); }
@@ -94,20 +91,10 @@ export class PathEvent {
 	set delete(v: boolean) { v ? this.methods.delete('n').delete('*').add('d') : this.methods.delete('d'); }
 
 	constructor(e: string | PathEvent) {
-		if(typeof e == 'object') {
-			Object.assign(this, e);
-			return;
-		}
-
-		// Check cache first
-		if (PathEvent.pathEventCache.has(e)) {
-			Object.assign(this, PathEvent.pathEventCache.get(e)!);
-			return;
-		}
-
+		if(typeof e == 'object') return Object.assign(this, e);
 		let [p, scope, method] = e.replaceAll(/\/{2,}/g, '/').split(':');
 		if(!method) method = scope || '*';
-		if(p == '*' || (!p && method == '*')) {
+		if(p == '*' || !p && method == '*') {
 			p = '';
 			method = '*';
 		}
@@ -117,14 +104,6 @@ export class PathEvent {
 		this.fullPath = `${this.module}${this.module && this.path ? '/' : ''}${this.path}`;
 		this.name = temp.pop() || '';
 		this.methods = new ASet(<any>method.split(''));
-
-		// Store in cache
-		PathEvent.pathEventCache.set(e, this);
-	}
-
-	/** Clear the cache of all PathEvents */
-	static clearCache(): void {
-		PathEvent.pathEventCache.clear();
 	}
 
 	/**
@@ -136,7 +115,7 @@ export class PathEvent {
 	 */
 	static combine(...paths: (string | PathEvent)[]): PathEvent {
 		let hitNone = false;
-		const combined = paths.map(p => p instanceof PathEvent ? p : new PathEvent(p))
+		const combined = paths.map(p => new PathEvent(p))
 			.toSorted((p1, p2) => {
 				const l1 = p1.fullPath.length, l2 = p2.fullPath.length;
 				return l1 < l2 ? 1 : (l1 > l2 ? -1 : 0);
@@ -145,9 +124,10 @@ export class PathEvent {
 				if(p.none) hitNone = true;
 				if(!acc) return p;
 				if(hitNone) return acc;
-				acc.methods = new ASet([...acc.methods, ...p.methods]);
+				acc.methods = [...acc.methods, ...p.methods];
 				return acc;
 			}, <any>null);
+		combined.methods = new ASet<Method>(combined.methods);
 		return combined;
 	}
 
@@ -159,12 +139,11 @@ export class PathEvent {
 	 * @return {boolean} Whether there is any overlap
 	 */
 	static filter(target: string | PathEvent | (string | PathEvent)[], ...filter: (string | PathEvent)[]): PathEvent[] {
-		const parsedTarget = makeArray(target).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
-		const parsedFilter = makeArray(filter).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
+		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
+		const parsedFilter = makeArray(filter).map(pe => new PathEvent(pe));
 		return parsedTarget.filter(t => !!parsedFilter.find(r => {
 			const wildcard = r.fullPath == '*' || t.fullPath == '*';
-			const p1 = r.fullPath.includes('*') ? r.fullPath.slice(0, r.fullPath.indexOf('*')) : r.fullPath;
-			const p2 = t.fullPath.includes('*') ? t.fullPath.slice(0, t.fullPath.indexOf('*')) : t.fullPath;
+			const p1 = r.fullPath.slice(0, r.fullPath.indexOf('*')), p2 = t.fullPath.slice(0, t.fullPath.indexOf('*'))
 			const scope = p1.startsWith(p2) || p2.startsWith(p1);
 			const methods = r.all || t.all || r.methods.intersection(t.methods).length;
 			return (wildcard || scope) && methods;
@@ -179,13 +158,12 @@ export class PathEvent {
 	 * @return {boolean} Whether there is any overlap
 	 */
 	static has(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): boolean {
-		const parsedTarget = makeArray(target).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
-		const parsedRequired = makeArray(has).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
+		const parsedTarget = makeArray(target).map(pe => new PathEvent(pe));
+		const parsedRequired = makeArray(has).map(pe => new PathEvent(pe));
 		return !!parsedRequired.find(r => !!parsedTarget.find(t => {
 			const wildcard = r.fullPath == '*' || t.fullPath == '*';
-			const p1 = r.fullPath.includes('*') ? r.fullPath.slice(0, r.fullPath.indexOf('*')) : r.fullPath;
-			const p2 = t.fullPath.includes('*') ? t.fullPath.slice(0, t.fullPath.indexOf('*')) : t.fullPath;
-			const scope = p1.startsWith(p2); // Note: Original had || p2.startsWith(p1) here, but has implies target has required.
+			const p1 = r.fullPath.slice(0, r.fullPath.indexOf('*')), p2 = t.fullPath.slice(0, t.fullPath.indexOf('*'))
+			const scope = p1.startsWith(p2);
 			const methods = r.all || t.all || r.methods.intersection(t.methods).length;
 			return (wildcard || scope) && methods;
 		}));
@@ -315,7 +293,7 @@ export class PathEventEmitter implements IPathEventEmitter{
 	constructor(public readonly prefix: string = '') { }
 
 	emit(event: Event, ...args: any[]) {
-		const parsed = event instanceof PathEvent ? event : new PathEvent(`${this.prefix}/${event}`);
+		const parsed = PE`${this.prefix}/${event}`;
 		this.listeners.filter(l => PathEvent.has(l[0], parsed))
 			.forEach(async l => l[1](parsed, ...args));
 	};
@@ -326,7 +304,7 @@ export class PathEventEmitter implements IPathEventEmitter{
 
 	on(event: Event | Event[], listener: PathListener): PathUnsubscribe {
 		makeArray(event).forEach(e => this.listeners.push([
-			e instanceof PathEvent ? e : new PathEvent(`${this.prefix}/${e}`),
+			new PathEvent(`${this.prefix}/${e}`),
 			listener
 		]));
 		return () => this.off(listener);

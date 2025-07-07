@@ -177,51 +177,19 @@ export function includes(target: any, values: any, allowMissing = false): boolea
 }
 
 /**
- * Deep check if two items are equal.
- * Handles primitives, objects, arrays, functions, Date, RegExp, and circular references.
+ * Deep check if two objects are equal
  *
  * @param {any} a - first item to compare
  * @param {any} b - second item to compare
- * @param {WeakMap<object, object>} [seen] - Internal parameter to track circular references
  * @returns {boolean} True if they match
  */
-export function isEqual(a: any, b: any, seen = new WeakMap<object, object>()): boolean {
-	// Simple cases
-	if(a === b) return true;
-	if(a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
-	if(a instanceof RegExp && b instanceof RegExp) return a.source === b.source && a.flags === b.flags;
-
-	// Null checks
-	if(typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
-		if(Number.isNaN(a) && Number.isNaN(b)) return true;
-		if(typeof a === 'function' && typeof b === 'function') return a.toString() === b.toString()
-		return false;
-	}
-
-	// Circular references
-	if(seen.has(a)) return seen.get(a) === b;
-	seen.set(a, b);
-	const isArrayA = Array.isArray(a);
-	const isArrayB = Array.isArray(b);
-
-	// Array checks
-	if(isArrayA && isArrayB) {
-		if(a.length !== b.length) return false;
-		for(let i = 0; i < a.length; i++) {
-			if(!isEqual(a[i], b[i], seen)) return false;
-		}
-		return true;
-	}
-	if(isArrayA !== isArrayB) return false;
-
-	// Key & value deep comparison
-	const keysA = Object.keys(a);
-	const keysB = Object.keys(b);
-	if(keysA.length !== keysB.length) return false;
-	for(const key of keysA) {
-		if(!Object.prototype.hasOwnProperty.call(b, key) || !isEqual(a[key], b[key], seen)) return false;
-	}
-	return true;
+export function isEqual(a: any, b: any): boolean {
+	const ta = typeof a, tb = typeof b;
+	if((ta != 'object' || a == null) || (tb != 'object' || b == null))
+		return ta == 'function' && tb == 'function' ? a.toString() == b.toString() : a === b;
+	const keys = Object.keys(a);
+	if(keys.length != Object.keys(b).length) return false;
+	return Object.keys(a).every(key => isEqual(a[key], b[key]));
 }
 
 /**

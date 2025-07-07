@@ -1,11 +1,9 @@
 <html>
 	<body>
 		<script type="module">
-			import {PathEventEmitter} from './dist/index.mjs';
+			import {PES} from './dist/index.mjs';
 
-			const emitter = new PathEventEmitter('data');
-			emitter.on('*', console.log);
-			emitter.emit('data/asd', {});
+			console.log(PES`storage${'Test/Test'}:d`);
 		</script>
 	</body>
 </html>
