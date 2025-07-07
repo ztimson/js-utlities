@@ -39,7 +39,7 @@ export class Cache<K extends string | number | symbol, T> {
 			if(typeof this.options.persistentStorage == 'string')
 				this.options.persistentStorage = {storage: localStorage, key: this.options.persistentStorage};
 
-			if(this.options.persistentStorage?.storage instanceof Database) {
+			if(this.options.persistentStorage?.storage?.constructor.name == 'Database') {
 				(async () => {
 					const persists: any = this.options.persistentStorage;
 					const table: Table<any, any> = await persists.storage.createTable({name: persists.key, key: this.key});
@@ -47,8 +47,8 @@ export class Cache<K extends string | number | symbol, T> {
 					Object.assign(this.store, rows.reduce((acc, row) => ({...acc, [this.getKey(row)]: row}), {}));
 					done();
 				})();
-			} else {
-				const stored = this.options.persistentStorage.storage.getItem(this.options.persistentStorage.key);
+			} else if(this.options.persistentStorage?.storage?.constructor.name == 'Storage') {
+				const stored = (<Storage>this.options.persistentStorage.storage).getItem(this.options.persistentStorage.key);
 				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
 				done();
 			}
