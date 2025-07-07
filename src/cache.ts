@@ -75,10 +75,10 @@ export class Cache<K extends string | number | symbol, T> {
 	}
 
 	private save(key?: K) {
-		const persists: any = this.options.persistentStorage;
+		const persists: {storage: any, key: string} = <any>this.options.persistentStorage;
 		if(!!persists?.storage) {
 			if(persists.storage?.constructor.name == 'Database') {
-				(<Database>persists.storage).createTable({name: persists.storage.key, key: <string>this.key}).then(table => {
+				(<Database>persists.storage).createTable({name: persists.key, key: <string>this.key}).then(table => {
 					if(key) {
 						table.set(key, this.get(key));
 					} else {
