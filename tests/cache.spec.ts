@@ -123,7 +123,7 @@ describe('Cache', () => {
 	// Edge: add error handling test
 	it('throws if instantiating with invalid key property', () => {
 		expect(() => {
-			const invalid = new Cache<'foo', TestItem>('foo');
+			const invalid = new Cache<'string', TestItem>('id');
 			// try invalid.add({id: 'z', value: 'fail'}) if needed
 		}).not.toThrow();
 	});
