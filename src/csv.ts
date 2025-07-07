@@ -64,7 +64,6 @@ export function fromCsv<T = any>(csv: string, hasHeaders = true): T[] {
 	});
 }
 
-
 /**
  * Convert an array of objects to a CSV string
  *
