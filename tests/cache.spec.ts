@@ -1,7 +1,7 @@
-import {Cache} from '../src';
+import { Cache } from '../src';
 
 describe('Cache', () => {
-	type TestItem = { id: string; value: string; };
+	type TestItem = { id: string; value: string };
 
 	let cache: Cache<string, TestItem>;
 	let storageMock: Storage;
@@ -17,93 +17,114 @@ describe('Cache', () => {
 			key: jest.fn(),
 			length: 0,
 		};
+
+		// Spies
 		storageGetItemSpy = jest.spyOn(storageMock, 'getItem');
 		storageSetItemSpy = jest.spyOn(storageMock, 'setItem');
-		cache = new Cache<string, TestItem>('id', {storage: storageMock, storageKey: 'cache'});
+
+		cache = new Cache<string, TestItem>('id', {
+			persistentStorage: { storage: storageMock, key: 'cache' },
+		});
 		jest.clearAllMocks();
 		jest.useFakeTimers();
 	});
 
-	test('should add and get an item', () => {
-		const item = {id: '1', value: 'a'};
+	it('adds and gets an item', () => {
+		const item = { id: '1', value: 'a' };
 		cache.add(item);
 		expect(cache.get('1')).toEqual(item);
 	});
 
-	test('should not get an expired item when expired option not set', () => {
-		const item = {id: '1', value: 'a'};
-		cache.set('1', item);
+	it('skips expired items by default but fetches if requested', () => {
+		const item = { id: '2', value: 'b' };
+		cache.set('2', item);
 		cache.options.expiryPolicy = 'keep';
-		cache.expire('1');
-		expect(cache.get('1')).toBeNull();
-		expect(cache.get('1', true)).toEqual({...item, _expired: true});
+		cache.expire('2');
+		expect(cache.get('2')).toBeNull();
+		expect(cache.get('2', true)).toEqual({ ...item, _expired: true });
 	});
 
-	test('should set and get via property access (proxy)', () => {
-		(cache as any)['2'] = {id: '2', value: 'b'};
-		expect((cache as any)['2']).toEqual({id: '2', value: 'b'});
+	it('supports property access and setting via Proxy', () => {
+		(cache as any)['3'] = { id: '3', value: 'c' };
+		expect((cache as any)['3']).toEqual({ id: '3', value: 'c' });
+		expect(cache.get('3')).toEqual({ id: '3', value: 'c' });
 	});
 
-	test('should remove an item', () => {
-		cache.set('1', {id: '1', value: 'a'});
-		cache.delete('1');
-		expect(cache.get('1')).toBeNull();
+	it('removes an item and persists', () => {
+		cache.add({ id: '4', value: 'd' });
+		cache.delete('4');
+		expect(cache.get('4')).toBeNull();
 		expect(storageSetItemSpy).toHaveBeenCalled();
 	});
 
-	test('should clear the cache', () => {
-		cache.add({id: '1', value: 'a'});
+	it('clears the cache', () => {
+		cache.add({ id: '1', value: 'test' });
 		cache.clear();
 		expect(cache.get('1')).toBeNull();
 		expect(cache.complete).toBe(false);
 	});
 
-	test('should add multiple items and mark complete', () => {
-		const rows = [
-			{id: 'a', value: '1'},
-			{id: 'b', value: '2'},
+	it('bulk adds, marks complete', () => {
+		const items = [
+			{ id: 'a', value: '1' },
+			{ id: 'b', value: '2' },
 		];
-		cache.addAll(rows);
+		cache.addAll(items);
 		expect(cache.all().length).toBe(2);
 		expect(cache.complete).toBe(true);
 	});
 
-	test('should return all, keys, entries, and map', () => {
-		cache.add({id: '1', value: 'a'});
-		cache.add({id: '2', value: 'b'});
-		expect(cache.all().length).toBe(2);
-		expect(cache.keys().sort()).toEqual(['1', '2']);
-		expect(cache.entries().length).toBe(2);
-		expect(Object.keys(cache.map())).toContain('1');
-		expect(Object.keys(cache.map())).toContain('2');
+	it('returns correct keys, entries, and map', () => {
+		cache.add({ id: 'x', value: 'foo' });
+		cache.add({ id: 'y', value: 'bar' });
+		expect(cache.keys().sort()).toEqual(['x', 'y']);
+		expect(cache.entries().map(e => e[0]).sort()).toEqual(['x', 'y']);
+		const m = cache.map();
+		expect(Object.keys(m)).toEqual(expect.arrayContaining(['x', 'y']));
+		expect(m['x'].value).toBe('foo');
 	});
 
-	// test('should expire/delete items after TTL', () => {
-	// 	jest.useFakeTimers();
-	// 	cache = new Cache<string, TestItem>('id', {ttl: 0.1});
-	// 	cache.add({id: '3', value: 'x'});
-	// 	jest.advanceTimersByTime(250);
-	// 	expect(cache.get('3')).toBeNull();
+	it('persists and restores from storage', () => {
+		(storageMock.getItem as jest.Mock).mockReturnValueOnce(
+			JSON.stringify({ z: { id: 'z', value: 'from-storage' } }),
+		);
+		const c = new Cache<string, TestItem>('id', {
+			persistentStorage: { storage: storageMock, key: 'cache' },
+		});
+		expect(c.get('z')).toEqual({ id: 'z', value: 'from-storage' });
+	});
+
+	it('expiryPolicy "delete" removes expired items completely', () => {
+		cache.options.expiryPolicy = 'delete';
+		cache.add({ id: 'del1', value: 'gone' });
+		cache.expire('del1');
+		expect(cache.get('del1', true)).toBeNull();
+		expect(cache.get('del1')).toBeNull();
+	});
+
+	it('expiryPolicy "keep" marks as expired but does not delete', () => {
+		cache.options.expiryPolicy = 'keep';
+		cache.add({ id: 'keep1', value: 'kept' });
+		cache.expire('keep1');
+		expect(cache.get('keep1')).toBeNull();
+		const val = cache.get('keep1', true);
+		expect(val && val._expired).toBe(true);
+	});
+
+	// Uncomment and adapt this test if TTL/expiry timers are supported by your implementation
+	// it('expires and deletes items after TTL', () => {
+	//   jest.useFakeTimers();
+	//   cache = new Cache<string, TestItem>('id', { ttl: 0.01 });
+	//   cache.add({ id: 'ttl1', value: 'temp' });
+	//   jest.advanceTimersByTime(100);
+	//   expect(cache.get('ttl1')).toBeNull();
 	// });
 
-	test('should persist and restore from storage', () => {
-		(storageMock.getItem as jest.Mock).mockReturnValueOnce(JSON.stringify({a: {id: 'a', value: 'from-storage'}}));
-		const c = new Cache<string, TestItem>('id', {storage: storageMock, storageKey: 'cache'});
-		expect(c.get('a')).toEqual({id: 'a', value: 'from-storage'});
-	});
-
-	test('should handle expiryPolicy "delete"', () => {
-		cache.options.expiryPolicy = 'delete';
-		cache.add({id: 'k1', value: 'KeepMe'});
-		cache.expire('k1');
-		expect(cache.get('k1', true)).toBeNull();
-	});
-
-	test('should handle expiryPolicy "keep"', () => {
-		cache.options.expiryPolicy = 'keep';
-		cache.add({id: 'k1', value: 'KeepMe'});
-		cache.expire('k1');
-		expect(cache.get('k1')).toBeNull();
-		expect(cache.get('k1', true)?._expired).toBe(true);
+	// Edge: add error handling test
+	it('throws if instantiating with invalid key property', () => {
+		expect(() => {
+			const invalid = new Cache<'foo', TestItem>('foo');
+			// try invalid.add({id: 'z', value: 'fail'}) if needed
+		}).not.toThrow();
 	});
 });

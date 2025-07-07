@@ -79,26 +79,30 @@ export class Database {
 
 	async createTable<K extends IDBValidKey = any, T = any>(table: string | TableOptions): Promise<Table<K, T>> {
 		return this.schemaLock.run(async () => {
-			if(typeof table == 'string') table = { name: table };
+			if (typeof table == 'string') table = { name: table };
 			const conn = await this.connection;
-			if(!this.includes(table.name)) {
+			if (!this.includes(table.name)) {
+				const newDb = new Database(this.database, [...this.tables, table], (this.version ?? 0) + 1);
 				conn.close();
-				Object.assign(this, new Database(this.database, [...this.tables, table], (this.version ?? 0) + 1));
+				Object.assign(this, newDb);
 				await this.connection;
 			}
 			return this.table<K, T>(table.name);
 		});
 	}
 
+
 	async deleteTable(table: string | TableOptions): Promise<void> {
 		return this.schemaLock.run(async () => {
-			if(typeof table == 'string') table = { name: table };
-			if(!this.includes(table.name)) return;
+			if (typeof table == 'string') table = { name: table };
+			if (!this.includes(table.name)) return;
 			const conn = await this.connection;
+			const newDb = new Database(this.database, this.tables.filter(t => t.name != (<TableOptions>table).name), (this.version ?? 0) + 1);
 			conn.close();
-			Object.assign(this, new Database(this.database, this.tables.filter(t => t.name != (<TableOptions>table).name), (this.version ?? 0) + 1));
+			Object.assign(this, newDb);
 			await this.connection;
 		});
+
 	}
 
 	includes(name: any): boolean {

@@ -1,13 +1,11 @@
-import {Table} from './database.ts';
+import {Database, Table} from './database.ts';
 import {deepCopy, includes, JSONSanitize} from './objects.ts';
 
 export type CacheOptions = {
 	/** Delete keys automatically after x amount of seconds */
 	ttl?: number;
 	/** Storage to persist cache */
-	storage?: Storage | Table<any, any>;
-	/** Key cache will be stored under */
-	storageKey?: string;
+	persistentStorage?: {storage: Storage | Database, key: string} | string;
 	/** Keep or delete cached items once expired, defaults to delete */
 	expiryPolicy?: 'delete' | 'keep';
 }
@@ -33,21 +31,30 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param options
 	 */
 	constructor(public readonly key?: keyof T, public readonly options: CacheOptions = {}) {
-		let resolve: any;
-		this.loading = new Promise(r => resolve = r);
-		if(options.storageKey && !options.storage && typeof(Storage) !== 'undefined') options.storage = localStorage;
-		if(options.storage) {
-			if(options.storage instanceof Table) {
+		let done!: Function;
+		this.loading = new Promise(r => done = r);
+
+		// Persistent storage
+		if(this.options.persistentStorage != null) {
+			if(typeof this.options.persistentStorage == 'string')
+				this.options.persistentStorage = {storage: localStorage, key: this.options.persistentStorage};
+
+			if(this.options.persistentStorage?.storage instanceof Database) {
 				(async () => {
-					this.addAll(await options.storage?.getAll(), false);
-					resolve();
-				})()
-			} else if(options.storageKey) {
-				const stored = options.storage?.getItem(options.storageKey);
+					const persists: any = this.options.persistentStorage;
+					const table: Table<any, any> = await persists.storage.createTable({name: persists.key, key: this.key});
+					const rows = await table.getAll();
+					Object.assign(this.store, rows.reduce((acc, row) => ({...acc, [this.getKey(row)]: row}), {}));
+					done();
+				})();
+			} else {
+				const stored = this.options.persistentStorage.storage.getItem(this.options.persistentStorage.key);
 				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
-				resolve();
+				done();
 			}
-		} else resolve();
+		}
+
+		// Handle index lookups
 		return new Proxy(this, {
 			get: (target: this, prop: string | symbol) => {
 				if(prop in target) return (target as any)[prop];
@@ -68,19 +75,19 @@ export class Cache<K extends string | number | symbol, T> {
 	}
 
 	private save(key?: K) {
-		if(this.options.storage) {
-			if(this.options.storage instanceof Table) {
-				if(key == null) {
-					let rows: any = this.entries();
-					rows.forEach(([k, v]: [string, any]) => this.options.storage?.put(k, v));
-					rows = rows.map(([k]: [string]) => k);
-					this.options.storage.getAllKeys().then(keys =>
-						keys.filter(k => !rows.includes(k))
-							.forEach(k => this.options.storage?.delete(k)));
-				} else if(this.store[key] === undefined) this.options.storage.delete(key);
-				else this.options.storage.put(key, this.store[key]);
-			} else if(this.options.storageKey) {
-				this.options.storage.setItem(this.options.storageKey, JSONSanitize(this.store));
+		const persists: any = this.options.persistentStorage;
+		if(!!persists?.storage) {
+			if(persists.storage instanceof Database) {
+				(<Database>persists.storage).createTable({name: persists.storage.key, key: <string>this.key}).then(table => {
+					if(key) {
+						table.set(key, this.get(key));
+					} else {
+						table.clear();
+						this.all().forEach(row => table.add(row));
+					}
+				});
+			} else {
+				persists.storage.setItem(persists.storage.key, JSONSanitize(this.all(true)));
 			}
 		}
 	}
