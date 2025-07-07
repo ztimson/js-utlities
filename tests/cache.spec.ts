@@ -10,6 +10,7 @@ describe('Cache', () => {
 
 	beforeEach(() => {
 		storageMock = {
+			constructor: {name: 'Storage' as any},
 			getItem: jest.fn(),
 			setItem: jest.fn(),
 			removeItem: jest.fn(),
