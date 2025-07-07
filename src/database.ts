@@ -166,8 +166,11 @@ export class Table<K extends IDBValidKey = any, T = any> {
 		return this.tx(this.name, store => store.getAllKeys(), true);
 	}
 
-	put(key: K, value: T): Promise<void> {
-		return this.tx(this.name, store => store.put(value, key));
+	put(value: T, key?: string): Promise<void> {
+		return this.tx(this.name, store => {
+			if (store.keyPath) return store.put(value);
+			return store.put(value, key);
+		});
 	}
 
 	read(): Promise<T[]>;
@@ -177,8 +180,9 @@ export class Table<K extends IDBValidKey = any, T = any> {
 	}
 
 	set(value: T, key?: K): Promise<void> {
-		if(!key && !(<any>value)[this.key]) return this.add(value);
-		return this.put(key || (<any>value)[this.key], value);
+		if(key) (<any>value)[this.key] = key;
+		if(!(<any>value)[this.key]) return this.add(value);
+		return this.put(value);
 	}
 
 	update = this.set;
