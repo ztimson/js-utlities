@@ -1,6 +1,10 @@
 import {PathError, PathEvent, PathEventEmitter, PE, PES} from '../src';
 
 describe('Path Events', () => {
+	beforeEach(() => {
+		PathEvent.clearCache();
+	});
+
 	describe('PE', () => {
 		it('creates PathEvent from template string', () => {
 			const e = PE`users/system:cr`;
