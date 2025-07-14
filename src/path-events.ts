@@ -325,10 +325,13 @@ export class PathEventEmitter implements IPathEventEmitter{
 	}
 
 	on(event: Event | Event[], listener: PathListener): PathUnsubscribe {
-		makeArray(event).forEach(e => this.listeners.push([
-			e instanceof PathEvent ? e : new PathEvent(`${this.prefix}/${e}`),
-			listener
-		]));
+		makeArray(event).forEach(e => {
+			if(typeof e == 'string' && e[0] == '*' && this.prefix) e = e.slice(1);
+			this.listeners.push([
+				e instanceof PathEvent ? e : new PathEvent(`${this.prefix}/${e}`),
+				listener
+			])
+		});
 		return () => this.off(listener);
 	}
 
