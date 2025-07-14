@@ -80,7 +80,9 @@ export class Cache<K extends string | number | symbol, T> {
 			if(persists.storage?.database != undefined) {
 				(<Database>persists.storage).createTable({name: persists.key, key: <string>this.key}).then(table => {
 					if(key) {
-						table.set(this.get(key), key);
+						const value = this.get(key);
+						if(value != null) table.set(value, key);
+						else table.delete(key);
 					} else {
 						table.clear();
 						this.all().forEach(row => table.add(row));
