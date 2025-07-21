@@ -39,8 +39,8 @@ export function logicTest(target: object, condition: string): boolean {
 			case '=':
 			case '==': return a == b;
 			case '!=': return a != b;
-			case '+': return typeof a?.includes != 'undefined' ? a.includes(b) : a == b;
-			case '-': return typeof a?.includes != 'undefined' ? !a.includes(b) : a != b;
+			case '+': return a.toString().includes(b);
+			case '-': return !a.toString().includes(b);
 			case '>': return a > b;
 			case '>=': return a >= b;
 			case '<': return a < b;
