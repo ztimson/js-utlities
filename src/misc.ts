@@ -53,7 +53,7 @@ export function ipV6ToV4(ip: string) {
  * @returns {boolean}
  */
 export function reservedIp(ip: string): boolean {
-	if(ip == 'localhost') return true;
+	if(ip == 'localhost' || ip == '127.0.0.1') return true;
 	return /\b(10\.(?:[0-9]{1,3}\.){2}[0-9]{1,3})\b|\b(172\.(?:1[6-9]|2[0-9]|3[0-1])\.(?:[0-9]{1,3}\.)[0-9]{1,3})\b|\b(192\.168\.(?:[0-9]{1,3}\.)[0-9]{1,3})\b/.test(ip);
 }
 
