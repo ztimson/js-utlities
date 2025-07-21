@@ -48,6 +48,17 @@ export function ipV6ToV4(ip: string) {
 }
 
 /**
+ * Check if IP is reserved, e.g. localhost, private IPs, etc.
+ * @param {string} ip
+ * @returns {boolean}
+ */
+export function reservedIp(ip: string): boolean {
+	if(ip == 'localhost') return true;
+	return /\b(10\.(?:[0-9]{1,3}\.){2}[0-9]{1,3})\b|\b(172\.(?:1[6-9]|2[0-9]|3[0-1])\.(?:[0-9]{1,3}\.)[0-9]{1,3})\b|\b(192\.168\.(?:[0-9]{1,3}\.)[0-9]{1,3})\b/.test(ip);
+}
+
+
+/**
  * Represents a function that listens for events and handles them accordingly.
  *
  * @param {PathEvent} event - The event object containing data related to the triggered event.
