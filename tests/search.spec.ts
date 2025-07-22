@@ -4,6 +4,7 @@ const rows = [
 	{id: 1, name: 'Alice', age: 30},
 	{id: 2, name: 'Bob', age: 24},
 	{id: 3, name: 'Carol', age: 30},
+	{id: 4, name: 'David', age: 35},
 ];
 
 describe('Search Utilities', () => {
@@ -37,6 +38,35 @@ describe('Search Utilities', () => {
 		it('returns all if search is falsy and regex enabled', () => {
 			expect(search(rows, '', true)).toEqual(rows);
 		});
+
+		it('handles regex search with special characters', () => {
+			expect(search(rows, '^[AC]', true)).toEqual([rows[0], rows[2]]);
+		});
+
+		it('ignores case when regex is applied', () => {
+			expect(search(rows, 'ALICE', true)).toEqual([]);
+		});
+
+		it('performs partial matches for properties when regex=false', () => {
+			expect(search(rows, 'Da')).toEqual([rows[3]]);
+		});
+
+		it('handles empty array input gracefully', () => {
+			expect(search([], 'test')).toEqual([]);
+		});
+
+		it('handles numeric values with comparison logic in strings', () => {
+			expect(search(rows, 'age < 31')).toEqual([rows[0], rows[1], rows[2]]);
+		});
+
+		// New test cases for `+` and `-` operators
+		it('filters rows using the + operator', () => {
+			expect(search(rows, 'name += Al')).toEqual([rows[0]]);
+		});
+
+		it('filters rows using the - operator', () => {
+			expect(search(rows, 'name -= Al')).toEqual([rows[1], rows[2], rows[3]]);
+		});
 	});
 
 	describe('logicTest', () => {
@@ -66,6 +96,47 @@ describe('Search Utilities', () => {
 
 		it('returns false for unsupported operators', () => {
 			expect(logicTest(obj, 'x === 10')).toBe(false);
+		});
+
+		it('handles invalid condition strings gracefully', () => {
+			expect(logicTest(obj, 'invalid condition')).toBe(false);
+		});
+
+		it('supports numeric operations with ranges', () => {
+			expect(logicTest(obj, 'x > 5 && x < 15')).toBe(true);
+			expect(logicTest(obj, 'x > 15')).toBe(false);
+		});
+
+		it('handles mixed case keys gracefully', () => {
+			const mixedCaseObj = {TestKey: 123};
+			expect(logicTest(mixedCaseObj, 'TestKey == 123')).toBe(true);
+			expect(logicTest(mixedCaseObj, 'testkey == 123')).toBe(true);
+		});
+
+		it('returns false if condition operators are missing', () => {
+			expect(logicTest(obj, 'x 10')).toBe(false);
+		});
+
+		// New test cases for `+` and `-` operators
+		it('handles the + operator for inclusion', () => {
+			expect(logicTest(obj, 'name += Alpha')).toBe(true);
+			expect(logicTest(obj, 'name += Alp')).toBe(true);
+			expect(logicTest(obj, 'name += Bet')).toBe(false);
+		});
+
+		it('handles the - operator for exclusion', () => {
+			expect(logicTest(obj, 'name -= Alpha')).toBe(false);
+			expect(logicTest(obj, 'name -= Alp')).toBe(false);
+			expect(logicTest(obj, 'name -= Bet')).toBe(true);
+		});
+
+		it('includes partial matches correctly with +', () => {
+			expect(logicTest(obj, 'name += lph')).toBe(true);
+		});
+
+		it('excludes partial matches correctly with -', () => {
+			expect(logicTest(obj, 'name -= lph')).toBe(false);
+			expect(logicTest(obj, 'name -= xyz')).toBe(true);
 		});
 	});
 });

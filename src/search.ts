@@ -39,8 +39,8 @@ export function logicTest(target: object, condition: string): boolean {
 			case '=':
 			case '==': return a == b;
 			case '!=': return a != b;
-			case '+': return a?.toString().includes(b);
-			case '-': return !a?.toString().includes(b);
+			case '+=': return a?.toString().includes(b);
+			case '-=': return !a?.toString().includes(b);
 			case '>': return a > b;
 			case '>=': return a >= b;
 			case '<': return a < b;
@@ -55,7 +55,7 @@ export function logicTest(target: object, condition: string): boolean {
 		const and = p.split('&&').map(p => p.trim()).filter(p => !!p);
 		return and.filter(p => {
 			// Boolean operator
-			const prop = /(\S+)\s*(==?|!=|\+|-|>=|>|<=|<)\s*(\S+)/g.exec(p);
+			const prop = /(\S+)\s*(==?|!=|\+=|-=|>=|>|<=|<)\s*(\S+)/g.exec(p);
 			if(prop) {
 				const key = Object.keys(target).find(k => k.toLowerCase() == prop[1].toLowerCase());
 				return evalBoolean(dotNotation<any>(target, key || prop[1]),  prop[2], JSONAttemptParse(prop[3]));
