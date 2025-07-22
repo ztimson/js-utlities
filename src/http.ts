@@ -78,7 +78,7 @@ export class Http {
 		if(!this.url && !opts.url) throw new Error('URL needs to be set');
 		let url = opts.url?.startsWith('http') ? opts.url : (this.url || '') + (opts.url || '');
 		url = url.replaceAll(/([^:]\/)\/+/g, '$1');
-		if(opts.fragment) url.includes('#') ? url.replace(/#.*(\?|\n)/g, (match, arg1) => `#${opts.fragment}${arg1}`) : `${url}#${opts.fragment}`;
+		if(opts.fragment) url.includes('#') ? url.replace(/#.*([?\n])/g, (match, arg1) => `#${opts.fragment}${arg1}`) : `${url}#${opts.fragment}`;
 		if(opts.query) {
 			const q = Array.isArray(opts.query) ? opts.query :
 				Object.keys(opts.query).map(k => ({key: k, value: (<any>opts.query)[k]}))
