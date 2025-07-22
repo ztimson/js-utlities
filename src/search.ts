@@ -13,8 +13,8 @@ export function search(rows: any[], search: string, regex?: boolean, transform: 
 	if(!rows) return [];
 	return rows.filter(r => {
 		// Empty search
-		const value = transform(r);
 		if(!search) return true;
+		const value = transform(r);
 		// Regex search
 		if(regex) {
 			return !!Object.values(value).filter((v: any) => {
@@ -22,7 +22,7 @@ export function search(rows: any[], search: string, regex?: boolean, transform: 
 				catch { return false; }
 			}).length
 		} else {
-			return logicTest(r, search);
+			return logicTest(value, search);
 		}
 	});
 }
