@@ -44,6 +44,24 @@ export function formatBytes(bytes: number, decimals = 2) {
 }
 
 /**
+ * Convert milliseconds to human-readable duration
+ * @param {string} number milliseconds
+ * @return {string} formated duration
+ */
+export function formatMs(number: string): string {
+	const ms = parseInt(number, 10);
+	if (isNaN(ms) || ms < 0) return "Invalid input";
+	const seconds = ms / 1000;
+	const minutes = seconds / 60;
+	const hours = minutes / 60;
+	const days = hours / 24;
+	if (days >= 1) return `${days.toFixed(1)} days`;
+	else if (hours >= 1) return `${hours.toFixed(1)} hours`;
+	else if (minutes >= 1) return `${minutes.toFixed(1)} minutes`;
+	else return `${seconds.toFixed(1)} seconds`;
+}
+
+/**
  * Extract numbers from a string & create a formated phone number: +1 (123) 456-7890
  *
  * @param {string} number String that will be parsed for numbers
