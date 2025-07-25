@@ -46,18 +46,19 @@ export function formatBytes(bytes: number, decimals = 2) {
 /**
  * Convert milliseconds to human-readable duration
  * @param {string} ms milliseconds
+ * @param {boolean} short Use unit initial instead of word
  * @return {string} formated duration
  */
-export function formatMs(ms: number): string {
+export function formatMs(ms: number, short = false): string {
 	if (isNaN(ms) || ms < 0) return "Invalid input";
 	const seconds = ms / 1000;
 	const minutes = seconds / 60;
 	const hours = minutes / 60;
 	const days = hours / 24;
-	if (days >= 1) return `${days.toFixed(1)} days`;
-	else if (hours >= 1) return `${hours.toFixed(1)} hours`;
-	else if (minutes >= 1) return `${minutes.toFixed(1)} minutes`;
-	else return `${seconds.toFixed(1)} seconds`;
+	if (days >= 1) return `${days.toFixed(1)} ${short ? 'd' : 'days'}`;
+	else if (hours >= 1) return `${hours.toFixed(1)} ${short ? 'h' : 'hours'}`;
+	else if (minutes >= 1) return `${minutes.toFixed(1)} ${short ? 'm' : 'minutes'}`;
+	else return `${seconds.toFixed(1)} ${short ? 's' : 'seconds'}`;
 }
 
 /**
