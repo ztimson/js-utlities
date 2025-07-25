@@ -45,11 +45,10 @@ export function formatBytes(bytes: number, decimals = 2) {
 
 /**
  * Convert milliseconds to human-readable duration
- * @param {string} number milliseconds
+ * @param {string} ms milliseconds
  * @return {string} formated duration
  */
-export function formatMs(number: string): string {
-	const ms = parseInt(number, 10);
+export function formatMs(ms: number): string {
 	if (isNaN(ms) || ms < 0) return "Invalid input";
 	const seconds = ms / 1000;
 	const minutes = seconds / 60;
