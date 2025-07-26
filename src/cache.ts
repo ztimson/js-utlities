@@ -22,8 +22,10 @@ export class Cache<K extends string | number | symbol, T> {
 	[key: string | number | symbol]: CachedValue<T> | any;
 	/** Whether cache is complete */
 	complete = false;
+
+	private _loading!: Function;
 	/** Await initial loading */
-	loading!: Promise<void>;
+	loading = new Promise<void>(r => this._loading = r);
 
 	/**
 	 * Create new cache
@@ -31,9 +33,6 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param options
 	 */
 	constructor(public readonly key?: keyof T, public readonly options: CacheOptions = {}) {
-		let done!: Function;
-		this.loading = new Promise(r => done = r);
-
 		// Persistent storage
 		if(this.options.persistentStorage != null) {
 			if(typeof this.options.persistentStorage == 'string')
@@ -45,13 +44,15 @@ export class Cache<K extends string | number | symbol, T> {
 					const table: Table<any, any> = await persists.storage.createTable({name: persists.key, key: this.key});
 					const rows = await table.getAll();
 					Object.assign(this.store, rows.reduce((acc, row) => ({...acc, [this.getKey(row)]: row}), {}));
-					done();
+					this._loading();
 				})();
 			} else if((<any>this.options.persistentStorage?.storage)?.getItem != undefined) {
 				const stored = (<Storage>this.options.persistentStorage.storage).getItem(this.options.persistentStorage.key);
 				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
-				done();
+				this._loading();
 			}
+		} else {
+			this._loading();
 		}
 
 		// Handle index lookups
