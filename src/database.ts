@@ -100,9 +100,9 @@ export class Database {
 			if(!this.includes(table.name)) {
 				const newDb = new Database(this.database, [...this.tables, table], (this.version ?? 0) + 1);
 				conn.close();
-				await newDb.connection;
-				Object.assign(this, newDb);
+				this.connection = newDb.connection;
 				await this.connection;
+				Object.assign(this, newDb);
 			}
 			return this.table<K, T>(table.name);
 		});
@@ -115,9 +115,9 @@ export class Database {
 			const conn = await this.connection;
 			const newDb = new Database(this.database, this.tables.filter(t => t.name != (<TableOptions>table).name), (this.version ?? 0) + 1);
 			conn.close();
-			await newDb.connection;
-			Object.assign(this, newDb);
+			this.connection = newDb.connection;
 			await this.connection;
+			Object.assign(this, newDb);
 		});
 	}
 
