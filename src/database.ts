@@ -14,8 +14,8 @@ class AsyncLock {
 		const res = this.p.then(fn, fn);
 		this.p = res.then(() => {}, () => {});
 		return res;
-}
 	}
+}
 
 export class Database {
 	private schemaLock = new AsyncLock();
@@ -28,7 +28,10 @@ export class Database {
 
 	constructor(public readonly database: string, tables?: (string | TableOptions)[], public version?: number) {
 		this.connection = new Promise((resolve, reject) => {
-			const req = indexedDB.open(this.database, this.version);
+			let req: IDBOpenDBRequest;
+			try { req = indexedDB.open(this.database, this.version); }
+			catch (err) { return reject(err); }
+
 			this.tables = !tables ? [] : tables.map(t => {
 				t = typeof t == 'object' ? t : {name: t};
 				return {...t, name: t.name.toString()};
@@ -37,13 +40,22 @@ export class Database {
 			req.onerror = () => reject(req.error);
 
 			req.onsuccess = () => {
-				const db = req.result;
+				let db: IDBDatabase;
+				try { db = req.result; }
+				catch (err) { return reject(err); }
+
 				const existing = Array.from(db.objectStoreNames);
-				if(!tables) this.tables = existing.map(t => {
-					const tx = db.transaction(t, 'readonly');
-					const store = tx.objectStore(t);
-					return {name: t, key: <string>store.keyPath};
-				});
+				if(!tables) {
+					this.tables = existing.map(t => {
+						try {
+							const tx = db.transaction(t, 'readonly');
+							const store = tx.objectStore(t);
+							return {name: t, key: <string>store.keyPath};
+						} catch {
+							return {name: t}; // 🛡️ fallback
+						}
+					});
+				}
 				const desired = new ASet((tables || []).map(t => typeof t == 'string' ? t : t.name));
 				if(tables && desired.symmetricDifference(new ASet(existing)).length) {
 					db.close();
@@ -58,19 +70,23 @@ export class Database {
 
 			req.onupgradeneeded = () => {
 				this.upgrading = true;
-				const db = req.result;
-				const existingTables = new ASet(Array.from(db.objectStoreNames));
-				if(tables) {
-					const desired = new ASet((tables || []).map(t => typeof t == 'string' ? t : t.name));
-					existingTables.difference(desired).forEach(name => db.deleteObjectStore(name));
-					desired.difference(existingTables).forEach(name => {
-						const t = this.tables.find(findByProp('name', name));
-						db.createObjectStore(name, {
-							keyPath: t?.key,
-							autoIncrement: t?.autoIncrement || !t?.key,
+				let db: IDBDatabase;
+				try { db = req.result; }
+				catch { return; }
+				try {
+					const existingTables = new ASet(Array.from(db.objectStoreNames));
+					if(tables) {
+						const desired = new ASet((tables || []).map(t => typeof t == 'string' ? t : t.name));
+						existingTables.difference(desired).forEach(name => db.deleteObjectStore(name));
+						desired.difference(existingTables).forEach(name => {
+							const t = this.tables.find(findByProp('name', name));
+							db.createObjectStore(name, {
+								keyPath: t?.key,
+								autoIncrement: t?.autoIncrement || !t?.key,
+							});
 						});
-					});
-				}
+					}
+				} catch { }
 			};
 		});
 	}
@@ -79,11 +95,12 @@ export class Database {
 
 	async createTable<K extends IDBValidKey = any, T = any>(table: string | TableOptions): Promise<Table<K, T>> {
 		return this.schemaLock.run(async () => {
-			if (typeof table == 'string') table = { name: table };
+			if(typeof table == 'string') table = { name: table };
 			const conn = await this.connection;
-			if (!this.includes(table.name)) {
+			if(!this.includes(table.name)) {
 				const newDb = new Database(this.database, [...this.tables, table], (this.version ?? 0) + 1);
 				conn.close();
+				await newDb.connection;
 				Object.assign(this, newDb);
 				await this.connection;
 			}
@@ -91,18 +108,17 @@ export class Database {
 		});
 	}
 
-
 	async deleteTable(table: string | TableOptions): Promise<void> {
 		return this.schemaLock.run(async () => {
-			if (typeof table == 'string') table = { name: table };
-			if (!this.includes(table.name)) return;
+			if(typeof table == 'string') table = { name: table };
+			if(!this.includes(table.name)) return;
 			const conn = await this.connection;
 			const newDb = new Database(this.database, this.tables.filter(t => t.name != (<TableOptions>table).name), (this.version ?? 0) + 1);
 			conn.close();
+			await newDb.connection;
 			Object.assign(this, newDb);
 			await this.connection;
 		});
-
 	}
 
 	includes(name: any): boolean {
@@ -126,9 +142,8 @@ export class Table<K extends IDBValidKey = any, T = any> {
 		await this.database.waitForUpgrade();
 		const db = await this.database.connection;
 		const tx = db.transaction(table, readonly ? 'readonly' : 'readwrite');
-		const store = tx.objectStore(table);
 		return new Promise<R>((resolve, reject) => {
-			const request = fn(store);
+			const request = fn(tx.objectStore(table));
 			request.onsuccess = () => resolve(request.result as R);
 			request.onerror = () => reject(request.error);
 		});
@@ -168,7 +183,7 @@ export class Table<K extends IDBValidKey = any, T = any> {
 
 	put(value: T, key?: string): Promise<void> {
 		return this.tx(this.name, store => {
-			if (store.keyPath) return store.put(value);
+			if(store.keyPath) return store.put(value);
 			return store.put(value, key);
 		});
 	}
