@@ -1,4 +1,4 @@
-type Delta = { [key: string]: any | Delta | null };
+export type Delta = { [key: string]: any | Delta | null };
 
 /**
  * Applies deltas in order to modify `target`.
@@ -6,7 +6,7 @@ type Delta = { [key: string]: any | Delta | null };
  * @param deltas - List of deltas to apply
  * @returns Mutated target
  */
-function applyDeltas(target: any, deltas: Delta[]): any {
+export function applyDeltas(target: any, deltas: Delta[]): any {
 	for(const delta of deltas) {
 		for(const [key, value] of Object.entries(delta)) {
 			if(value === null) {
@@ -30,7 +30,7 @@ function applyDeltas(target: any, deltas: Delta[]): any {
  * @param target - Modified object
  * @returns Delta to revert changes
  */
-function calcDelta(old: any, target: any): Delta {
+export function calcDelta(old: any, target: any): Delta {
 	const delta: Delta = {};
 	const keys = new Set([...Object.keys(old || {}), ...Object.keys(target || {})]);
 	for(const key of keys) {
