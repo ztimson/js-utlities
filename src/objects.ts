@@ -1,3 +1,58 @@
+type Delta = { [key: string]: any | Delta | null };
+
+/**
+ * Applies deltas in order to modify `target`.
+ * @param target - Object to mutate
+ * @param deltas - List of deltas to apply
+ * @returns Mutated target
+ */
+function applyDeltas(target: any, deltas: Delta[]): any {
+	for(const delta of deltas) {
+		for(const [key, value] of Object.entries(delta)) {
+			if(value === null) {
+				delete target[key]; // remove
+			} else if(typeof value === 'object' && !Array.isArray(value)) {
+				if(typeof target[key] !== 'object' || Array.isArray(target[key])) {
+					target[key] = {}; // nested obj
+				}
+				applyDeltas(target[key], [value]); // recurse
+			} else {
+				target[key] = value; // restore
+			}
+		}
+	}
+	return target;
+}
+
+/**
+ * Creates a nested delta that reverts `target` back to `old`.
+ * @param old - Original object
+ * @param target - Modified object
+ * @returns Delta to revert changes
+ */
+function calcDelta(old: any, target: any): Delta {
+	const delta: Delta = {};
+	const keys = new Set([...Object.keys(old || {}), ...Object.keys(target || {})]);
+	for(const key of keys) {
+		const val1 = old?.[key];
+		const val2 = target?.[key];
+		if(!(key in target)) {
+			delta[key] = val1; // removed
+		} else if(!(key in old)) {
+			delta[key] = null; // added
+		} else if(
+			typeof val1 === 'object' && typeof val2 === 'object' &&
+			val1 && val2 && !Array.isArray(val1)
+		) {
+			const nested = calcDelta(val1, val2);
+			if(Object.keys(nested).length) delta[key] = nested;
+		} else if(val1 !== val2) {
+			delta[key] = val1; // changed
+		}
+	}
+	return delta;
+}
+
 /**
  * Removes any null values from an object in-place
  *
