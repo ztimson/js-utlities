@@ -2,8 +2,20 @@ import {PathEvent} from './path-events.ts';
 import {md5} from './string';
 
 /**
+ * Compare version numbers
+ * @param {string} target
+ * @param {string} vs
+ * @return {number} -1 = target is lower, 0 = equal, 1 = higher
+ */
+export function compareVersions(target: string, vs: string): -1 | 0 | 1 {
+	const [tMajor, tMinor, tPatch] = target.split('.').map(v => +v.replace(/[^0-9]/g, ''));
+	const [vMajor, vMinor, vPatch] = vs.split('.').map(v => +v.replace(/[^0-9]/g, ''));
+	return (tMajor > vMajor || tMinor > vMinor || tPatch > vPatch) ? 1 :
+		(tMajor < vMajor || tMinor < vMinor || tPatch < vPatch) ? -1 : 0;
+}
+
+/**
  * Escape any regex special characters to avoid misinterpretation during search
- *
  * @param {string} value String which should be escaped
  * @return {string} New escaped sequence
  */
