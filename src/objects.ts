@@ -10,14 +10,15 @@ export function applyDeltas(target: any, deltas: Delta[]): any {
 	for(const delta of deltas) {
 		for(const [key, value] of Object.entries(delta)) {
 			if(value === null) {
-				delete target[key]; // remove
-			} else if(typeof value === 'object' && !Array.isArray(value)) {
-				if(typeof target[key] !== 'object' || Array.isArray(target[key])) {
-					target[key] = {}; // nested obj
-				}
-				applyDeltas(target[key], [value]); // recurse
+				delete target[key]; // Remove
+			} else if(Array.isArray(value)) {
+				target[key] = [...value]; // Array
+			} else if(typeof value === 'object') {
+				if(typeof target[key] !== 'object' || Array.isArray(target[key]) || !target[key])
+					target[key] = {}; // Nested
+				applyDeltas(target[key], [value]); // Recurse
 			} else {
-				target[key] = value; // restore
+				target[key] = value; // Primitive
 			}
 		}
 	}
@@ -37,17 +38,16 @@ export function calcDelta(old: any, target: any): Delta {
 		const val1 = old?.[key];
 		const val2 = target?.[key];
 		if(!(key in target)) {
-			delta[key] = val1; // removed
+			delta[key] = val1; // Removed
 		} else if(!(key in old)) {
-			delta[key] = null; // added
-		} else if(
-			typeof val1 === 'object' && typeof val2 === 'object' &&
-			val1 && val2 && !Array.isArray(val1)
-		) {
+			delta[key] = null; // Added
+		} else if(Array.isArray(val1) || Array.isArray(val2)) {
+			if(JSON.stringify(val1) !== JSON.stringify(val2)) delta[key] = val1; // Array
+		} else if(typeof val1 === 'object' && typeof val2 === 'object' && val1 && val2) {
 			const nested = calcDelta(val1, val2);
-			if(Object.keys(nested).length) delta[key] = nested;
+			if(Object.keys(nested).length) delta[key] = nested; // Nested
 		} else if(val1 !== val2) {
-			delta[key] = val1; // changed
+			delta[key] = val1; // Modified
 		}
 	}
 	return delta;
