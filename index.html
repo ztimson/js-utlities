@@ -1,9 +1,10 @@
 <html>
 	<body>
 		<script type="module">
-			import {PE} from './dist/index.mjs';
+			import {formatDate} from './dist/index.mjs';
 
-			console.log('data/Ts:n', PE`${'data/Ts'}:n`.methods);
+			console.log(formatDate('YYYY-MM-DD HH:mm A z'));
+			console.log(formatDate('YYYY-MM-DD HH:mm A Z'));
 		</script>
 	</body>
 </html>
