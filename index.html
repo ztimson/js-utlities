@@ -3,8 +3,9 @@
 		<script type="module">
 			import {formatDate} from './dist/index.mjs';
 
-			console.log(formatDate('YYYY-MM-DD HH:mm A z'));
-			console.log(formatDate('YYYY-MM-DD HH:mm A Z'));
+			const dt = new Date('2021-03-03T09:00:00Z');
+			const result = formatDate('Do MMMM dddd', dt, 0);
+			console.log(result);
 		</script>
 	</body>
 </html>

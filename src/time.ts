@@ -1,3 +1,5 @@
+import {numSuffix} from './math.ts';
+
 /**
  * Like setInterval but will adjust the timeout value to account for runtime
  * @param {Function} cb Callback function that will be ran
@@ -20,13 +22,12 @@ export function adjustedInterval(cb: Function, ms: number) {
 	}
 }
 
-
-export function dayOfWeek(num: number): string {
-	return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][num] || 'Unknown';
+export function dayOfWeek(d: number): string {
+	return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d];
 }
 
 export function dayOfYear(date: Date): number {
-	const start = new Date(`${date.getFullYear()}-01-01T00:00:00Z`);
+	const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
 	return Math.ceil((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
@@ -43,86 +44,90 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 	if (isNaN(date.getTime())) throw new Error('Invalid date input');
 	const numericTz = typeof tz === 'number';
 	const localTz = tz === 'local' || (!numericTz && tz.toLowerCase?.() === 'local');
-	const offsetMinutes = numericTz ? tz * 60 : 0;
-	const adjustedDate = date;
-	const tzName = localTz ? Intl.DateTimeFormat().resolvedOptions().timeZone : numericTz ? `UTC${tz >= 0 ? '+' : ''}${tz}` : tz;
+	const tzName = localTz ? Intl.DateTimeFormat().resolvedOptions().timeZone : numericTz ? 'UTC' : tz;
+
+	if (!numericTz && tzName !== 'UTC') {
+		try {
+			new Intl.DateTimeFormat('en-US', { timeZone: tzName }).format();
+		} catch {
+			throw new Error(`Invalid timezone: ${tzName}`);
+		}
+	}
+
+	let zonedDate = new Date(date);
+	if (!numericTz && tzName !== 'UTC') {
+		const parts = new Intl.DateTimeFormat('en-US', {
+			timeZone: tzName,
+			year: 'numeric', month: '2-digit', day: '2-digit',
+			hour: '2-digit', minute: '2-digit', second: '2-digit',
+			hour12: false
+		}).formatToParts(date);
+		const get = (type: string) => parts.find(p => p.type === type)?.value;
+		const build = `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}Z`;
+		zonedDate = new Date(build);
+	} else if (numericTz || tzName === 'UTC') {
+		const offset = numericTz ? tz as number : 0;
+		zonedDate = new Date(date.getTime() + offset * 60 * 60 * 1000);
+	}
+
+	const get = (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds') =>
+		(numericTz || tzName === 'UTC') ? zonedDate[`getUTC${fn}`]() : zonedDate[`get${fn}`]();
 
 	function getTZOffset(): string {
 		if (numericTz) {
-			const hours = Math.floor(Math.abs(offsetMinutes) / 60);
-			const minutes = Math.abs(offsetMinutes) % 60;
-			return `${offsetMinutes >= 0 ? '+' : '-'}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+			const total = (tz as number) * 60;
+			const hours = Math.floor(Math.abs(total) / 60);
+			const mins = Math.abs(total) % 60;
+			return `${tz >= 0 ? '+' : '-'}${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 		}
-		if (tzName === 'UTC') return '+00:00';
-
 		try {
-			const parts = new Intl.DateTimeFormat('en-US', {timeZone: tzName, timeZoneName: 'longOffset', hour: '2-digit', minute: '2-digit',}).formatToParts(adjustedDate);
-			const tzPart = parts.find(p => p.type === 'timeZoneName')?.value || '';
-			const match = tzPart.match(/([+-]\d{2}:\d{2})/);
-			if (match) return match[1];
+			const offset = new Intl.DateTimeFormat('en-US', {timeZone: tzName, timeZoneName: 'longOffset', hour: '2-digit', minute: '2-digit',})
+				.formatToParts(<Date>date).find(p => p.type === 'timeZoneName')?.value.match(/([+-]\d{2}:\d{2})/)?.[1];
+			if (offset) return offset;
 		} catch {}
-
-		const dtf = new Intl.DateTimeFormat('en-US', {timeZone: tzName, hour12: false, hour: '2-digit', minute: '2-digit'});
-		const parts = dtf.formatToParts(adjustedDate);
-		const targetHour = Number(parts.find(p => p.type === 'hour')?.value);
-		const targetMinute = Number(parts.find(p => p.type === 'minute')?.value);
-		const utcHour = adjustedDate.getUTCHours();
-		const utcMinute = adjustedDate.getUTCMinutes();
-
-		let offset = (targetHour - utcHour) * 60 + (targetMinute - utcMinute);
-		if (offset > 720) offset -= 1440;
-		if (offset < -720) offset += 1440;
-
-		const sign = offset >= 0 ? '+' : '-';
-		const absOffset = Math.abs(offset);
-		const hours = Math.floor(absOffset / 60);
-		const minutes = absOffset % 60;
-		return `${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+		return '+00:00';
 	}
 
 	function getTZAbbr(): string {
-		if(numericTz && tz == 0) return 'UTC';
+		if (numericTz && tz === 0) return 'UTC';
 		try {
-			return new Intl.DateTimeFormat('en-US', {timeZone: tzName, timeZoneName: 'short'})
-				.formatToParts(adjustedDate).find(p => p.type === 'timeZoneName')?.value || '';
+			return new Intl.DateTimeFormat('en-US', { timeZone: tzName, timeZoneName: 'short' })
+				.formatToParts(<Date>date).find(p => p.type === 'timeZoneName')?.value || '';
 		} catch {
 			return tzName;
 		}
 	}
 
-	const formatter = new Intl.DateTimeFormat('en-us', {
-		timeZone: numericTz ? 'UTC' : tzName,
-		year: format.includes('YY') ? 'numeric' : undefined,
-		month: format.includes('MM') || format.includes('M') ? '2-digit' : undefined,
-		day: format.includes('DD') || format.includes('Do') || format.includes('D') ? '2-digit' : undefined,
-		hour: format.includes('HH') || format.includes('hh') || format.includes('H') || format.includes('h') ? '2-digit' : undefined,
-		minute: format.includes('mm') || format.includes('m') ? '2-digit' : undefined,
-		second: format.includes('ss') || format.includes('s') ? '2-digit' : undefined,
-		hourCycle: format.includes('A') || format.includes('a') ? 'h12' : 'h23',
-	});
-
-	const parts = formatter.formatToParts(adjustedDate);
 	const tokens: Record<string, string> = {
-		YYYY: adjustedDate.getFullYear().toString(),
-		YY: adjustedDate.getFullYear().toString().slice(2),
-		MM: parts.find(part => part.type === 'month')?.value || '',
-		M: (parseInt(parts.find(part => part.type === 'month')?.value || '0', 10)).toString(),
-		DD: parts.find(part => part.type === 'day')?.value || '',
-		D: parseInt(parts.find(part => part.type === 'day')?.value || '0', 10).toString(),
-		HH: parts.find(part => part.type === 'hour')?.value.padStart(2, '0') || '',
-		H: parseInt(parts.find(part => part.type === 'hour')?.value || '0', 10).toString(),
-		hh: (parseInt(parts.find(part => part.type === 'hour')?.value || '0', 10) % 12 || 12).toString().padStart(2, '0'),
-		h: (parseInt(parts.find(part => part.type === 'hour')?.value || '0', 10) % 12 || 12).toString(),
-		mm: parts.find(part => part.type === 'minute')?.value || '',
-		m: parseInt(parts.find(part => part.type === 'minute')?.value || '0', 10).toString(),
-		ss: parts.find(part => part.type === 'second')?.value || '',
-		s: parseInt(parts.find(part => part.type === 'second')?.value || '0', 10).toString(),
-		A: parseInt(parts.find(part => part.type === 'hour')?.value || '0', 10) >= 12 ? 'PM' : 'AM',
-		a: parseInt(parts.find(part => part.type === 'hour')?.value || '0', 10) >= 12 ? 'pm' : 'am',
+		YYYY: get('FullYear').toString(),
+		YY: get('FullYear').toString().slice(2),
+		MMMM: month(get('Month')),
+		MMM: month(get('Month')).slice(0, 3),
+		MM: (get('Month') + 1).toString().padStart(2, '0'),
+		M: (get('Month') + 1).toString(),
+		DDD: dayOfYear(zonedDate).toString(),
+		DD: get('Date').toString().padStart(2, '0'),
+		Do: numSuffix(get('Date')),
+		D: get('Date').toString(),
+		dddd: dayOfWeek(get('Day')),
+		ddd: dayOfWeek(get('Day')).slice(0, 3),
+		HH: get('Hours').toString().padStart(2, '0'),
+		H: get('Hours').toString(),
+		hh: (get('Hours') % 12 || 12).toString().padStart(2, '0'),
+		h: (get('Hours') % 12 || 12).toString(),
+		mm: get('Minutes').toString().padStart(2, '0'),
+		m: get('Minutes').toString(),
+		ss: get('Seconds').toString().padStart(2, '0'),
+		s: get('Seconds').toString(),
+		SSS: get('Milliseconds').toString().padStart(3, '0'),
+		A: get('Hours') >= 12 ? 'PM' : 'AM',
+		a: get('Hours') >= 12 ? 'pm' : 'am',
+		ZZ: getTZOffset().replace(':', ''),
 		Z: getTZOffset(),
 		z: getTZAbbr(),
 	};
-	return format.replace(/YYYY|YY|MM|M|DD|D|HH|H|hh|h|mm|m|ss|s|A|a|Z|z/g, token => tokens[token]);
+
+	return format.replace(/YYYY|YY|MMMM|MMM|MM|M|DDD|DD|Do|D|dddd|ddd|HH|H|hh|h|mm|m|ss|s|SSS|A|a|ZZ|Z|z/g, token => tokens[token]);
 }
 
 /**
@@ -137,8 +142,8 @@ export function instantInterval(fn: () => any, interval: number) {
 	return setInterval(fn, interval);
 }
 
-export function monthString(num: number): string {
-	return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][num] || 'Unknown';
+export function month(m: number): string {
+	return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m];
 }
 
 /**

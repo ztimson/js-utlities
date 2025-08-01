@@ -31,11 +31,11 @@ describe('Time Utilities', () => {
 		it('handles formatting for given timestamp', () => {
 			const timestamp = Date.UTC(2023, 1, 1, 18, 5, 5, 123); // Feb 1, 2023 18:05:05.123 UTC
 			const formatted = formatDate('YYYY MM DD HH mm ss SSS A Z', timestamp, 'UTC');
-			expect(formatted).toMatch(/^2023 02 01 18 05 05 123 PM \+?0:00$/i);
+			expect(formatted).toMatch(/^2023 02 01 18 05 05 123 PM \+00:00/i);
 		});
 
 		it('throws for unknown timezone', () => {
-			expect(() => formatDate('YYYY', new Date(), '???')).toThrowError(/Unknown timezone/);
+			expect(() => formatDate('YYYY', new Date(), '???')).toThrowError(/Invalid timezone/);
 		});
 
 		it('handles timezone by offset number', () => {

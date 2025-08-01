@@ -49,12 +49,16 @@ export function fracToDec(frac: string) {
 	return whole + (Number(split[0]) / Number(split[1]));
 }
 
-export function numSuffix(num: number): string {
-	if (num % 100 >= 11 && num % 100 <= 13) return `${num}th`;
-	switch (num % 10) {
-		case 1: return `${num}st`;
-		case 2: return `${num}nd`;
-		case 3: return `${num}rd`;
-		default: return `${num}th`;
-	}
+/**
+ * Add a suffix to a number:
+ * 1 = 1st
+ * 2 = 2nd
+ * 3 = 3rd
+ * N = Nth
+ * @param {number} n
+ * @returns {string}
+ */
+export function numSuffix(n: number): string {
+	const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+	return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
 }
