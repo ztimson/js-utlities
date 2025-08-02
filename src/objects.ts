@@ -1,22 +1,28 @@
 export type Delta = { [key: string]: any | Delta | null };
 
+
 /**
- * Applies deltas in order to modify `target`.
- * @param base - Original
- * @param deltas - List of deltas to apply
+ * Applies deltas to `target`.
+ * @param base starting point
+ * @param deltas List of deltas to apply
  * @returns Mutated target
  */
-export function applyDelta(base: any, deltas: any): any {
-	if(deltas === null) return null;
-	if(typeof base !== 'object' || base === null) return deltas === undefined ? base : deltas;
-	const result = Array.isArray(base) ? [...base] : { ...base };
-	for(const key in deltas) {
-		const val = deltas[key];
-		if (val === undefined) delete result[key];
-		else if (typeof val === 'object' && val !== null && !(Array.isArray(val))) result[key] = applyDelta(result[key], val);
-		else result[key] = val;
+export function applyDeltas(base: any, ...deltas: any): any {
+	function applyDelta(base: any, delta: any): any {
+		if(delta === null) return null;
+		if(typeof base !== 'object' || base === null) return delta === undefined ? base : delta;
+		const result = Array.isArray(base) ? [...base] : { ...base };
+		for(const key in delta) {
+			const val = delta[key];
+			if (val === undefined) delete result[key];
+			else if (typeof val === 'object' && val !== null && !(Array.isArray(val))) result[key] = applyDelta(result[key], val);
+			else result[key] = val;
+		}
+		return result;
 	}
-	return result;
+
+	for(let d of deltas) base = applyDeltas(base, d);
+	return base;
 }
 
 /**
