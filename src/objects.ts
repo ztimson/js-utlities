@@ -2,55 +2,44 @@ export type Delta = { [key: string]: any | Delta | null };
 
 /**
  * Applies deltas in order to modify `target`.
- * @param target - Object to mutate
+ * @param base - Original
  * @param deltas - List of deltas to apply
  * @returns Mutated target
  */
-export function applyDeltas(target: any, deltas: Delta[]): any {
-	for(const delta of deltas) {
-		for(const [key, value] of Object.entries(delta)) {
-			if(value === null) {
-				delete target[key]; // Remove
-			} else if(Array.isArray(value)) {
-				target[key] = [...value]; // Array
-			} else if(typeof value === 'object') {
-				if(typeof target[key] !== 'object' || Array.isArray(target[key]) || !target[key])
-					target[key] = {}; // Nested
-				applyDeltas(target[key], [value]); // Recurse
-			} else {
-				target[key] = value; // Primitive
-			}
-		}
+export function applyDelta(base: any, deltas: any): any {
+	if(deltas === null) return null;
+	if(typeof base !== 'object' || base === null) return deltas === undefined ? base : deltas;
+	const result = Array.isArray(base) ? [...base] : { ...base };
+	for(const key in deltas) {
+		const val = deltas[key];
+		if (val === undefined) delete result[key];
+		else if (typeof val === 'object' && val !== null && !(Array.isArray(val))) result[key] = applyDelta(result[key], val);
+		else result[key] = val;
 	}
-	return target;
+	return result;
 }
 
 /**
  * Creates a nested delta that reverts `target` back to `old`.
  * @param old - Original object
- * @param target - Modified object
- * @returns Delta to revert changes
+ * @param updated - Modified object
+ * @returns New changes
  */
-export function calcDelta(old: any, target: any): Delta {
-	const delta: Delta = {};
-	const keys = new Set([...Object.keys(old || {}), ...Object.keys(target || {})]);
-	for(const key of keys) {
-		const val1 = old?.[key];
-		const val2 = target?.[key];
-		if(!(key in target)) {
-			delta[key] = val1; // Removed
-		} else if(!(key in old)) {
-			delta[key] = null; // Added
-		} else if(Array.isArray(val1) || Array.isArray(val2)) {
-			if(JSON.stringify(val1) !== JSON.stringify(val2)) delta[key] = val1; // Array
-		} else if(typeof val1 === 'object' && typeof val2 === 'object' && val1 && val2) {
-			const nested = calcDelta(val1, val2);
-			if(Object.keys(nested).length) delta[key] = nested; // Nested
-		} else if(val1 !== val2) {
-			delta[key] = val1; // Modified
+export function calcDelta(old: any, updated: any): any {
+	if(updated == null) return null; // full delete
+	const delta: any = {};
+	const isObj = (v: any) => v && typeof v === 'object' && !Array.isArray(v);
+	for (const key of new Set([...(old ? Object.keys(old) : []), ...(updated ? Object.keys(updated) : [])])) {
+		const oldVal = old?.[key];
+		const newVal = updated?.[key];
+		if(isObj(oldVal) && isObj(newVal)) {
+			const nested = calcDelta(oldVal, newVal);
+			if (nested !== null && Object.keys(nested).length > 0) delta[key] = nested;
+		} else if(JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+			delta[key] = newVal;
 		}
 	}
-	return delta;
+	return Object.keys(delta).length === 0 ? {} : delta;
 }
 
 /**
