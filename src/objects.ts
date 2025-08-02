@@ -7,21 +7,21 @@ export type Delta = { [key: string]: any | Delta | null };
  * @param deltas List of deltas to apply
  * @returns Mutated target
  */
-export function applyDeltas(base: any, ...deltas: any): any {
+export function applyDeltas(base: any, ...deltas: any[]): any {
 	function applyDelta(base: any, delta: any): any {
 		if(delta === null) return null;
 		if(typeof base !== 'object' || base === null) return delta === undefined ? base : delta;
 		const result = Array.isArray(base) ? [...base] : { ...base };
 		for(const key in delta) {
 			const val = delta[key];
-			if (val === undefined) delete result[key];
-			else if (typeof val === 'object' && val !== null && !(Array.isArray(val))) result[key] = applyDelta(result[key], val);
+			if(val === undefined) delete result[key];
+			else if(typeof val === 'object' && val !== null && !Array.isArray(val)) result[key] = applyDelta(result[key], val);
 			else result[key] = val;
 		}
 		return result;
 	}
 
-	for(let d of deltas) base = applyDeltas(base, d);
+	for(const d of deltas.flat()) base = applyDelta(base, d?.delta ?? d);
 	return base;
 }
 
@@ -40,7 +40,7 @@ export function calcDelta(old: any, updated: any): any {
 		const newVal = updated?.[key];
 		if(isObj(oldVal) && isObj(newVal)) {
 			const nested = calcDelta(oldVal, newVal);
-			if (nested !== null && Object.keys(nested).length > 0) delta[key] = nested;
+			if(nested !== null && Object.keys(nested).length > 0) delta[key] = nested;
 		} else if(JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
 			delta[key] = newVal;
 		}
@@ -325,8 +325,8 @@ export function JSONSerialize<T1>(obj: T1): T1 | string {
 export function JSONSanitize(obj: any, space?: number): string {
 	const cache: any[] = [];
 	return JSON.stringify(obj, (key, value) => {
-		if (typeof value === 'object' && value !== null) {
-			if (cache.includes(value)) return '[Circular]';
+		if(typeof value === 'object' && value !== null) {
+			if(cache.includes(value)) return '[Circular]';
 			cache.push(value);
 		}
 		return value;
