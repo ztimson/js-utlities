@@ -55,23 +55,46 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 	}
 
 	let zonedDate = new Date(date);
+	let get: (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds') => number;
+	const partsMap: Record<string, string> = {};
 	if (!numericTz && tzName !== 'UTC') {
 		const parts = new Intl.DateTimeFormat('en-US', {
 			timeZone: tzName,
-			year: 'numeric', month: '2-digit', day: '2-digit',
+			year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long',
 			hour: '2-digit', minute: '2-digit', second: '2-digit',
 			hour12: false
 		}).formatToParts(date);
-		const get = (type: string) => parts.find(p => p.type === type)?.value;
-		const build = `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}Z`;
-		zonedDate = new Date(build);
-	} else if (numericTz || tzName === 'UTC') {
+		parts.forEach(p => {
+			partsMap[p.type] = p.value;
+		});
+
+		const monthValue = parseInt(partsMap.month) - 1;
+		const dayOfWeekValue = new Date(`${partsMap.year}-${partsMap.month}-${partsMap.day}`).getDay();
+		const hourValue = parseInt(partsMap.hour);
+
+		get = (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds'): number => {
+			switch (fn) {
+				case 'FullYear': return parseInt(partsMap.year);
+				case 'Month': return monthValue;
+				case 'Date': return parseInt(partsMap.day);
+				case 'Day': return dayOfWeekValue;
+				case 'Hours': return hourValue;
+				case 'Minutes': return parseInt(partsMap.minute);
+				case 'Seconds': return parseInt(partsMap.second);
+				default: return 0;
+			}
+		};
+	} else {
 		const offset = numericTz ? tz as number : 0;
 		zonedDate = new Date(date.getTime() + offset * 60 * 60 * 1000);
+		get = (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds'): number => zonedDate[`getUTC${fn}`]();
 	}
 
-	const get = (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds') =>
-		(numericTz || tzName === 'UTC') ? zonedDate[`getUTC${fn}`]() : zonedDate[`get${fn}`]();
+	function numSuffix(n: number): string {
+		const s = ["th", "st", "nd", "rd"];
+		const v = n % 100;
+		return n + (s[(v - 20) % 10] || s[v] || s[0]);
+	}
 
 	function getTZOffset(): string {
 		if (numericTz) {
@@ -119,7 +142,7 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 		m: get('Minutes').toString(),
 		ss: get('Seconds').toString().padStart(2, '0'),
 		s: get('Seconds').toString(),
-		SSS: get('Milliseconds').toString().padStart(3, '0'),
+		SSS: (zonedDate[`getUTC${'Milliseconds'}`]()).toString().padStart(3, '0'),
 		A: get('Hours') >= 12 ? 'PM' : 'AM',
 		a: get('Hours') >= 12 ? 'pm' : 'am',
 		ZZ: getTZOffset().replace(':', ''),
