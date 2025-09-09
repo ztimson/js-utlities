@@ -8,6 +8,8 @@ export type CacheOptions = {
 	persistentStorage?: {storage: Storage | Database, key: string} | string;
 	/** Keep or delete cached items once expired, defaults to delete */
 	expiryPolicy?: 'delete' | 'keep';
+	/** Least Recently Used size limit */
+	sizeLimit?: number;
 }
 
 export type CachedValue<T> = T & {_expired?: boolean};
@@ -16,14 +18,15 @@ export type CachedValue<T> = T & {_expired?: boolean};
  * Map of data which tracks whether it is a complete collection & offers optional expiry of cached values
  */
 export class Cache<K extends string | number | symbol, T> {
-	private store: Record<K, T> = <any>{};
+	private _loading!: Function;
+	private store: Map<K, T> = new Map();
+	private timers: Map<K, NodeJS.Timeout> = new Map();
+	private lruOrder: K[] = [];
 
 	/** Support index lookups */
 	[key: string | number | symbol]: CachedValue<T> | any;
 	/** Whether cache is complete */
 	complete = false;
-
-	private _loading!: Function;
 	/** Await initial loading */
 	loading = new Promise<void>(r => this._loading = r);
 
@@ -43,12 +46,18 @@ export class Cache<K extends string | number | symbol, T> {
 					const persists: any = this.options.persistentStorage;
 					const table: Table<any, any> = await persists.storage.createTable({name: persists.key, key: this.key});
 					const rows = await table.getAll();
-					Object.assign(this.store, rows.reduce((acc, row) => ({...acc, [this.getKey(row)]: row}), {}));
+					for(const row of rows) this.store.set(this.getKey(row), row);
 					this._loading();
 				})();
 			} else if((<any>this.options.persistentStorage?.storage)?.getItem != undefined) {
-				const stored = (<Storage>this.options.persistentStorage.storage).getItem(this.options.persistentStorage.key);
-				if(stored != null) try { Object.assign(this.store, JSON.parse(stored)); } catch { }
+				const {storage, key} = <{storage: Storage, key: string}>this.options.persistentStorage;
+				const stored = storage.getItem(key);
+				if(stored != null) {
+					try {
+						const obj = JSON.parse(stored);
+						for(const k of Object.keys(obj)) this.store.set(<any>k, obj[k]);
+					} catch { /* ignore */ }
+				}
 				this._loading();
 			}
 		} else {
@@ -71,8 +80,8 @@ export class Cache<K extends string | number | symbol, T> {
 
 	private getKey(value: T): K {
 		if(!this.key) throw new Error('No key defined');
-		if(value[this.key] === undefined) throw new Error(`${this.key.toString()} Doesn't exist on ${JSON.stringify(value, null, 2)}`);
-		return <K>value[this.key];
+		if((value as any)[this.key] === undefined) throw new Error(`${this.key.toString()} Doesn't exist on ${JSON.stringify(value, null, 2)}`);
+		return <K>(value as any)[this.key];
 	}
 
 	private save(key?: K) {
@@ -80,18 +89,36 @@ export class Cache<K extends string | number | symbol, T> {
 		if(!!persists?.storage) {
 			if(persists.storage?.database != undefined) {
 				(<Database>persists.storage).createTable({name: persists.key, key: <string>this.key}).then(table => {
-					if(key) {
-						const value = this.get(key);
+					if(key !== undefined) {
+						const value = this.get(key, true);
 						if(value != null) table.set(value, key);
 						else table.delete(key);
 					} else {
 						table.clear();
-						this.all().forEach(row => table.add(row));
+						this.all(true).forEach(row => table.add(row));
 					}
 				});
 			} else if(persists.storage?.setItem != undefined) {
-				persists.storage.setItem(persists.storage.key, JSONSanitize(this.all(true)));
+				const obj: Record<any, any> = {};
+				for(const [k, v] of this.store.entries()) obj[k as any] = v;
+				persists.storage.setItem(persists.key, JSONSanitize(obj));
 			}
+		}
+	}
+
+	private clearTimer(key: K) {
+		const t = this.timers.get(key);
+		if(t) { clearTimeout(t); this.timers.delete(key); }
+	}
+
+	private touchLRU(key: K) {
+		if(!this.options.sizeLimit || this.options.sizeLimit <= 0) return;
+		const idx = this.lruOrder.indexOf(key);
+		if(idx >= 0) this.lruOrder.splice(idx, 1);
+		this.lruOrder.push(key);
+		while(this.lruOrder.length > (this.options.sizeLimit || 0)) {
+			const lru = this.lruOrder.shift();
+			if(lru !== undefined) this.delete(lru);
 		}
 	}
 
@@ -100,8 +127,12 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {T[]} Array of items
 	 */
 	all(expired?: boolean): CachedValue<T>[] {
-		return deepCopy<any>(Object.values(this.store)
-			.filter((v: any) => expired || !v._expired));
+		const out: CachedValue<T>[] = [];
+		for(const v of this.store.values()) {
+			const val: any = v;
+			if(expired || !val?._expired) out.push(deepCopy<any>(val));
+		}
+		return out;
 	}
 
 	/**
@@ -134,7 +165,10 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	clear(): this {
 		this.complete = false;
-		this.store = <any>{};
+		for (const [k, t] of this.timers) clearTimeout(t);
+		this.timers.clear();
+		this.lruOrder = [];
+		this.store.clear();
 		this.save();
 		return this;
 	}
@@ -144,7 +178,10 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @param {K} key Item's primary key
 	 */
 	delete(key: K): this {
-		delete this.store[key];
+		this.clearTimer(key);
+		const idx = this.lruOrder.indexOf(key);
+		if(idx >= 0) this.lruOrder.splice(idx, 1);
+		this.store.delete(key);
 		this.save(key);
 		return this;
 	}
@@ -154,8 +191,12 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {[K, T][]} Key-value pairs array
 	 */
 	entries(expired?: boolean): [K, CachedValue<T>][] {
-		return deepCopy<any>(Object.entries(this.store)
-			.filter((v: any) => expired || !v?._expired));
+		const out: [K, CachedValue<T>][] = [];
+		for(const [k, v] of this.store.entries()) {
+			const val: any = v;
+			if(expired || !val?._expired) out.push([k, deepCopy<any>(val)]);
+		}
+		return out;
 	}
 
 	/**
@@ -165,8 +206,12 @@ export class Cache<K extends string | number | symbol, T> {
 	expire(key: K): this {
 		this.complete = false;
 		if(this.options.expiryPolicy == 'keep') {
-			(<any>this.store[key])._expired = true;
-			this.save(key);
+			const v: any = this.store.get(key);
+			if(v) {
+				v._expired = true;
+				this.store.set(key, v);
+				this.save(key);
+			}
 		} else this.delete(key);
 		return this;
 	}
@@ -178,7 +223,11 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @returns {T | undefined} Cached item or undefined if nothing matched
 	 */
 	find(filter: Partial<T>, expired?: boolean): T | undefined {
-		return <T>Object.values(this.store).find((row: any) => (expired || !row._expired) && includes(row, filter));
+		for(const v of this.store.values()) {
+			const row: any = v;
+			if((expired || !row._expired) && includes(row, filter)) return deepCopy<any>(row);
+		}
+		return undefined;
 	}
 
 	/**
@@ -188,7 +237,10 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {T} Cached item
 	 */
 	get(key: K, expired?: boolean): CachedValue<T> | null {
-		const cached = deepCopy<any>(this.store[key] ?? null);
+		const raw = this.store.get(key);
+		if(raw == null) return null;
+		const cached: any = deepCopy<any>(raw);
+		this.touchLRU(key);
 		if(expired || !cached?._expired) return cached;
 		return null;
 	}
@@ -198,8 +250,12 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {K[]} Array of keys
 	 */
 	keys(expired?: boolean): K[] {
-		return <K[]>Object.keys(this.store)
-			.filter(k => expired || !(<any>this.store)[k]._expired);
+		const out: K[] = [];
+		for(const [k, v] of this.store.entries()) {
+			const val: any = v;
+			if(expired || !val?._expired) out.push(k);
+		}
+		return out;
 	}
 
 	/**
@@ -207,10 +263,11 @@ export class Cache<K extends string | number | symbol, T> {
 	 * @return {Record<K, T>}
 	 */
 	map(expired?: boolean): Record<K, CachedValue<T>> {
-		const copy: any = deepCopy(this.store);
-		if(!expired) Object.keys(copy).forEach(k => {
-			if(copy[k]._expired) delete copy[k]
-		});
+		const copy: any = {};
+		for(const [k, v] of this.store.entries()) {
+			const val: any = v;
+			if(expired || !val?._expired) copy[k as any] = deepCopy<any>(val);
+		}
 		return copy;
 	}
 
@@ -223,12 +280,17 @@ export class Cache<K extends string | number | symbol, T> {
 	 */
 	set(key: K, value: T, ttl = this.options.ttl): this {
 		if(this.options.expiryPolicy == 'keep') delete (<any>value)._expired;
-		this.store[key] = value;
+		this.clearTimer(key);
+		this.store.set(key, value);
+		this.touchLRU(key);
 		this.save(key);
-		if(ttl) setTimeout(() => {
-			this.expire(key);
-			this.save(key);
-		}, (ttl || 0) * 1000);
+		if(ttl) {
+			const t = setTimeout(() => {
+				this.expire(key);
+				this.save(key);
+			}, (ttl || 0) * 1000);
+			this.timers.set(key, t);
+		}
 		return this;
 	}
 
@@ -236,5 +298,5 @@ export class Cache<K extends string | number | symbol, T> {
 	 * Get all cached items
 	 * @return {T[]} Array of items
 	 */
-	values = this.all();
+	values = this.all
 }
