@@ -1,3 +1,4 @@
+import {LogLevels} from './logger.ts';
 import {PathEvent} from './path-events.ts';
 import {md5} from './string';
 
@@ -13,6 +14,34 @@ export function compareVersions(target: string, vs: string): -1 | 0 | 1 {
 	return (tMajor > vMajor || tMinor > vMinor || tPatch > vPatch) ? 1 :
 		(tMajor < vMajor || tMinor < vMinor || tPatch < vPatch) ? -1 : 0;
 }
+
+/**
+ * Create a console object to intercept logs with optional passthrough
+ * @param {null | {debug: Function, log: Function, info: Function, warn: Function, error: Function}} out Passthrough logs, null to silence
+ * @param {{[K in LogLevels]?: LogLevels | "none"}} map Map log levels: {log: 'debug', warn: 'error'} = Suppress debug logs, elevate warnings
+ * @returns {{debug: Function, log: Function, info: Function, warn: Function, error: Function, stderr: string[], stdout: string[]}}
+ */
+export function consoleInterceptor(
+	out: null | {debug: Function, log: Function, info: Function, warn: Function, error: Function} = console,
+	map?: {[K in LogLevels]?: LogLevels | 'none'}
+): {debug: Function, log: Function, info: Function, warn: Function, error: Function, stderr: string[], stdout: string[]} {
+	const stderr: any[] = [], stdout: any[] = [];
+	const cWrapper = (type: 'debug' | 'log' | 'info' | 'warn' | 'error') => ((...args: any[]) => {
+		if(out) out[type](...args);
+		if(type == 'error') stderr.push(...args);
+		else stdout.push(...args);
+	});
+	return {
+		debug: map?.debug != 'none' ? cWrapper(map?.debug || 'debug') : () => {},
+		log: map?.log != 'none' ? cWrapper(map?.log || 'log') : () => {},
+		info: map?.info != 'none' ? cWrapper(map?.info || 'info') : () => {},
+		warn: map?.warn != 'none' ? cWrapper(map?.warn || 'warn') : () => {},
+		error: map?.error != 'none' ? cWrapper(map?.error || 'error') : () => {},
+		stderr,
+		stdout,
+	}
+}
+
 
 /**
  * Escape any regex special characters to avoid misinterpretation during search

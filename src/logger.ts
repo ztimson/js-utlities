@@ -42,6 +42,8 @@ export const CliBackground = {
 	GREY: "\x1b[100m",
 }
 
+export type LogLevels = 'debug' | 'log' | 'info' | 'warn' | 'error';
+
 export enum LOG_LEVEL {
 	ERROR = 0,
 	WARN = 1,

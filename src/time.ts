@@ -34,6 +34,50 @@ export function dayOfYear(date: Date): number {
 /**
  * Format date
  *
+ * Year:
+ * - YYYY = 2025 (4-digit year)
+ * - YY = 25 (2-digit year)
+ *
+ * Month:
+ * - MMMM = January (full month name)
+ * - MMM = Jan (abbreviated month name)
+ * - MM = 01 (zero-padded month number)
+ * - M = 1 (month number)
+ *
+ * Day:
+ * - DDD = 123 (day of year)
+ * - DD = 01 (zero-padded day)
+ * - Do = 1st (day with ordinal suffix)
+ * - D = 1 (day number)
+ * - dddd = Monday (full day name)
+ * - ddd = Mon (abbreviated day name)
+ *
+ * Hour:
+ * - HH = 13 (24-hour format, zero-padded)
+ * - H = 13 (24-hour format)
+ * - hh = 01 (12-hour format, zero-padded)
+ * - h = 1 (12-hour format)
+ *
+ * Minute:
+ * - mm = 05 (zero-padded minutes)
+ * - m = 5 (minutes)
+ *
+ * Second:
+ * - ss = 09 (zero-padded seconds)
+ * - s = 9 (seconds)
+ *
+ * Millisecond:
+ * - SSS = 123 (3-digit milliseconds)
+ *
+ * AM/PM:
+ * - A = AM/PM (uppercase)
+ * - a = am/pm (lowercase)
+ *
+ * Timezone:
+ * - ZZ = +0500 (timezone offset without colon)
+ * - Z = +05:00 (timezone offset with colon)
+ * - z = EST (timezone abbreviation)
+ *
  * @param {string} format How date string will be formatted, default: `YYYY-MM-DD H:mm A`
  * @param {Date | number | string} date Date or timestamp, defaults to now
  * @param tz Set timezone offset
