@@ -24,12 +24,13 @@ export function compareVersions(target: string, vs: string): -1 | 0 | 1 {
 export function consoleInterceptor(
 	out: null | {debug: Function, log: Function, info: Function, warn: Function, error: Function} = console,
 	map?: {[K in LogLevels]?: LogLevels | 'none'}
-): {debug: Function, log: Function, info: Function, warn: Function, error: Function, stderr: string[], stdout: string[]} {
-	const stderr: any[] = [], stdout: any[] = [];
+): {debug: Function, log: Function, info: Function, warn: Function, error: Function, output: {debug: any[], log: any[], info: any[], warn: any[], error: any[], stderr: any[], stdout: any[]}} {
+	const logs: any = {debug: [], log: [], info: [], warn: [], error: [], stderr: [], stdout: [],}
 	const cWrapper = (type: 'debug' | 'log' | 'info' | 'warn' | 'error') => ((...args: any[]) => {
 		if(out) out[type](...args);
-		if(type == 'error') stderr.push(...args);
-		else stdout.push(...args);
+		logs[type].push(...args);
+		if(type == 'error') logs.stderr.push(...args);
+		else logs.stdout.push(...args);
 	});
 	return {
 		debug: map?.debug != 'none' ? cWrapper(map?.debug || 'debug') : () => {},
@@ -37,8 +38,7 @@ export function consoleInterceptor(
 		info: map?.info != 'none' ? cWrapper(map?.info || 'info') : () => {},
 		warn: map?.warn != 'none' ? cWrapper(map?.warn || 'warn') : () => {},
 		error: map?.error != 'none' ? cWrapper(map?.error || 'error') : () => {},
-		stderr,
-		stdout,
+		output: logs
 	}
 }
 
