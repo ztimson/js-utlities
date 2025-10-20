@@ -1,5 +1,5 @@
 import {makeArray} from './array.ts';
-import {JSONAttemptParse} from './objects.ts';
+import {JSONAttemptParse} from './json.ts';
 import {PromiseProgress} from './promise-progress';
 import {formatDate} from './time.ts';
 

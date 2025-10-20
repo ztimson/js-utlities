@@ -1,4 +1,4 @@
-import {JSONAttemptParse} from './objects.ts';
+import {JSONAttemptParse} from './json.ts';
 
 /**
  * Creates a JSON Web Token (JWT) using the provided payload.

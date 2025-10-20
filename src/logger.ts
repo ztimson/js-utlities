@@ -1,5 +1,5 @@
 import {TypedEmitter, TypedEvents} from './emitter';
-import {JSONSanitize} from './objects.ts';
+import {JSONSanitize} from './json.ts';
 
 export const CliEffects = {
 	CLEAR: "\x1b[0m",

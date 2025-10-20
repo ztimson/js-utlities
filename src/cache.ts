@@ -1,5 +1,6 @@
 import {Database, Table} from './database.ts';
-import {deepCopy, includes, JSONSanitize} from './objects.ts';
+import {JSONSanitize} from './json.ts';
+import {deepCopy, includes} from './objects.ts';
 
 export type CacheOptions = {
 	/** Delete keys automatically after x amount of seconds */

@@ -1,6 +1,7 @@
 import {makeArray} from './array.ts';
 import {ASet} from './aset.ts';
-import {dotNotation, flattenObj, JSONSanitize} from './objects.ts';
+import {JSONSanitize} from './json.ts';
+import {dotNotation, flattenObj} from './objects.ts';
 import {LETTER_LIST} from './string.ts';
 
 /**

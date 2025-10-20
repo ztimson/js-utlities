@@ -2,7 +2,6 @@ import {JSONSanitize} from './json.ts';
 
 export type Delta = { [key: string]: any | Delta | null };
 
-
 /**
  * Applies deltas to `target`.
  * @param base starting point

@@ -1,4 +1,5 @@
-import {dotNotation, JSONAttemptParse, JSONSerialize} from './objects.ts';
+import {JSONAttemptParse, JSONSerialize} from './json.ts';
+import {dotNotation} from './objects.ts';
 
 /**
  * Filters an array of objects based on a search term and optional regex checking.

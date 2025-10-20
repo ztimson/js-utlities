@@ -1,5 +1,3 @@
-import {numSuffix} from './math.ts';
-
 /**
  * Like setInterval but will adjust the timeout value to account for runtime
  * @param {Function} cb Callback function that will be ran
