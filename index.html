@@ -1,11 +1,102 @@
+<!DOCTYPE html>
 <html>
+	<head>
+		<title>Console Styling Playground</title>
+	</head>
 	<body>
-		<script type="module">
-			import {formatDate} from './dist/index.mjs';
+		<h1>Open Chrome DevTools Console to see magic! (Ctrl+Shift+J or Cmd+Option+J)</h1>
 
-			const dt = new Date('2021-03-03T09:00:00Z');
-			const result = formatDate('Do MMMM dddd', dt, 0);
-			console.log(result);
+		<script>
+			// Console Styling Playground
+			class ConsoleStyler {
+				// Basic badge with customizable colors
+				badge(text, bgColor = '#007bff', textColor = 'white') {
+					console.log(
+						`%c ${text} `,
+						`background-color: ${bgColor};
+                 color: ${textColor};
+                 border-radius: 12px;
+                 padding: 2px 8px;
+                 font-weight: bold;`
+					);
+				}
+
+				// Multi-style log with different sections
+				richLog() {
+					console.log(
+						'%cSystem%c Operation %cDetails',
+						'background-color: #f0f0f0; color: black; padding: 2px 5px; border-radius: 3px;',
+						'color: blue; font-weight: bold;',
+						'color: green;'
+					);
+				}
+
+				// Grouped logs with nested information
+				groupedLog(title, items) {
+					console.group(title);
+					items.forEach(item => {
+						console.log(item);
+					});
+					console.groupEnd();
+				}
+
+				// Table view for structured data
+				tableLog(data) {
+					console.table(data);
+				}
+
+				// Performance tracking
+				timeTrack(label, operation) {
+					console.time(label);
+					operation();
+					console.timeEnd(label);
+				}
+
+				// Demonstration method
+				demo() {
+					// Different styled badges
+					this.badge('NEW', '#28a745');  // Green
+					this.badge('WARNING', '#ffc107', 'black');  // Yellow
+					this.badge('ERROR', '#dc3545');  // Red
+					this.badge('CUSTOM', '#6f42c1');  // Purple
+
+					// Rich multi-style log
+					this.richLog();
+
+					// Grouped logs
+					this.groupedLog('User Details', [
+						{ name: 'John Doe', age: 30, role: 'Admin' },
+						{ name: 'Jane Smith', age: 25, role: 'User' }
+					]);
+
+					// Table logging
+					this.tableLog([
+						{ name: 'John', age: 30, active: true },
+						{ name: 'Jane', age: 25, active: false }
+					]);
+
+					// Performance tracking
+					this.timeTrack('Complex Operation', () => {
+						let sum = 0;
+						for(let i = 0; i < 1000000; i++) {
+							sum += i;
+						}
+						console.log('Sum:', sum);
+					});
+
+					// Advanced: Conditional styling
+					const logLevel = 'warn';
+					console.log(
+						`%c[${logLevel.toUpperCase()}]%c Detailed message`,
+						`color: ${logLevel === 'warn' ? 'orange' : 'red'}; font-weight: bold;`,
+						'color: black;'
+					);
+				}
+			}
+
+			// Create instance and run demo
+			const styler = new ConsoleStyler();
+			styler.demo();
 		</script>
 	</body>
 </html>

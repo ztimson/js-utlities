@@ -294,6 +294,17 @@ export function mixin(target: any, constructors: any[]) {
 }
 
 /**
+ * Run a map function on each property
+ * @param obj Object that will be iterated
+ * @param {(key: string, value: any) => any} fn Transformer function - receives key & value
+ * @returns {{}}
+ */
+export function objectMap<T>(obj: any, fn: (key: string, value: any) => any): T {
+	return <any>Object.entries(obj).map(([key, value]: [string, any]) => [key, fn(key, value)])
+		.reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+}
+
+/**
  * Parse JSON but return the original string if it fails
  *
  * @param {any} json JSON string to parse
