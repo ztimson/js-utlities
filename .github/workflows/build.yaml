@@ -11,26 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     container: node:20-alpine
     steps:
-      -   name: Clone Repository
-          uses: ztimson/actions/clone@develop
+      - name: Clone Repository
+        uses: ztimson/actions/clone@develop
 
-      -   name: Install & Build
-          run: |
-            npm i
-            npm run build
+      - name: Install & Build
+        run: |
+          npm i
+          npm run build
 
-      -   name: Test
-          run: npm run test:coverage
+      - name: Test
+        run: npm run test:coverage
 
-      -   name: Upload to Registry
-          uses: ztimson/actions/npm/publish@develop
+      - name: Upload to Registry
+        uses: ztimson/actions/npm/publish@develop
 
-      -   name: Upload to NPM
-          uses: ztimson/actions/npm/publish@develop
-          with:
-              owner: ztimson
-              registry: https://registry.npmjs.org/
-              token: ${{secrets.NPM_TOKEN}}
+      - name: Upload to NPM
+        uses: ztimson/actions/npm/publish@develop
+        with:
+          owner: ztimson
+          registry: https://registry.npmjs.org/
+          token: ${{secrets.NPM_TOKEN}}
   tag:
     name: Tag Version
     needs: build
@@ -38,23 +38,53 @@ jobs:
     runs-on: ubuntu-latest
     container: node
     steps:
-      -   name: Clone Repository
-          uses: ztimson/actions/clone@develop
+      - name: Clone Repository
+        uses: ztimson/actions/clone@develop
 
-      -   name: Get Version Number
-          run: echo "VERSION=$(cat package.json | grep version | grep -Eo ':.+' | grep -Eo '[[:alnum:]\.\/\-]+')" >> $GITHUB_ENV
+      - name: Get Version Number
+        run: echo "VERSION=$(cat package.json | grep version | grep -Eo ':.+' | grep -Eo '[[:alnum:]\.\/\-]+')" >> $GITHUB_ENV
 
-      -   name: Tag Version
-          uses: ztimson/actions/tag@develop
-          with:
-            tag: ${{env.VERSION}}
-
-
+      - name: Tag Version
+        uses: ztimson/actions/tag@develop
+        with:
+          tag: ${{env.VERSION}}
   docs:
-    name: Publish Documentation
-    needs: build
-    uses: ztimson/actions/.github/workflows/docker.yaml@develop
-    with:
-        name: ztimson/utils
-        repository: ${{github.server_url}}/${{github.repository}}.git
-        pass: ${{secrets.DEPLOY_TOKEN}}
+    name: Publish Docs
+    runs-on: ubuntu-latest
+    container: docker:dind
+    steps:
+      - name: Clone Repository
+        uses: ztimson/actions/clone@develop
+
+      - name: Build Image
+        run: |
+          REGISTRY=$(echo ${{github.server_url}} | sed s%http://%% | sed s%https://%%)
+          docker build -t "$REGISTRY/${{github.repository}}:${{github.ref_name}}" .
+
+      - name: Build Image
+        run: |
+          echo "CHECKSUM: ${{env.CHECKSUM}}"
+          REGISTRY=$(echo ${{github.server_url}} | sed s%http://%% | sed s%https://%%)
+          docker build -t "$REGISTRY/${{github.repository}}:${{github.ref_name}}" --build-arg LICENSE_KEY="${{secrets.LICENSE_KEY}}" --build-arg UPDATE_TOKEN="${{secrets.UPDATE_TOKEN}}" .
+
+      - name: Publish Branch Tag
+        run: |
+          REGISTRY=$(echo ${{github.server_url}} | sed s%http://%% | sed s%https://%%)
+          docker login -u ${{github.repository_owner}} -p ${{secrets.DEPLOY_TOKEN}} $REGISTRY
+          docker push "$REGISTRY/${{github.repository}}:${{github.ref_name}}"
+
+      - name: Publish Version Tag
+        run: |
+          if [ "${{github.ref_name}}" = "master" ]; then
+            REGISTRY=$(echo ${{github.server_url}} | sed s%http://%% | sed s%https://%%)
+            docker tag "$REGISTRY/${{github.repository}}:${{github.ref_name}}" "$REGISTRY/${{github.repository}}:${{env.VERSION}}"
+            docker push "$REGISTRY/${{github.repository}}:${{env.VERSION}}"
+          fi
+
+      - name: Publish Latest Tag
+        run: |
+          if [ "${{github.ref_name}}" = "master" ]; then
+            REGISTRY=$(echo ${{github.server_url}} | sed s%http://%% | sed s%https://%%)
+            docker tag "$REGISTRY/${{github.repository}}:${{github.ref_name}}" "$REGISTRY/${{github.repository}}:latest"
+            docker push "$REGISTRY/${{github.repository}}:latest"
+          fi
