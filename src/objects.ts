@@ -1,3 +1,5 @@
+import {JSONSanitize} from './json.ts';
+
 export type Delta = { [key: string]: any | Delta | null };
 
 
@@ -302,44 +304,4 @@ export function mixin(target: any, constructors: any[]) {
 export function objectMap<T>(obj: any, fn: (key: string, value: any) => any): T {
 	return <any>Object.entries(obj).map(([key, value]: [string, any]) => [key, fn(key, value)])
 		.reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
-}
-
-/**
- * Parse JSON but return the original string if it fails
- *
- * @param {any} json JSON string to parse
- * @return {string | T} Object if successful, original string otherwise
- */
-export function JSONAttemptParse<T1, T2>(json: T2): T1 | T2 {
-	try { return JSON.parse(<any>json); }
-	catch { return json; }
-}
-
-/**
- * Stringifies objects & skips primitives
- *
- * @param {any} obj Object to convert to serializable value
- * @return {string | T} Serialized value
- */
-export function JSONSerialize<T1>(obj: T1): T1 | string {
-	if(typeof obj == 'object' && obj != null) return JSONSanitize(obj);
-	return obj;
-}
-
-/**
- * Convert an object to a JSON string avoiding any circular references.
- *
- * @param obj Object to convert to JSON
- * @param {number} space Format the JSON with spaces
- * @return {string} JSON string
- */
-export function JSONSanitize(obj: any, space?: number): string {
-	const cache: any[] = [];
-	return JSON.stringify(obj, (key, value) => {
-		if(typeof value === 'object' && value !== null) {
-			if(cache.includes(value)) return '[Circular]';
-			cache.push(value);
-		}
-		return value;
-	}, space);
 }

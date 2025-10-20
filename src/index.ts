@@ -9,6 +9,7 @@ export * from './files';
 export * from './emitter';
 export * from './errors';
 export * from './http';
+export * from './json';
 export * from './jwt';
 export * from './logger';
 export * from './math';
