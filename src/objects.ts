@@ -82,6 +82,9 @@ export function clean<T>(obj: T, undefinedOnly = false): Partial<T> {
  * @returns {T} Type
  */
 export function deepCopy<T>(value: T): T {
+	if(value == null) return value;
+	const t = typeof value;
+	if(t === 'string' || t === 'number' || t === 'boolean' || t === 'function') return value;
 	try {return structuredClone(value); }
 	catch { return JSON.parse(JSONSanitize(value)); }
 }

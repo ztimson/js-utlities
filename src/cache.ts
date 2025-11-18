@@ -85,6 +85,7 @@ export class Cache<K extends string | number | symbol, T> {
 		return <K>(value as any)[this.key];
 	}
 
+	/** Save item to storage */
 	private save(key?: K) {
 		const persists: {storage: any, key: string} = <any>this.options.persistentStorage;
 		if(!!persists?.storage) {
@@ -131,16 +132,13 @@ export class Cache<K extends string | number | symbol, T> {
 		const out: CachedValue<T>[] = [];
 		for(const v of this.store.values()) {
 			const val: any = v;
-			if(expired || !val?._expired) out.push(deepCopy<any>(val));
+			if(expired || !val?._expired) out.push(deepCopy(val));
 		}
 		return out;
 	}
 
 	/**
 	 * Add a new item to the cache. Like set, but finds key automatically
-	 * @param {T} value Item to add to cache
-	 * @param {number | undefined} ttl Override default expiry
-	 * @return {this}
 	 */
 	add(value: T, ttl = this.ttl): this {
 		const key = this.getKey(value);
@@ -150,9 +148,6 @@ export class Cache<K extends string | number | symbol, T> {
 
 	/**
 	 * Add several rows to the cache
-	 * @param {T[]} rows Several items that will be cached using the default key
-	 * @param complete Mark cache as complete & reliable, defaults to true
-	 * @return {this}
 	 */
 	addAll(rows: T[], complete = true): this {
 		this.clear();
@@ -161,9 +156,7 @@ export class Cache<K extends string | number | symbol, T> {
 		return this;
 	}
 
-	/**
-	 * Remove all keys from cache
-	 */
+	/** Remove all keys */
 	clear(): this {
 		this.complete = false;
 		for (const [k, t] of this.timers) clearTimeout(t);
@@ -174,10 +167,7 @@ export class Cache<K extends string | number | symbol, T> {
 		return this;
 	}
 
-	/**
-	 * Delete an item from the cache
-	 * @param {K} key Item's primary key
-	 */
+	/** Delete a cached item */
 	delete(key: K): this {
 		this.clearTimer(key);
 		const idx = this.lruOrder.indexOf(key);
@@ -187,23 +177,17 @@ export class Cache<K extends string | number | symbol, T> {
 		return this;
 	}
 
-	/**
-	 * Return cache as an array of key-value pairs
-	 * @return {[K, T][]} Key-value pairs array
-	 */
+	/** Return entries as array */
 	entries(expired?: boolean): [K, CachedValue<T>][] {
 		const out: [K, CachedValue<T>][] = [];
 		for(const [k, v] of this.store.entries()) {
 			const val: any = v;
-			if(expired || !val?._expired) out.push([k, deepCopy<any>(val)]);
+			if(expired || !val?._expired) out.push([k, deepCopy(val)]);
 		}
 		return out;
 	}
 
-	/**
-	 * Manually expire a cached item
-	 * @param {K} key Key to expire
-	 */
+	/** Manually expire a cached item */
 	expire(key: K): this {
 		this.complete = false;
 		if(this.options.expiryPolicy == 'keep') {
@@ -217,39 +201,26 @@ export class Cache<K extends string | number | symbol, T> {
 		return this;
 	}
 
-	/**
-	 * Find the first cached item to match a filter
-	 * @param {Partial<T>} filter Partial item to match
-	 * @param {Boolean} expired Include expired items, defaults to false
-	 * @returns {T | undefined} Cached item or undefined if nothing matched
-	 */
+	/** Find first matching item */
 	find(filter: Partial<T>, expired?: boolean): T | undefined {
 		for(const v of this.store.values()) {
 			const row: any = v;
-			if((expired || !row._expired) && includes(row, filter)) return deepCopy<any>(row);
+			if((expired || !row._expired) && includes(row, filter)) return deepCopy(row);
 		}
 		return undefined;
 	}
 
-	/**
-	 * Get item from the cache
-	 * @param {K} key Key to lookup
-	 * @param expired Include expired items
-	 * @return {T} Cached item
-	 */
+	/** Get cached item by key */
 	get(key: K, expired?: boolean): CachedValue<T> | null {
 		const raw = this.store.get(key);
 		if(raw == null) return null;
-		const cached: any = deepCopy<any>(raw);
 		this.touchLRU(key);
-		if(expired || !cached?._expired) return cached;
+		const isExpired = (raw as any)?._expired;
+		if(expired || !isExpired) return deepCopy(raw);
 		return null;
 	}
 
-	/**
-	 * Get a list of cached keys
-	 * @return {K[]} Array of keys
-	 */
+	/** Return list of keys */
 	keys(expired?: boolean): K[] {
 		const out: K[] = [];
 		for(const [k, v] of this.store.entries()) {
@@ -259,26 +230,17 @@ export class Cache<K extends string | number | symbol, T> {
 		return out;
 	}
 
-	/**
-	 * Get map of cached items
-	 * @return {Record<K, T>}
-	 */
+	/** Return map of key → item */
 	map(expired?: boolean): Record<K, CachedValue<T>> {
 		const copy: any = {};
 		for(const [k, v] of this.store.entries()) {
 			const val: any = v;
-			if(expired || !val?._expired) copy[k as any] = deepCopy<any>(val);
+			if(expired || !val?._expired) copy[k as any] = deepCopy(val);
 		}
 		return copy;
 	}
 
-	/**
-	 * Add an item to the cache manually specifying the key
-	 * @param {K} key Key item will be cached under
-	 * @param {T} value Item to cache
-	 * @param {number | undefined} ttl Override default expiry in seconds
-	 * @return {this}
-	 */
+	/** Add item manually specifying the key */
 	set(key: K, value: T, ttl = this.options.ttl): this {
 		if(this.options.expiryPolicy == 'keep') delete (<any>value)._expired;
 		this.clearTimer(key);
@@ -289,15 +251,12 @@ export class Cache<K extends string | number | symbol, T> {
 			const t = setTimeout(() => {
 				this.expire(key);
 				this.save(key);
-			}, (ttl || 0) * 1000);
+			}, ttl * 1000);
 			this.timers.set(key, t);
 		}
 		return this;
 	}
 
-	/**
-	 * Get all cached items
-	 * @return {T[]} Array of items
-	 */
-	values = this.all
+	/** Get all cached items */
+	values = this.all;
 }
