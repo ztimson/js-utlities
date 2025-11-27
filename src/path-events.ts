@@ -83,6 +83,9 @@ export class PathEvent {
 	/** Create method specified */
 	get create(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('c')) }
 	set create(v: boolean) { v ? this.methods.delete('n').delete('*').add('c') : this.methods.delete('c'); }
+	/** Execute method specified */
+	get execute(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('x')) }
+	set execute(v: boolean) { v ? this.methods.delete('n').delete('*').add('x') : this.methods.delete('x'); }
 	/** Read method specified */
 	get read(): boolean { return !this.methods.has('n') && (this.methods.has('*') || this.methods.has('r')) }
 	set read(v: boolean) { v ? this.methods.delete('n').delete('*').add('r') : this.methods.delete('r'); }
