@@ -3,6 +3,7 @@ import {PathError, PathEvent, PathEventEmitter, PE, PES} from '../src';
 describe('Path Events', () => {
 	beforeEach(() => {
 		PathEvent.clearCache();
+		PathEvent.clearPermissionCache();
 	});
 
 	describe('PE', () => {
@@ -42,8 +43,14 @@ describe('Path Events', () => {
 		it('parses wildcard', () => {
 			const pe = new PathEvent('*');
 			expect(pe.all).toBe(true);
-			expect(pe.fullPath).toBe('');
+			expect(pe.fullPath).toBe('**');
 			expect(pe.methods.has('*')).toBe(true);
+		});
+
+		it('parses empty string as none', () => {
+			const pe = new PathEvent('');
+			expect(pe.none).toBe(true);
+			expect(pe.fullPath).toBe('');
 		});
 
 		it('parses none method', () => {
@@ -143,6 +150,82 @@ describe('Path Events', () => {
 			const filtered = pe.filter(arr);
 			expect(filtered[0].fullPath).toBe('users/sys');
 		});
+
+		it('caches PathEvent instances', () => {
+			const pe1 = new PathEvent('users/sys:cr');
+			const pe2 = new PathEvent('users/sys:cr');
+			expect(pe1.fullPath).toBe(pe2.fullPath);
+		});
+
+		it('clearCache removes all cached instances', () => {
+			new PathEvent('users/sys:cr');
+			PathEvent.clearCache();
+			const pe = new PathEvent('users/sys:cr');
+			expect(pe.fullPath).toBe('users/sys');
+		});
+	});
+
+	describe('Glob Patterns', () => {
+		it('** matches zero or more segments', () => {
+			const pattern = new PathEvent('storage/**:r');
+			expect(PathEvent.has(pattern, 'storage:r')).toBe(true);
+			expect(PathEvent.has(pattern, 'storage/file:r')).toBe(true);
+			expect(PathEvent.has(pattern, 'storage/dir/file:r')).toBe(true);
+		});
+
+		it('** in middle matches multiple segments', () => {
+			const pattern = new PathEvent('data/**/archive:r');
+			expect(PathEvent.has(pattern, 'data/archive:r')).toBe(true);
+			expect(PathEvent.has(pattern, 'data/old/archive:r')).toBe(true);
+		});
+
+		it('filters by glob and methods', () => {
+			const events = [
+				new PathEvent('users/123/profile:cr'),
+				new PathEvent('users/456/profile:r'),
+				new PathEvent('users/789/settings:r')
+			];
+			const filtered = PathEvent.filter(events, 'users/*/profile:r');
+			expect(filtered.length).toBe(2);
+		});
+
+		it('wildcard method matches all methods', () => {
+			const pattern = new PathEvent('users/**:*');
+			expect(PathEvent.has(pattern, 'users/123:c')).toBe(true);
+			expect(PathEvent.has(pattern, 'users/456:r')).toBe(true);
+		});
+	});
+
+	describe('Specificity and None Permissions', () => {
+		it('more specific path wins when sorted by specificity', () => {
+			const perms = [new PathEvent('users/**:*'), new PathEvent('users/admin:r')];
+			const combined = PathEvent.combine(...perms);
+			expect(combined.fullPath).toBe('users/admin');
+		});
+
+		it('none at parent stops combining', () => {
+			const a = new PathEvent('data/public:cr');
+			const b = new PathEvent('data:n');
+			const combined = PathEvent.combine(a, b);
+			expect(combined.fullPath).toBe('data/public');
+			expect(combined.read).toBe(true);
+		});
+
+		it('instance methods work correctly', () => {
+			const pe = new PathEvent('users/sys:r');
+			expect(pe.has('users/sys:r')).toBe(true);
+			expect(pe.hasAll('users/sys:r')).toBe(true);
+			expect(pe.filter(['users/sys:r', 'users/other:r']).length).toBe(1);
+		});
+
+		it('combines methods from hierarchy', () => {
+			const a = new PathEvent('users/admin:c');
+			const b = new PathEvent('users/admin:r');
+			const combined = PathEvent.combine(a, b);
+			expect(combined.fullPath).toBe('users/admin');
+			expect(combined.create).toBe(true);
+			expect(combined.read).toBe(true);
+		});
 	});
 
 	describe('PathEventEmitter', () => {
@@ -157,7 +240,7 @@ describe('Path Events', () => {
 
 		it('scoped', done => {
 			const emitter = new PathEventEmitter('users');
-			emitter.on(':cud', (event) => {
+			emitter.on('*:cud', (event) => {
 				expect(event.fullPath).toBe('users/system');
 				done();
 			});
@@ -197,6 +280,36 @@ describe('Path Events', () => {
 			emitter.once('*', (event) =>
 				expect(event.fullPath).toBe('foo/bar'));
 			emitter.emit('bar:r');
+		});
+
+		it('registers multiple listeners', () => {
+			const emitter = new PathEventEmitter();
+			const fn1 = jest.fn();
+			const fn2 = jest.fn();
+			emitter.on('users/sys:r', fn1);
+			emitter.on('users/sys:r', fn2);
+			emitter.emit('users/sys:r');
+			expect(fn1).toHaveBeenCalled();
+			expect(fn2).toHaveBeenCalled();
+		});
+
+		it('matches multiple listeners with overlapping globs', () => {
+			const emitter = new PathEventEmitter();
+			const fn1 = jest.fn();
+			const fn2 = jest.fn();
+			emitter.on('users/**:r', fn1);
+			emitter.on('users/*/profile:r', fn2);
+			emitter.emit('users/123/profile:r');
+			expect(fn1).toHaveBeenCalled();
+			expect(fn2).toHaveBeenCalled();
+		});
+
+		it('glob patterns in listener registration', () => {
+			const emitter = new PathEventEmitter();
+			const fn = jest.fn();
+			emitter.on('users/sys:r', fn);
+			emitter.emit('users/sys:r');
+			expect(fn).toHaveBeenCalled();
 		});
 	});
 });
