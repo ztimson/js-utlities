@@ -45,6 +45,7 @@ describe('Path Events', () => {
 			expect(pe.all).toBe(true);
 			expect(pe.fullPath).toBe('**');
 			expect(pe.methods.has('*')).toBe(true);
+			expect(pe.hasAll('module:c', 'some/path:ud')).toBeTruthy();
 		});
 
 		it('parses empty string as none', () => {

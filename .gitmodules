@@ -1,5 +1,0 @@
-[submodule "docs"]
-	path = docs
-	url = ../utils.wiki.git
-	branch = master
-	ignore = all

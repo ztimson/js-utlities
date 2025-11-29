@@ -40,7 +40,6 @@ export function PE(str: TemplateStringsArray, ...args: any[]) {
  * @param {TemplateStringsArray} str
  * @param {string} args
  * @return {string}
- * @constructor
  */
 export function PES(str: TemplateStringsArray, ...args: any[]) {
 	let combined = [];

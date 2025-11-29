@@ -9,6 +9,7 @@ node_modules
 uploads
 public/momentum*js
 junit.xml
+/docs/
 
 # Logs
 *.log

@@ -35,7 +35,7 @@ describe('Time Utilities', () => {
 		});
 
 		it('throws for unknown timezone', () => {
-			expect(() => formatDate('YYYY', new Date(), '???')).toThrowError(/Invalid timezone/);
+			expect(() => formatDate('YYYY', new Date(), '???')).toThrow(/Invalid timezone/);
 		});
 
 		it('handles timezone by offset number', () => {
