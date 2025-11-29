@@ -40,6 +40,7 @@ export function PE(str: TemplateStringsArray, ...args: any[]) {
  * @param {TemplateStringsArray} str
  * @param {string} args
  * @return {string}
+ * @constructor
  */
 export function PES(str: TemplateStringsArray, ...args: any[]) {
 	let combined = [];
@@ -292,11 +293,7 @@ export class PathEvent {
 	static filter(target: string | PathEvent | (string | PathEvent)[], ...filter: (string | PathEvent)[]): PathEvent[] {
 		const parsedTarget = makeArray(target).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
 		const parsedFilter = makeArray(filter).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
-
-		return parsedTarget.filter(t => {
-			const combined = PathEvent.combine(t);
-			return !!parsedFilter.find(r => PathEvent.matches(r, combined));
-		});
+		return parsedTarget.filter(t => !!parsedFilter.find(r => PathEvent.matches(r, t)));
 	}
 
 	/**
@@ -338,10 +335,8 @@ export class PathEvent {
 		const parsedTarget = makeArray(target).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
 		const parsedRequired = makeArray(has).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
 
-		// If target is a single item, check directly; if multiple, combine first
-		const effectiveTarget = parsedTarget.length === 1 ? parsedTarget[0] : PathEvent.combine(...parsedTarget);
-
-		return !!parsedRequired.find(r => PathEvent.matches(r, effectiveTarget));
+		// Check if any target permission matches any required permission
+		return !!parsedRequired.find(r => !!parsedTarget.find(t => PathEvent.matches(r, t)));
 	}
 
 	/**

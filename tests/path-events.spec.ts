@@ -81,6 +81,7 @@ describe('Path Events', () => {
 			expect(c.methods.has('c')).toBe(true);
 			expect(c.methods.has('r')).toBe(true);
 			expect(c.methods.has('u')).toBe(true);
+			expect(c.delete).toBe(false);
 		});
 
 		it('combine stops at none', () => {
@@ -93,6 +94,17 @@ describe('Path Events', () => {
 			expect(d.read).toBe(true);
 			expect(d.update).toBe(false);
 			expect(d.none).toBe(false);
+		});
+
+		it('combine works with wildcards', () => {
+			expect(PathEvent.has([
+				'payments/anonymous:d',
+				'payments/anonymous:c',
+				'payments/system:cr',
+				'logs/Momentum:c',
+				'products:r',
+				'*'
+			], 'actions/692a92d18afa11e6722e9f2e:r')).toBe(true);
 		});
 
 		it('filter finds overlap by path and methods', () => {
