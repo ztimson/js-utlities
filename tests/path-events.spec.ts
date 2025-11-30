@@ -60,6 +60,10 @@ describe('Path Events', () => {
 			expect(pe.none).toBe(false);
 		});
 
+		it('Test several wild card perms', () => {
+			expect(PathEvent.has(['actions:*', 'groups:*', 'users:*'], 'groups/AUTH:r')).toBe(true);
+		});
+
 		it('setters for methods', () => {
 			const pe = new PathEvent('users/system:r');
 			pe.create = true;

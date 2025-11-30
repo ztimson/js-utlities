@@ -109,18 +109,16 @@ export class PathEvent {
 			return;
 		}
 
-		// Check cache first
 		if(PathEvent.pathEventCache.has(e)) {
 			Object.assign(this, PathEvent.pathEventCache.get(e)!);
 			return;
 		}
 
-		let [p, method] = e.replaceAll(/\/{2,}/g, '/').split(':');
+		let [p, method] = e.replaceAll(/(^|\/)\*+\/?$/g, '').split(':');
 		if(!method) method = '*';
 
 		// Handle special cases
 		if(p === '' || p === undefined || p === '*') {
-			// Empty string with methods (e.g., ":*") matches the root level/everything
 			this.module = '';
 			this.path = '';
 			this.fullPath = '**';
@@ -136,15 +134,72 @@ export class PathEvent {
 		this.path = temp.join('/');
 		this.fullPath = `${this.module}${this.module && this.path ? '/' : ''}${this.path}`;
 		this.name = temp.pop() || '';
-
-		// Don't trim /** - it's needed for glob matching to work properly
-		// Only trim if there's something after it which won't happen with our parsing
-
 		this.hasGlob = this.fullPath.includes('*');
 		this.methods = new ASet(<any>method.split(''));
-
-		// Store in cache
 		PathEvent.pathEventCache.set(e, this);
+	}
+
+	/**
+	 * Check if a filter pattern matches a target path
+	 * @private
+	 */
+	private static matches(pattern: PathEvent, target: PathEvent): boolean {
+		const methodsMatch = pattern.all || target.all || pattern.methods.intersection(target.methods).length > 0;
+		if(!methodsMatch) return false;
+		if(!pattern.hasGlob && !target.hasGlob) {
+			const last = pattern.fullPath[target.fullPath.length];
+			return pattern.fullPath.startsWith(target.fullPath) && (last == null || last == '/');
+		}
+		if(pattern.hasGlob) return this.pathMatchesGlob(target.fullPath, pattern.fullPath);
+		return this.pathMatchesGlob(pattern.fullPath, target.fullPath);
+	}
+
+	/**
+	 * Check if a path matches a glob pattern
+	 * @private
+	 */
+	private static pathMatchesGlob(path: string, pattern: string): boolean {
+		if(pattern === path) return true;
+		const pathParts = path.split('/').filter(p => !!p);
+		const patternParts = pattern.split('/').filter(p => !!p);
+
+		let pathIdx = 0;
+		let patternIdx = 0;
+		while (patternIdx < patternParts.length && pathIdx < pathParts.length) {
+			const patternPart = patternParts[patternIdx];
+			if(patternPart === '**') {
+				if(patternIdx === patternParts.length - 1) return true;
+				while (pathIdx < pathParts.length) {
+					if(PathEvent.pathMatchesGlob(pathParts.slice(pathIdx).join('/'), patternParts.slice(patternIdx + 1).join('/'))) return true;
+					pathIdx++;
+				}
+				return false;
+			} else if(patternPart === '*') {
+				pathIdx++;
+				patternIdx++;
+			} else {
+				if(patternPart !== pathParts[pathIdx]) return false;
+				pathIdx++;
+				patternIdx++;
+			}
+		}
+		if(patternIdx < patternParts.length) return patternParts.slice(patternIdx).every(p => p === '**');
+		return pathIdx === pathParts.length;
+	}
+
+	/**
+	 * Score a path for specificity ranking (lower = more specific = higher priority)
+	 * @private
+	 */
+	private static scoreSpecificity(path: string): number {
+		if(path === '**' || path === '') return Number.MAX_SAFE_INTEGER;
+		const segments = path.split('/').filter(p => !!p);
+		let score = -segments.length;
+		segments.forEach(seg => {
+			if(seg === '**') score += 0.5;
+			else if(seg === '*') score += 0.25;
+		});
+		return score;
 	}
 
 	/** Clear the cache of all PathEvents */
@@ -158,82 +213,6 @@ export class PathEvent {
 	}
 
 	/**
-	 * Score a path for specificity ranking (lower = more specific = higher priority)
-	 * @private
-	 */
-	private static scoreSpecificity(path: string): number {
-		if(path === '**' || path === '') return Number.MAX_SAFE_INTEGER; // Least specific
-
-		const segments = path.split('/').filter(p => !!p);
-		// Base score: number of segments (more segments = more specific = lower score)
-		let score = -segments.length;
-
-		// Penalty for wildcards (makes them less specific than exact matches)
-		// ADD to score to make it HIGHER/WORSE
-		segments.forEach(seg => {
-			if(seg === '**') score += 0.5;
-			else if(seg === '*') score += 0.25;
-		});
-
-		return score;
-	}
-
-	/**
-	 * Check if a path matches a glob pattern
-	 * @private
-	 */
-	private static pathMatchesGlob(path: string, pattern: string): boolean {
-		// Handle exact match
-		if(pattern === path) return true;
-
-		const pathParts = path.split('/').filter(p => !!p);
-		const patternParts = pattern.split('/').filter(p => !!p);
-
-		let pathIdx = 0;
-		let patternIdx = 0;
-
-		while (patternIdx < patternParts.length && pathIdx < pathParts.length) {
-			const patternPart = patternParts[patternIdx];
-
-			if(patternPart === '**') {
-				// ** matches zero or more path segments
-				if(patternIdx === patternParts.length - 1) {
-					// ** at the end matches everything
-					return true;
-				}
-				// Try matching from next pattern part onwards
-				const nextPattern = patternParts[patternIdx + 1];
-				while (pathIdx < pathParts.length) {
-					if(PathEvent.pathMatchesGlob(pathParts.slice(pathIdx).join('/'), patternParts.slice(patternIdx + 1).join('/'))) {
-						return true;
-					}
-					pathIdx++;
-				}
-				return false;
-			} else if(patternPart === '*') {
-				// * matches exactly one segment
-				pathIdx++;
-				patternIdx++;
-			} else {
-				// Exact match required
-				if(patternPart !== pathParts[pathIdx]) {
-					return false;
-				}
-				pathIdx++;
-				patternIdx++;
-			}
-		}
-
-		// Check if we've consumed all pattern parts
-		if(patternIdx < patternParts.length) {
-			// Remaining pattern parts must all be ** to match
-			return patternParts.slice(patternIdx).every(p => p === '**');
-		}
-
-		return pathIdx === pathParts.length;
-	}
-
-	/**
 	 * Combine multiple events into one parsed object. Longest path takes precedent, but all subsequent methods are
 	 * combined until a "none" is reached
 	 *
@@ -242,32 +221,22 @@ export class PathEvent {
 	 */
 	static combine(...paths: (string | PathEvent)[]): PathEvent {
 		const parsed = paths.map(p => p instanceof PathEvent ? p : new PathEvent(p));
-
-		// Sort by specificity: lower score = more specific = higher priority
 		const sorted = parsed.toSorted((p1, p2) => {
 			const score1 = PathEvent.scoreSpecificity(p1.fullPath);
 			const score2 = PathEvent.scoreSpecificity(p2.fullPath);
 			return score1 - score2;
 		});
-
 		let result: PathEvent | null = null;
-
 		for (const p of sorted) {
 			if(!result) {
 				result = p;
 			} else {
-				// Only combine if current result's path starts with or matches the new permission's path
 				if(result.fullPath.startsWith(p.fullPath)) {
-					// If we hit a none at a parent level, stop here
-					if(p.none) {
-						break;
-					}
-					// Combine methods for permissions in the same hierarchy
+					if(p.none) break;
 					result.methods = new ASet([...result.methods, ...p.methods]);
 				}
 			}
 		}
-
 		return result || new PathEvent('');
 	}
 
@@ -285,35 +254,6 @@ export class PathEvent {
 	}
 
 	/**
-	 * Check if a filter pattern matches a target path
-	 * @private
-	 */
-	private static matches(pattern: PathEvent, target: PathEvent): boolean {
-		// Handle special cases
-		if(pattern.fullPath === '' || target.fullPath === '') return false;
-		if(pattern.fullPath === '**') return pattern.methods.has('*') || pattern.methods.intersection(target.methods).length > 0;
-		if(target.fullPath === '**') return pattern.methods.has('*') || target.methods.has('*') || pattern.methods.intersection(target.methods).length > 0;
-
-		// Check methods
-		const methodsMatch = pattern.all || target.all || pattern.methods.intersection(target.methods).length > 0;
-		if(!methodsMatch) return false;
-
-		// Check paths
-		if(!pattern.hasGlob && !target.hasGlob) {
-			// Fast path: no globs, use string comparison
-			return pattern.fullPath === target.fullPath;
-		}
-
-		if(pattern.hasGlob) {
-			// Pattern has glob, match target against it
-			return this.pathMatchesGlob(target.fullPath, pattern.fullPath);
-		}
-
-		// Target has glob but pattern doesn't - pattern must match within target's glob range
-		return this.pathMatchesGlob(pattern.fullPath, target.fullPath);
-	}
-
-	/**
 	 * Squash 2 sets of paths & return true if any overlap is found
 	 *
 	 * @param {string | PathEvent | (string | PathEvent)[]} target Array of Events as strings or pre-parsed
@@ -323,8 +263,6 @@ export class PathEvent {
 	static has(target: string | PathEvent | (string | PathEvent)[], ...has: (string | PathEvent)[]): boolean {
 		const parsedTarget = makeArray(target).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
 		const parsedRequired = makeArray(has).map(pe => pe instanceof PathEvent ? pe : new PathEvent(pe));
-
-		// Check if any target permission matches any required permission
 		return !!parsedRequired.find(r => !!parsedTarget.find(t => PathEvent.matches(r, t)));
 	}
 
