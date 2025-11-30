@@ -48,10 +48,9 @@ describe('Path Events', () => {
 			expect(pe.hasAll('module:c', 'some/path:ud')).toBeTruthy();
 		});
 
-		it('parses empty string as none', () => {
+		it('parses empty string as wildcard', () => {
 			const pe = new PathEvent('');
-			expect(pe.none).toBe(true);
-			expect(pe.fullPath).toBe('');
+			expect(pe.has('any/path:c')).toBe(true);
 		});
 
 		it('parses none method', () => {
