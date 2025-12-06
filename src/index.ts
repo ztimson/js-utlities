@@ -19,6 +19,7 @@ export * from './path-events';
 export * from './promise-progress';
 export * from './search';
 export * from './string';
+export * from './template';
 export * from './time';
 export * from './types';
 export * from 'var-persist';
