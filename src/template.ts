@@ -1,4 +1,7 @@
-import {BadRequestError, dotNotation, formatDate, matchAll} from '@ztimson/utils';
+import {BadRequestError} from './errors.ts';
+import {dotNotation} from './objects.ts';
+import {matchAll} from './string.ts';
+import {formatDate} from './time.ts';
 
 export class TemplateError extends BadRequestError { }
 
