@@ -24,7 +24,7 @@ export async function renderTemplate(template: string, data: any, fetch?: (file:
 
 	const evaluate = (code: string, data: object, fatal = true) => {
 		try {
-			return Function('data', `Object.assign(this, data); return ${code};`)(data);
+			return Function('data', `with(data) { return ${code}; }`)(data);
 		} catch {
 			if(fatal) throw new TemplateError(`Failed to evaluate: ${code}`);
 			else return false;
