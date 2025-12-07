@@ -71,7 +71,7 @@ export async function renderTemplate(template: string, data: any, fetch?: (file:
 
 	// Extends: `{{ > file.html:property }} CONTENT {{ /> }}`
 	while(!!(found = /\{\{\s*?>\s*?(.+?):(.+?)\s*?}}([\s\S]*?)\{\{\s*?\/>\s*?}}/g.exec(content))) {
-		content = content.replace(found[0], await renderTemplate(await fetch(found[1].trim), {
+		content = content.replace(found[0], await renderTemplate(await fetch(found[1].trim()), {
 			...data,
 			[found[2].trim()]: found[3],
 		}, fetch));
