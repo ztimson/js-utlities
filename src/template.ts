@@ -36,12 +36,12 @@ export async function renderTemplate(template: string, data: any, fetch?: (file:
 		const nested = matchAll(found[0], /\{\{\s*?\?.+?}}/g).slice(-1)?.[0]?.index;
 		if(nested != 0)
 			found = /\{\{\s*?\?\s*?(.+?)\s*?}}([\s\S]*?)(?:\{\{\s*?!\?\s*?}}([\s\S]*?))?\{\{\s*?\/\?\s*?}}/g.exec(content.slice(found.index + nested))
-		content = content.replaceAll(found[0], (evaluate(found[1], d, false) ? found[2] : found[3]) || '');
+		content = content.replace(found[0], (evaluate(found[1], d, false) ? found[2] : found[3]) || '');
 	}
 
 	// Imports - We render bottom up: `{{ < file.html }}`
 	while(!!(found = /\{\{\s*?<\s*?(.+?)\s*?}}/g.exec(content))) {
-		content = content.replaceAll(found[0], await renderTemplate(await fetch(found[1].trim()), data, fetch));
+		content = content.replace(found[0], await renderTemplate(await fetch(found[1].trim()), data, fetch));
 	}
 
 	// For Loops: `{{ * (row, index) in invoice }} CONTENT {{ /* }}`
@@ -61,12 +61,12 @@ export async function renderTemplate(template: string, data: any, fetch?: (file:
 				[index]: i
 			}, fetch))
 		}
-		content = content.replaceAll(found[0], compiled.join('\n'));
+		content = content.replace(found[0], compiled.join('\n'));
 	}
 
 	// Evaluate whatever is left - Should come last: `{{ javascript }}`
 	while(!!(found = /\{\{\s*([^<>\*\?!/}\s][^}]*?)\s*}}/g.exec(content))) {
-		content = content.replaceAll(found[0], evaluate(found[1].trim(), d) || '');
+		content = content.replace(found[0], evaluate(found[1].trim(), d) || '');
 	}
 
 	// Extends: `{{ > file.html:property }} CONTENT {{ /> }}`
