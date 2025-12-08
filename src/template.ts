@@ -5,7 +5,7 @@ import {formatDate} from './time.ts';
 
 export class TemplateError extends BadRequestError { }
 
-function findTemplateVars(html: string): Record<string, any> {
+export function findTemplateVars(html: string): Record<string, any> {
 	const variables = new Set<string>();
 	const regex = /\{\{\s*([^<>\*\?!/}\s][^}]*?)\s*}}/g;
 	let match;
