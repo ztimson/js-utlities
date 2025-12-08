@@ -7,13 +7,54 @@ export class TemplateError extends BadRequestError { }
 
 export function findTemplateVars(html: string): Record<string, any> {
 	const variables = new Set<string>();
+	const excluded = new Set<string>(['true', 'false', 'null', 'undefined']);
+
+	// Extract & exclude loop variables
+	for (const loop of matchAll(html, /\{\{\s*?\*\s*?(.+?)\s+in\s+(.+?)\s*?}}/g)) {
+		const [element, index = 'index'] = loop[1].replaceAll(/[()\s]/g, '').split(',');
+		excluded.add(element);
+		excluded.add(index);
+		// Add the array reference (but exclude if it's a loop variable)
+		const arrayRef = loop[2].trim();
+		const arrayVar = arrayRef.split('.')[0].match(/^[a-zA-Z_$][a-zA-Z0-9_$]*/)?.[0];
+		if (arrayVar && !excluded.has(arrayVar)) variables.add(arrayVar);
+	}
+
+	// Extract variables from if/else-if conditions
+	for (const ifStmt of matchAll(html, /\{\{\s*?[!]?\?\s*?([^}]+?)\s*?}}/g)) {
+		const code = ifStmt[1].replace(/["'`][^"'`]*["'`]/g, ''); // Remove string literals
+		const vars = code.match(/[a-zA-Z_$][a-zA-Z0-9_$.]+/g) || [];
+		for (const v of vars) {
+			const root = v.split('.')[0];
+			if (!excluded.has(root)) variables.add(root);
+		}
+	}
+
+	// Extract variables from content within if blocks
+	for (const ifBlock of matchAll(html, /\{\{\s*?\?\s*?.+?\s*?}}([\s\S]*?)\{\{\s*?\/\?\s*?}}/g)) {
+		const content = ifBlock[1];
+		const regex = /\{\{\s*([^<>\*\?!/}\s][^}]*?)\s*}}/g;
+		let match;
+		while ((match = regex.exec(content)) !== null) {
+			const code = match[1].trim().replace(/["'`][^"'`]*["'`]/g, '');
+			const vars = code.match(/[a-zA-Z_$][a-zA-Z0-9_$.]+/g) || [];
+			for (const v of vars) {
+				const root = v.split('.')[0];
+				if (!excluded.has(root)) variables.add(v);
+			}
+		}
+	}
+
+	// Extract variables from regular interpolations
 	const regex = /\{\{\s*([^<>\*\?!/}\s][^}]*?)\s*}}/g;
 	let match;
-
 	while ((match = regex.exec(html)) !== null) {
-		const code = match[1].trim();
-		const varMatch = code.match(/^([a-zA-Z_$][a-zA-Z0-9_$.]*)/);
-		if (varMatch) variables.add(varMatch[1]);
+		const code = match[1].trim().replace(/["'`][^"'`]*["'`]/g, '');
+		const vars = code.match(/[a-zA-Z_$][a-zA-Z0-9_$.]+/g) || [];
+		for (const v of vars) {
+			const root = v.split('.')[0];
+			if (!excluded.has(root)) variables.add(v);
+		}
 	}
 
 	const result: Record<string, any> = {};

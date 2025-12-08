@@ -1,4 +1,87 @@
-import { renderTemplate, TemplateError } from '../src';
+import {findTemplateVars, renderTemplate, TemplateError} from '../src';
+
+describe('findTemplateVars', () => {
+	test('extracts simple variables', () => {
+		const result = findTemplateVars('Hello {{ name }}!');
+		expect(result).toEqual({ name: '' });
+	});
+
+	test('extracts nested object paths', () => {
+		const result = findTemplateVars('{{ user.name }} is {{ user.age }}');
+		expect(result).toEqual({ user: { name: '', age: '' } });
+	});
+
+	test('extracts variables from if statements', () => {
+		const result = findTemplateVars('{{ ? active }}{{ message }}{{ /? }}');
+		expect(result).toEqual({ active: '', message: '' });
+	});
+
+	test('extracts variables from else-if conditions', () => {
+		const result = findTemplateVars('{{ ? status == "paid" }}PAID{{ !? status == "pending" }}{{ value }}{{ /? }}');
+		expect(result).toEqual({ status: '', value: '' });
+	});
+
+	test('extracts array reference from loops', () => {
+		const result = findTemplateVars('{{ * item in items }}{{ item }}{{ /* }}');
+		expect(result).toEqual({ items: '' });
+	});
+
+	test('excludes loop element variable', () => {
+		const result = findTemplateVars('{{ * item in items }}{{ item.name }}{{ /* }}');
+		expect(result).toEqual({ items: '' });
+		expect(result).not.toHaveProperty('item');
+	});
+
+	test('excludes loop index variable', () => {
+		const result = findTemplateVars('{{ * (item, i) in items }}{{ i }}:{{ item }}{{ /* }}');
+		expect(result).toEqual({ items: '' });
+		expect(result).not.toHaveProperty('item');
+		expect(result).not.toHaveProperty('i');
+	});
+
+	test('extracts external vars used inside loops', () => {
+		const result = findTemplateVars('{{ * item in items }}{{ item }}-{{ prefix }}{{ /* }}');
+		expect(result).toEqual({ items: '', prefix: '' });
+	});
+
+	test('handles nested loops', () => {
+		const result = findTemplateVars('{{ * row in rows }}{{ * col in row.cols }}{{ col }}{{ /* }}{{ /* }}');
+		expect(result).toEqual({ rows: '' });
+		expect(result).not.toHaveProperty('row');
+		expect(result).not.toHaveProperty('col');
+	});
+
+	test('extracts from complex nested template', () => {
+		const tpl = `
+{{ ? items.length > 0 }}
+{{ * (item, i) in items }}
+{{ i }}. {{ item.name }}: {{ currency }}{{ item.price }}
+{{ /* }}
+Total: {{ total }}
+{{ !? }}
+{{ emptyMessage }}
+{{ /? }}`;
+		const result = findTemplateVars(tpl);
+		expect(result).toEqual({
+			items: '',
+			currency: '',
+			total: '',
+			emptyMessage: ''
+		});
+		expect(result).not.toHaveProperty('item');
+		expect(result).not.toHaveProperty('i');
+	});
+
+	test('ignores template control syntax', () => {
+		const result = findTemplateVars('{{ < header.html }}{{ > layout.html:content }}content{{ /> }}');
+		expect(result).toEqual({});
+	});
+
+	test('handles multiple variables in expressions', () => {
+		const result = findTemplateVars('{{ firstName + " " + lastName }}');
+		expect(result).toEqual({ firstName: '', lastName: '' });
+	});
+});
 
 describe('renderTemplate', () => {
 	test('basic variable interpolation', async () => {
