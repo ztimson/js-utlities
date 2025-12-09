@@ -23,30 +23,30 @@ describe('findTemplateVars', () => {
 
 	test('extracts array reference from loops', () => {
 		const result = findTemplateVars('{{ * item in items }}{{ item }}{{ /* }}');
-		expect(result).toEqual({ items: '' });
+		expect(result).toEqual({ items: [] });
 	});
 
 	test('excludes loop element variable', () => {
 		const result = findTemplateVars('{{ * item in items }}{{ item.name }}{{ /* }}');
-		expect(result).toEqual({ items: '' });
+		expect(result).toEqual({ items: [] });
 		expect(result).not.toHaveProperty('item');
 	});
 
 	test('excludes loop index variable', () => {
 		const result = findTemplateVars('{{ * (item, i) in items }}{{ i }}:{{ item }}{{ /* }}');
-		expect(result).toEqual({ items: '' });
+		expect(result).toEqual({ items: [] });
 		expect(result).not.toHaveProperty('item');
 		expect(result).not.toHaveProperty('i');
 	});
 
 	test('extracts external vars used inside loops', () => {
 		const result = findTemplateVars('{{ * item in items }}{{ item }}-{{ prefix }}{{ /* }}');
-		expect(result).toEqual({ items: '', prefix: '' });
+		expect(result).toEqual({ items: [], prefix: '' });
 	});
 
 	test('handles nested loops', () => {
 		const result = findTemplateVars('{{ * row in rows }}{{ * col in row.cols }}{{ col }}{{ /* }}{{ /* }}');
-		expect(result).toEqual({ rows: '' });
+		expect(result).toEqual({ rows: [] });
 		expect(result).not.toHaveProperty('row');
 		expect(result).not.toHaveProperty('col');
 	});
@@ -63,7 +63,7 @@ Total: {{ total }}
 {{ /? }}`;
 		const result = findTemplateVars(tpl);
 		expect(result).toEqual({
-			items: '',
+			items: [],
 			currency: '',
 			total: '',
 			emptyMessage: ''
@@ -80,6 +80,62 @@ Total: {{ total }}
 	test('handles multiple variables in expressions', () => {
 		const result = findTemplateVars('{{ firstName + " " + lastName }}');
 		expect(result).toEqual({ firstName: '', lastName: '' });
+	});
+
+	test('creates arrays for loop variables', () => {
+		const result = findTemplateVars('{{ * item in items }}{{ item }}{{ /* }}');
+		expect(result).toEqual({ items: [] });
+	});
+
+	test('creates nested arrays', () => {
+		const result = findTemplateVars('{{ * row in data.rows }}{{ row }}{{ /* }}');
+		expect(result).toEqual({ data: { rows: [] } });
+	});
+
+	test('creates multiple arrays', () => {
+		const result = findTemplateVars('{{ * user in users }}{{ user }}{{ /* }}{{ * post in posts }}{{ post }}{{ /* }}');
+		expect(result).toEqual({ users: [], posts: [] });
+	});
+
+	test('excludes function calls', () => {
+		const result = findTemplateVars('{{ value.toFixed(2) }}');
+		expect(result).toEqual({ value: '' });
+		expect(result.value).not.toBe('toFixed');
+	});
+
+	test('excludes method chains', () => {
+		const result = findTemplateVars('{{ text.replaceAll("\\n", "<br>") }}');
+		expect(result).toEqual({ text: '' });
+	});
+
+	test('handles mix of arrays and regular variables', () => {
+		const result = findTemplateVars('{{ * item in cart }}{{ item.name }}{{ /* }}{{ total }}');
+		expect(result).toEqual({ cart: [], total: '' });
+	});
+
+	test('real world invoice template', () => {
+		const tpl = `
+{{ settings.title }}
+{{ * (row, index) in transaction.cart }}
+    {{ row.quantity }} x {{ row.name }} = \${{ row.cost.toFixed(2) }}
+{{ /* }}
+Total: \${{ transaction.total.toFixed(2) }}
+{{ ? transaction.discount }}
+    Discount: {{ transaction.discount.value }}
+{{ /? }}
+`;
+		const result = findTemplateVars(tpl);
+		expect(result).toEqual({
+			settings: { title: '' },
+			transaction: {
+				cart: [],
+				total: '',
+				discount: { value: '' }
+			}
+		});
+		expect(result).not.toHaveProperty('row');
+		expect(result).not.toHaveProperty('index');
+		expect(result.transaction.cart).toEqual([]);
 	});
 });
 
