@@ -122,6 +122,8 @@ export function sortByProp(prop: string, reverse = false) {
 	return function (a: any, b: any) {
 		const aVal = dotNotation<any>(a, prop);
 		const bVal = dotNotation<any>(b, prop);
+		if(aVal === undefined) return 1;
+		if(bVal === undefined) return -1;
 		if(typeof aVal == 'number' && typeof bVal == 'number')
 			return (reverse ? -1 : 1) * (aVal - bVal);
 		if(aVal > bVal) return reverse ? -1 : 1;

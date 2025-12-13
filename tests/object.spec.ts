@@ -62,6 +62,11 @@ describe('Object utilities', () => {
 			dotNotation(obj, 'd.e.f', 5);
 			expect(obj.d.e.f).toBe(5);
 		});
+		it('undefined', () => {
+			const obj: any = {a: 1};
+			const resp = dotNotation(obj, 'a.b');
+			expect(resp).toBe(undefined);
+		})
 	});
 
 	describe('encodeQuery', () => {
