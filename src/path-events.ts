@@ -65,6 +65,8 @@ export class PathEvent {
 	module!: string;
 	/** Entire path, including the module & name */
 	fullPath!: string;
+	/** Parent directory, excludes module & name */
+	dir!: string;
 	/** Path including the name, excluding the module */
 	path!: string;
 	/** Last segment of path */
@@ -121,6 +123,7 @@ export class PathEvent {
 		if(p === '' || p === undefined || p === '*') {
 			this.module = '';
 			this.path = '';
+			this.dir = '';
 			this.fullPath = '**';
 			this.name = '';
 			this.methods = new ASet<Method>(p === '*' ? ['*'] : <any>method.split(''));
@@ -132,6 +135,7 @@ export class PathEvent {
 		let temp = p.split('/').filter(p => !!p);
 		this.module = temp.splice(0, 1)[0] || '';
 		this.path = temp.join('/');
+		this.dir = temp.length > 2 ? temp.slice(0, -1).join('/') : '';
 		this.fullPath = `${this.module}${this.module && this.path ? '/' : ''}${this.path}`;
 		this.name = temp.pop() || '';
 		this.hasGlob = this.fullPath.includes('*');
