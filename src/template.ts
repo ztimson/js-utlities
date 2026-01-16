@@ -17,7 +17,7 @@ export function findTemplateVars(html: string): Record<string, any> {
 		excluded.add(index);
 		const arrayVar = loop[2].trim();
 		const root = arrayVar.split('.')[0];
-		if (!excluded.has(root)) {
+		if(!excluded.has(root)) {
 			variables.add(arrayVar);
 			arrays.add(arrayVar);
 		}
@@ -33,7 +33,7 @@ export function findTemplateVars(html: string): Record<string, any> {
 		const vars = cleaned.match(/[a-zA-Z_$][a-zA-Z0-9_$.]+/g) || [];
 		for (const v of vars) {
 			const root = v.split('.')[0];
-			if (!excluded.has(root)) variables.add(v);
+			if(!excluded.has(root)) variables.add(v);
 		}
 	}
 
@@ -49,7 +49,7 @@ export function findTemplateVars(html: string): Record<string, any> {
 		const vars = cleaned.match(/[a-zA-Z_$][a-zA-Z0-9_$.]+/g) || [];
 		for (const v of vars) {
 			const root = v.split('.')[0];
-			if (!excluded.has(root)) variables.add(v);
+			if(!excluded.has(root)) variables.add(v);
 		}
 	}
 
@@ -59,7 +59,7 @@ export function findTemplateVars(html: string): Record<string, any> {
 		let current = result;
 		for (let i = 0; i < parts.length; i++) {
 			const part = parts[i];
-			if (i === parts.length - 1) {
+			if(i === parts.length - 1) {
 				const fullPath = parts.slice(0, i + 1).join('.');
 				current[part] = arrays.has(fullPath) ? [] : '';
 			} else {
@@ -70,10 +70,11 @@ export function findTemplateVars(html: string): Record<string, any> {
 	}
 	return result;
 }
-
 export async function renderTemplate(template: string, data: any, fetch?: (file: string) => Promise<string>) {
-	let content = template, found: any;
-	const now = new Date(), d = {
+	if(!fetch) fetch = (file) => { throw new TemplateError(`Unable to fetch template: ${file}`); }
+
+	const now = new Date();
+	const d = {
 		date: {
 			day: now.getDate(),
 			month: now.toLocaleString('default', { month: 'long' }),
@@ -83,72 +84,158 @@ export async function renderTemplate(template: string, data: any, fetch?: (file:
 		},
 		...(data || {}),
 	};
-	if(!fetch) fetch = (file) => { throw new TemplateError(`Unable to fetch template: ${file}`); }
+
 	const evaluate = (code: string, data: object, fatal = true) => {
 		try {
 			return Function('data', `with(data) { return ${code}; }`)(data);
-		} catch {
-			if(fatal) throw new TemplateError(`Failed to evaluate: ${code}`);
-			else return false;
+		} catch(err: any) {
+			if(fatal) throw new TemplateError(`Failed to evaluate: ${code}\n${err.message || err.toString()}`);
+			return false;
 		}
 	}
 
-	// If Statements - Optimize what we render: `{{ ? javascript }} IF TRUE CONTENT {{ !? javascript }} ELSE-IF CONTENT {{ !? }} ELSE FALSE CONTENT {{ /? }}`
-	while(!!(found = /\{\{\s*?\?\s*?(.+?)\s*?}}([\s\S]*?)\{\{\s*?\/\?\s*?}}/g.exec(content))) {
-		const nested = matchAll(found[0], /\{\{\s*?\?.+?}}/g).slice(-1)?.[0]?.index;
-		if(nested != 0) found = /\{\{\s*?\?\s*?(.+?)\s*?}}([\s\S]*?)\{\{\s*?\/\?\s*?}}/g.exec(content.slice(found.index + nested))
-		const parts = found[2].split(/\{\{\s*?!\?\s*?/);
-		let result = evaluate(found[1], d, false) ? parts[0] : '';
-		if (!result) {
-			for (let i = 1; i < parts.length; i++) {
-				const [cond, body] = parts[i].split(/}}/);
-				if (!cond.trim()) {
-					result = body || '';
-					break;
+	async function process(content: string, ctx: object = d): Promise<string> {
+		let result = content;
+
+		// Process extends first (they wrap everything)
+		const extendsMatch = result.match(/\{\{\s*>\s*(.+?):(.+?)\s*}}([\s\S]*?)\{\{\s*\/>\s*}}/);
+		if(extendsMatch) {
+			const parentTemplate = await (<Function>fetch)(extendsMatch[1].trim());
+			if(!parentTemplate) throw new TemplateError(`Unknown extended template: ${extendsMatch[1].trim()}`);
+			const slotName = extendsMatch[2].trim();
+			const slotContent = await process(extendsMatch[3], ctx);
+			return process(parentTemplate, {...ctx, [slotName]: slotContent});
+		}
+
+		let changed = true;
+		while(changed) {
+			changed = false;
+			const before = result;
+
+			// Process imports
+			const importMatch = result.match(/\{\{\s*<\s*(.+?)\s*}}/);
+			if(importMatch) {
+				const t = await (<Function>fetch)(importMatch[1].trim());
+				if(!t) throw new TemplateError(`Unknown imported template: ${importMatch[1].trim()}`);
+				const rendered = await process(t, ctx);
+				result = result.replace(importMatch[0], rendered);
+				changed = true;
+				continue;
+			}
+
+			// Process for-loops (innermost first)
+			const forMatch = findInnermostFor(result);
+			if(forMatch) {
+				const { full, vars, array, body, start } = forMatch;
+				const [element, index = 'index'] = vars.split(',').map(v => v.trim());
+				const arr: any[] = <any>dotNotation(ctx, array);
+				if(!arr || typeof arr != 'object') throw new TemplateError(`Cannot iterate: ${array}`);
+				let output = [];
+				for(let i = 0; i < arr.length; i++)
+					output.push(await process(body, {...ctx, [element]: arr[i], [index]: i}));
+				result = result.slice(0, start) + output.join('\n') + result.slice(start + full.length);
+				changed = true;
+				continue;
+			}
+
+			// Process if-statements (innermost first)
+			const ifMatch = findInnermostIf(result);
+			if(ifMatch) {
+				const { full, condition, body, start } = ifMatch;
+				const branches = parseIfBranches(body);
+				let output = '';
+				if(evaluate(condition, ctx, false)) {
+					output = branches.if;
+				} else {
+					for(const branch of branches.elseIf) {
+						if(evaluate(branch.condition, ctx, false)) {
+							output = branch.body;
+							break;
+						}
+					}
+					if(!output && branches.else) output = branches.else;
 				}
-				if (evaluate(cond, d, false)) {
-					result = body || '';
-					break;
-				}
+				result = result.slice(0, start) + output + result.slice(start + full.length);
+				changed = true;
+				continue;
+			}
+			if(before === result) changed = false;
+		}
+		return processVariables(result, ctx);
+	}
+
+	function processVariables(content: string, data: object): string {
+		return content.replace(/\{\{\s*([^<>\*\?!/}\s][^{}]*?)\s*}}/g, (match, code) => {
+			return evaluate(code.trim(), data) ?? '';
+		});
+	}
+
+	function findInnermostIf(content: string) {
+		const regex = /\{\{\s*\?\s*(.+?)\s*}}/g;
+		let match, lastMatch = null;
+		while((match = regex.exec(content)) !== null) {
+			const start = match.index;
+			const condition = match[1];
+			const bodyStart = match.index + match[0].length;
+			const end = findMatchingClose(content, bodyStart, /\{\{\s*\?\s*/, /\{\{\s*\/\?\s*}}/);
+			if(end === -1) throw new TemplateError(`Unmatched if-statement at position ${start}`);
+			const closeTag = content.slice(end).match(/\{\{\s*\/\?\s*}}/);
+			const full = content.slice(start, end + (<any>closeTag)[0].length);
+			const body = content.slice(bodyStart, end);
+			lastMatch = { full, condition, body, start };
+		}
+		return lastMatch;
+	}
+
+	function findInnermostFor(content: string) {
+		const regex = /\{\{\s*\*\s*(.+?)\s+in\s+(.+?)\s*}}/g;
+		let match, lastMatch = null;
+		while((match = regex.exec(content)) !== null) {
+			const start = match.index;
+			const vars = match[1].replaceAll(/[()\s]/g, '');
+			const array = match[2];
+			const bodyStart = match.index + match[0].length;
+			const end = findMatchingClose(content, bodyStart, /\{\{\s*\*\s*/, /\{\{\s*\/\*\s*}}/);
+			if(end === -1) throw new TemplateError(`Unmatched for-loop at position ${start}`);
+			const closeTag = content.slice(end).match(/\{\{\s*\/\*\s*}}/);
+			const full = content.slice(start, end + (<any>closeTag)[0].length);
+			const body = content.slice(bodyStart, end);
+			lastMatch = { full, vars, array, body, start };
+		}
+		return lastMatch;
+	}
+
+	function findMatchingClose(content: string, startIndex: number, openTag: RegExp, closeTag: RegExp): number {
+		let depth = 1, pos = startIndex;
+		while (depth > 0 && pos < content.length) {
+			const remaining = content.slice(pos);
+			const nextOpen = remaining.search(openTag);
+			const nextClose = remaining.search(closeTag);
+			if(nextClose === -1) return -1;
+			if(nextOpen !== -1 && nextOpen < nextClose) {
+				depth++;
+				pos += nextOpen + 1;
+			} else {
+				depth--;
+				if(depth === 0) return pos + nextClose;
+				pos += nextClose + 1;
 			}
 		}
-		content = content.replace(found[0], result);
+		return -1;
 	}
 
-	// Imports - We render bottom up: `{{ < file.html }}`
-	while(!!(found = /\{\{\s*?<\s*?(.+?)\s*?}}/g.exec(content))) {
-		const t = await fetch(found[1].trim());
-		if(!t) throw new TemplateError(`Unknown imported template: ${found[1].trim()}`);
-		content = content.replace(found[0], await renderTemplate(t, d, fetch));
+	function parseIfBranches(body: string) {
+		const parts = body.split(/\{\{\s*!\?\s*/);
+		const result = { if: parts[0], elseIf: [] as any[], else: '' };
+		for(let i = 1; i < parts.length; i++) {
+			const closeBrace = parts[i].indexOf('}}');
+			const condition = parts[i].slice(0, closeBrace).trim();
+			const branchBody = parts[i].slice(closeBrace + 2);
+			if(!condition) result.else = branchBody;
+			else result.elseIf.push({ condition, body: branchBody });
+		}
+		return result;
 	}
 
-	// For Loops: `{{ * (row, index) in invoice }} CONTENT {{ /* }}`
-	while(!!(found = /\{\{\s*?\*\s*?(.+?)\s+in\s+(.+?)\s*?}}([\s\S]*?)\{\{\s*?\/\*\s*?}}/g.exec(content))) {
-		const split = found[1].replaceAll(/[()\s]/g, '').split(',');
-		const element = split[0];
-		const index = split[1] || 'index';
-		const array: any[] = <any>dotNotation(d, found[2]);
-		if(!array || typeof array != 'object') throw new TemplateError(`Cannot iterate: ${found[2]}`);
-		let compiled = [];
-		for(let i = 0; i < array.length; i++)
-			compiled.push(await renderTemplate(found[3], {...d, [element]: array[i], [index]: i}, fetch));
-		content = content.replace(found[0], compiled.join('\n'));
-	}
-
-	// Evaluate whatever is left - Should come last: `{{ javascript }}`
-	while(!!(found = /\{\{\s*([^<>\*\?!/}\s][^}]*?)\s*}}/g.exec(content))) {
-		content = content.replace(found[0], evaluate(found[1].trim(), d) ?? '');
-	}
-
-	// Extends: `{{ > file.html:property }} CONTENT {{ /> }}`
-	while(!!(found = /\{\{\s*?>\s*?(.+?):(.+?)\s*?}}([\s\S]*?)\{\{\s*?\/>\s*?}}/g.exec(content))) {
-		const t = await fetch(found[1].trim());
-		if(!t) throw new TemplateError(`Unknown extended templated: ${found[1].trim()}`);
-		content = content.replace(found[0], await renderTemplate(t, {
-			...d,
-			[found[2].trim()]: found[3],
-		}, fetch));
-	}
-
-	return content;
+	return process(template);
 }

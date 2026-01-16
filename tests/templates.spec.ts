@@ -113,6 +113,39 @@ Total: {{ total }}
 		expect(result).toEqual({ cart: [], total: '' });
 	});
 
+	test('real world template', async () => {
+		const wrapper = `<div> {{body}} </div>`;
+		const tpl = `
+{{ > email:body }}
+	<div style="text-align: center">
+		{{ ? title }}<h1 style="margin: 0">{{ title }}</h1>{{ /? }}
+		{{ ? subject }}<h2 style="margin: 0">{{ subject }}</h2>{{ /? }}
+		{{ ? message }}<p style="margin-top: 1rem">{{ message }}</p>{{ /? }}
+		{{ ? link }}
+			<br>
+			<div style="background: #dedede; padding: 8px 20px; border-radius: 10px; overflow-x: auto;">
+				{{ ? link.startsWith('http') }}
+					<a style="word-break: break-all;" target="_blank" href="{{ link }}">{{ link }}</a>
+				{{ !? }}
+					<p style="margin: 0; word-break: break-all;">{{ link }}</p>
+				{{ /? }}
+			</div>
+		{{ /? }}
+		{{ ? footer }}
+			<br>
+			<p>{{ footer }}</p>
+		{{ /? }}
+	</div>
+{{ /> }}`;
+		console.log(await renderTemplate(tpl, {
+			title: 'test',
+			subject: 'test',
+			message: 'test',
+			link: 'test',
+			footer: 'test',
+		}, async () => wrapper))
+	});
+
 	test('real world invoice template', () => {
 		const tpl = `
 {{ settings.title }}
