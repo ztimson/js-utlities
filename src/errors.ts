@@ -113,6 +113,18 @@ export class NotAcceptableError extends CustomError {
 	}
 }
 
+export class TooManyRequestsError extends CustomError {
+	static code = 429;
+
+	constructor(message: string = 'Rate Limit Reached') {
+		super(message);
+	}
+
+	static instanceof(err: Error) {
+		return (<any>err).constructor.code == this.code;
+	}
+}
+
 export class InternalServerError extends CustomError {
 	static code = 500;
 
