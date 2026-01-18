@@ -4,6 +4,8 @@ export class TTS {
 	private static readonly QUALITY_PATTERNS = ['Google', 'Microsoft', 'Samantha', 'Premium', 'Natural', 'Neural'];
 
 	private _currentUtterance: SpeechSynthesisUtterance | null = null;
+	private _voicesLoaded: Promise<void>;
+	private _isStopping: boolean = false;
 
 	private _rate: number = 1.0;
 	get rate(): number { return this._rate; }
@@ -35,12 +37,31 @@ export class TTS {
 
 	/** Create a TTS instance with optional configuration */
 	constructor(config?: {rate?: number; pitch?: number; volume?: number; voice?: SpeechSynthesisVoice | null}) {
+		this._voicesLoaded = this.initializeVoices();
 		if(config) {
 			if(config.rate !== undefined) this._rate = config.rate;
 			if(config.pitch !== undefined) this._pitch = config.pitch;
 			if(config.volume !== undefined) this._volume = config.volume;
 			this._voice = config.voice === null ? undefined : (config.voice || undefined);
 		}
+	}
+
+	/** Initializes voice loading and sets default voice if needed */
+	private initializeVoices(): Promise<void> {
+		return new Promise((resolve) => {
+			const voices = window.speechSynthesis.getVoices();
+			if(voices.length > 0) {
+				if(!this._voice) this._voice = TTS.bestVoice();
+				resolve();
+			} else {
+				const handler = () => {
+					window.speechSynthesis.removeEventListener('voiceschanged', handler);
+					if(!this._voice) this._voice = TTS.bestVoice();
+					resolve();
+				};
+				window.speechSynthesis.addEventListener('voiceschanged', handler);
+			}
+		});
 	}
 
 	/**
@@ -77,30 +98,30 @@ export class TTS {
 	}
 
 	/** Speaks text and returns a Promise which resolves once complete */
-	speak(text: string): Promise<void> {
+	async speak(text: string): Promise<void> {
 		if(!text.trim()) return Promise.resolve();
-
+		await this._voicesLoaded;
 		return new Promise((resolve, reject) => {
 			this._currentUtterance = this.createUtterance(text);
-
 			this._currentUtterance.onend = () => {
 				this._currentUtterance = null;
 				resolve();
 			};
-
 			this._currentUtterance.onerror = (error) => {
 				this._currentUtterance = null;
-				reject(error);
+				if(this._isStopping && error.error === 'interrupted') resolve();
+				else reject(error);
 			};
-
 			window.speechSynthesis.speak(this._currentUtterance);
 		});
 	}
 
 	/** Stops all TTS */
 	stop(): void {
+		this._isStopping = true;
 		window.speechSynthesis.cancel();
 		this._currentUtterance = null;
+		setTimeout(() => { this._isStopping = false; }, 0);
 	}
 
 	/**
@@ -115,24 +136,25 @@ export class TTS {
 	 *
 	 * @returns Object with next function for passing chunk of streamed text and done for completing the stream
 	 */
-	speakStream(): {next: (text: string) => void, done: () => void} {
+	speakStream(): {next: (text: string) => void, done: () => Promise<void>} {
 		let buffer = '';
+		let streamPromise: Promise<void> = Promise.resolve();
 		const sentenceRegex = /[^.!?\n]+[.!?\n]+/g;
-
 		return {
 			next: (text: string): void => {
 				buffer += text;
 				const sentences = buffer.match(sentenceRegex);
 				if(sentences) {
-					sentences.forEach(sentence => this.speak(sentence.trim()));
+					sentences.forEach(sentence => streamPromise = this.speak(sentence.trim()));
 					buffer = buffer.replace(sentenceRegex, '');
 				}
 			},
 			done: async (): Promise<void> => {
 				if(buffer.trim()) {
-					await this.speak(buffer.trim());
+					streamPromise = this.speak(buffer.trim());
 					buffer = '';
 				}
+				await streamPromise;
 			}
 		};
 	}
