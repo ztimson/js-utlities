@@ -135,7 +135,15 @@ export function pascalCase(str?: string): string {
 		.join('');
 }
 
-
+/**
+ * Remove all emojis from a string
+ * @param {string} str Input string with emojis
+ * @returns {string} Sanitized string without emojis
+ */
+function removeEmojis(str: string): string {
+	const emojiRegex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud83c[\udde6-\uddff]|[\ud83d[\ude00-\ude4f]|[\ud83d[\ude80-\udeff]|[\ud83c[\udd00-\uddff]|[\ud83d[\ude50-\ude7f]|[\u2600-\u26ff]|[\u2700-\u27bf]|[\ud83e[\udd00-\uddff]|[\ud83c[\udf00-\uffff]|[\ud83d[\ude00-\udeff]|[\ud83c[\udde6-\uddff])/g;
+	return str.replace(emojiRegex, '');
+}
 
 /**
  * Generate a random hexadecimal value
