@@ -21,5 +21,6 @@ export * from './search';
 export * from './string';
 export * from './template';
 export * from './time';
+export * from './tts';
 export * from './types';
 export * from 'var-persist';
