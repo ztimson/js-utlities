@@ -5,7 +5,7 @@ export class TTS {
 
 	private _currentUtterance: SpeechSynthesisUtterance | null = null;
 	private _voicesLoaded: Promise<void>;
-	private _isStopping: boolean = false;
+	private _stoppedUtterances = new WeakSet<SpeechSynthesisUtterance>();
 
 	private _rate: number = 1.0;
 	get rate(): number { return this._rate; }
@@ -103,25 +103,25 @@ export class TTS {
 		await this._voicesLoaded;
 		return new Promise((resolve, reject) => {
 			this._currentUtterance = this.createUtterance(text);
-			this._currentUtterance.onend = () => {
+			const utterance = this._currentUtterance;
+			utterance.onend = () => {
 				this._currentUtterance = null;
 				resolve();
 			};
-			this._currentUtterance.onerror = (error) => {
+			utterance.onerror = (error) => {
 				this._currentUtterance = null;
-				if(this._isStopping && error.error === 'interrupted') resolve();
+				if(this._stoppedUtterances.has(utterance) && error.error === 'interrupted') resolve();
 				else reject(error);
 			};
-			window.speechSynthesis.speak(this._currentUtterance);
+			window.speechSynthesis.speak(utterance);
 		});
 	}
 
 	/** Stops all TTS */
 	stop(): void {
-		this._isStopping = true;
+		if(this._currentUtterance) this._stoppedUtterances.add(this._currentUtterance);
 		window.speechSynthesis.cancel();
 		this._currentUtterance = null;
-		setTimeout(() => { this._isStopping = false; }, 0);
 	}
 
 	/**
