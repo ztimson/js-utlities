@@ -8,7 +8,16 @@ export class TemplateError extends BadRequestError { }
 export function findTemplateVars(html: string): Record<string, any> {
 	const variables = new Set<string>();
 	const arrays = new Set<string>();
-	const excluded = new Set<string>(['true', 'false', 'null', 'undefined']);
+	const excluded = new Set([
+		'let', 'const', 'var', 'function', 'if', 'while', 'do', 'this', 'typeof',
+		'new', 'instanceof', 'in', 'for', 'else', 'case', 'break', 'continue',
+		'switch', 'default', 'with', 'eval', 'arguments', 'void', 'delete', 'null',
+		'undefined', 'true', 'false', 'async', 'await', 'try', 'catch', 'finally',
+		'throw', 'return', 'yield', 'debugger', 'extends', 'import', 'export',
+		'class', 'super', 'static', 'get', 'set', 'constructor', 'enum', 'implements',
+		'interface', 'package', 'private', 'protected', 'public', 'abstract', 'final',
+		'native', 'synchronized', 'throws', 'transient', 'volatile'
+	]);
 
 	// Extract & exclude loop variables, mark arrays
 	for (const loop of matchAll(html, /\{\{\s*?\*\s*?(.+?)\s+in\s+(.+?)\s*?}}/g)) {
@@ -70,6 +79,7 @@ export function findTemplateVars(html: string): Record<string, any> {
 	}
 	return result;
 }
+
 export async function renderTemplate(template: string, data: any, fetch?: (file: string) => Promise<string>) {
 	if(!fetch) fetch = (file) => { throw new TemplateError(`Unable to fetch template: ${file}`); }
 
