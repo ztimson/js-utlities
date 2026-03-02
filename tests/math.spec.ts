@@ -1,4 +1,4 @@
-import { dec2Frac, fracToDec } from '../src';
+import { dec2Frac, frac2Dec } from '../src';
 
 describe('Math Utilities', () => {
 	describe('dec2Frac', () => {
@@ -27,25 +27,25 @@ describe('Math Utilities', () => {
 
 	describe('fracToDec', () => {
 		it('should convert mixed fraction to decimal', () => {
-			expect(fracToDec('1 1/4')).toBeCloseTo(1.25);
-			expect(fracToDec('2 1/2')).toBeCloseTo(2.5);
-			expect(fracToDec('3 3/4')).toBeCloseTo(3.75);
+			expect(frac2Dec('1 1/4')).toBeCloseTo(1.25);
+			expect(frac2Dec('2 1/2')).toBeCloseTo(2.5);
+			expect(frac2Dec('3 3/4')).toBeCloseTo(3.75);
 		});
 
 		it('should convert fraction without whole part to decimal', () => {
-			expect(fracToDec('3/4')).toBeCloseTo(0.75);
-			expect(fracToDec('1/2')).toBeCloseTo(0.5);
-			expect(fracToDec('1/10')).toBeCloseTo(0.1);
+			expect(frac2Dec('3/4')).toBeCloseTo(0.75);
+			expect(frac2Dec('1/2')).toBeCloseTo(0.5);
+			expect(frac2Dec('1/10')).toBeCloseTo(0.1);
 		});
 
 		it('should convert whole number fraction', () => {
-			expect(fracToDec('4 0/1')).toBeCloseTo(4);
-			expect(fracToDec('0/1')).toBeCloseTo(0);
+			expect(frac2Dec('4 0/1')).toBeCloseTo(4);
+			expect(frac2Dec('0/1')).toBeCloseTo(0);
 		});
 
 		it('should handle zero correctly', () => {
-			expect(fracToDec('0/1')).toBeCloseTo(0);
-			expect(fracToDec('0 0/1')).toBeCloseTo(0);
+			expect(frac2Dec('0/1')).toBeCloseTo(0);
+			expect(frac2Dec('0 0/1')).toBeCloseTo(0);
 		});
 	});
 });

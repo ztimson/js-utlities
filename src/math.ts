@@ -30,6 +30,10 @@ export function dec2Frac(num: number, maxDen=1000): string {
 		(numerator ? numerator + '/' + closest.d : '');
 }
 
+export function dec2Hex(num: number): string {
+	const hex = Math.round(num * 255).toString(16);
+	return hex.length === 1 ? '0' + hex : hex;
+}
 
 /**
  * Convert fraction to decimal number
@@ -42,7 +46,7 @@ export function dec2Frac(num: number, maxDen=1000): string {
  * @param {string} frac Fraction to convert
  * @return {number} Faction as a decimal
  */
-export function fracToDec(frac: string) {
+export function frac2Dec(frac: string) {
 	let split = frac.split(' ');
 	const whole = split.length == 2 ? Number(split[0]) : 0;
 	split = (<string>split.pop()).split('/');
