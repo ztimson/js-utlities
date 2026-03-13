@@ -14,41 +14,55 @@ import {LETTER_LIST} from './string.ts';
 export function fromCsv<T = any>(csv: string, hasHeaders = true): T[] {
 	function parseLine(line: string): (string | null)[] {
 		const columns: string[] = [];
-		let current = '', inQuotes = false;
+		let current = '', inQuotes = false, quoteChar: string | null = null;
 		for (let i = 0; i < line.length; i++) {
 			const char = line[i];
 			const nextChar = line[i + 1];
-			if (char === '"') {
-				if (inQuotes && nextChar === '"') {
-					current += '"'; // Handle escaped quotes
+			if ((char === '"' || char === "'") && !inQuotes) {
+				inQuotes = true;
+				quoteChar = char;
+			} else if (char === quoteChar && inQuotes) {
+				if (nextChar === quoteChar) {
+					current += quoteChar; // Handle escaped quotes
 					i++;
-				} else inQuotes = !inQuotes;
+				} else {
+					inQuotes = false;
+					quoteChar = null;
+				}
 			} else if (char === ',' && !inQuotes) {
-				columns.push(current.trim()); // Trim column values
+				columns.push(current.trim());
 				current = '';
 			} else current += char;
 		}
-		columns.push(current.trim()); // Trim last column value
-		return columns.map(col => col.replace(/^"|"$/g, '').replace(/""/g, '"'));
+		columns.push(current.trim());
+		return columns.map(col => {
+			// Remove surrounding quotes (both " and ')
+			col = col.replace(/^["']|["']$/g, '');
+			// Unescape doubled quotes
+			return col.replace(/""/g, '"').replace(/''/g, "'");
+		});
 	}
 
-	// Normalize line endings and split rows
 	const rows = [];
-	let currentRow = '', inQuotes = false;
-	for (const char of csv.replace(/\r\n/g, '\n')) { // Normalize \r\n to \n
-		if (char === '"') inQuotes = !inQuotes;
+	let currentRow = '', inQuotes = false, quoteChar: string | null = null;
+	for (const char of csv.replace(/\r\n/g, '\n')) {
+		if ((char === '"' || char === "'") && !inQuotes) {
+			inQuotes = true;
+			quoteChar = char;
+		} else if (char === quoteChar && inQuotes) {
+			inQuotes = false;
+			quoteChar = null;
+		}
 		if (char === '\n' && !inQuotes) {
-			rows.push(currentRow.trim()); // Trim row
+			rows.push(currentRow.trim());
 			currentRow = '';
 		} else currentRow += char;
 	}
-	if (currentRow) rows.push(currentRow.trim()); // Trim last row
+	if (currentRow) rows.push(currentRow.trim());
 
-	// Extract headers
 	let headers: any = hasHeaders ? rows.splice(0, 1)[0] : null;
 	if (headers) headers = headers.match(/(?:[^,"']+|"(?:[^"]|"")*"|'(?:[^']|'')*')+/g)?.map((h: any) => h.trim());
 
-	// Parse rows
 	return <T[]>rows.map(r => {
 		const props = parseLine(r);
 		const h = headers || (Array(props.length).fill(null).map((_, i) => {
@@ -64,7 +78,6 @@ export function fromCsv<T = any>(csv: string, hasHeaders = true): T[] {
 		}, {});
 	});
 }
-
 
 /**
  * Convert an array of objects to a CSV string
