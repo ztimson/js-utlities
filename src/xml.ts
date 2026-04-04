@@ -1,3 +1,8 @@
+/**
+ * Parses an XML string into a structured JavaScript object.
+ * @param {string} xml - The XML string to parse
+ * @returns {Object} An object with `tag`, `attributes`, and `children` properties
+ */
 export function fromXml(xml: string) {
 	xml = xml.trim();
 	let pos = 0;
@@ -43,12 +48,14 @@ export function fromXml(xml: string) {
 		return { tag: tagName, attributes, children };
 	}
 
+	/** Parses and returns the tag name at the current position */
 	function parseTagName() {
 		let name = '';
 		while (pos < xml.length && /[a-zA-Z0-9_:-]/.test(xml[pos])) name += xml[pos++];
 		return name;
 	}
 
+	/** Parses and returns an object containing all attributes at the current position */
 	function parseAttributes() {
 		const attrs: any = {};
 		while (pos < xml.length) {
@@ -69,6 +76,7 @@ export function fromXml(xml: string) {
 		return attrs;
 	}
 
+	/** Parses and returns text content, or null if empty */
 	function parseText() {
 		let text = '';
 		while (pos < xml.length && xml[pos] !== '<') text += xml[pos++];
@@ -76,16 +84,19 @@ export function fromXml(xml: string) {
 		return text ? escapeXml(text, true) : null;
 	}
 
+	/** Skips over XML declaration (<?xml ... ?>) */
 	function parseDeclaration() {
 		while (xml[pos] !== '>') pos++;
 		pos++;
 	}
 
+	/** Skips over XML comments (<!-- ... -->) */
 	function parseComment() {
 		while (!(xml[pos] === '-' && xml[pos + 1] === '-' && xml[pos + 2] === '>')) pos++;
 		pos += 3;
 	}
 
+	/** Advances position past any whitespace characters */
 	function skipWhitespace() {
 		while (pos < xml.length && /\s/.test(xml[pos])) pos++;
 	}
@@ -93,6 +104,12 @@ export function fromXml(xml: string) {
 	return parseNode();
 }
 
+/**
+ * Converts a JavaScript object into an XML string.
+ * @param {Object} obj - Object with `tag`, `attributes`, and `children` properties, or a string
+ * @param {string} indent - Current indentation level (used internally for formatting)
+ * @returns {string} The formatted XML string
+ */
 export function toXml(obj: any, indent = '') {
 	if(typeof obj === 'string') return escapeXml(obj);
 	const { tag, attributes = {}, children = [] } = obj;
@@ -114,6 +131,12 @@ export function toXml(obj: any, indent = '') {
 	return xml;
 }
 
+/**
+ * Escapes or unescapes XML special characters.
+ * @param {string} str - The string to process
+ * @param {boolean} decode - If true, decodes XML entities; if false, encodes special characters
+ * @returns {string} The processed string
+ */
 export function escapeXml(str: string, decode = false) {
 	if(decode) {
 		return str
