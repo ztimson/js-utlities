@@ -3,6 +3,11 @@
  * @param {string} xml - The XML string to parse
  * @returns {Object} An object with `tag`, `attributes`, and `children` properties
  */
+/**
+ * Parses an XML string into a structured JavaScript object (fast-xml-parser style).
+ * @param {string} xml - The XML string to parse
+ * @returns {Object} An object matching fast-xml-parser output format
+ */
 export function fromXml(xml: string) {
 	xml = xml.trim();
 	let pos = 0;
@@ -28,7 +33,7 @@ export function fromXml(xml: string) {
 
 		if(xml[pos] === '/' && xml[pos + 1] === '>') {
 			pos += 2; // skip />
-			return { tag: tagName, attributes, children: [] };
+			return { [tagName]: Object.keys(attributes).length > 0 ? { '@_': attributes } : '' };
 		}
 
 		pos++; // skip >
@@ -45,17 +50,54 @@ export function fromXml(xml: string) {
 			const child = parseNode();
 			if(child) children.push(child);
 		}
-		return { tag: tagName, attributes, children };
+
+		// Build fast-xml-parser style output
+		const result: any = {};
+
+		// Add attributes with @_ prefix
+		if(Object.keys(attributes).length > 0) {
+			for(const [key, value] of Object.entries(attributes)) {
+				result[`@_${key}`] = value;
+			}
+		}
+
+		// Process children
+		if(children.length === 1 && typeof children[0] === 'string') {
+			// Single text node
+			if(Object.keys(attributes).length > 0) {
+				result['#text'] = children[0];
+				return { [tagName]: result };
+			}
+			return { [tagName]: children[0] };
+		}
+
+		// Group children by tag name
+		for(const child of children) {
+			if(typeof child === 'string') {
+				result['#text'] = child;
+			} else {
+				for(const [childTag, childValue] of Object.entries(child)) {
+					if(result[childTag]) {
+						if(!Array.isArray(result[childTag])) {
+							result[childTag] = [result[childTag]];
+						}
+						result[childTag].push(childValue);
+					} else {
+						result[childTag] = childValue;
+					}
+				}
+			}
+		}
+
+		return { [tagName]: Object.keys(result).length > 0 ? result : '' };
 	}
 
-	/** Parses and returns the tag name at the current position */
 	function parseTagName() {
 		let name = '';
 		while (pos < xml.length && /[a-zA-Z0-9_:-]/.test(xml[pos])) name += xml[pos++];
 		return name;
 	}
 
-	/** Parses and returns an object containing all attributes at the current position */
 	function parseAttributes() {
 		const attrs: any = {};
 		while (pos < xml.length) {
@@ -76,7 +118,6 @@ export function fromXml(xml: string) {
 		return attrs;
 	}
 
-	/** Parses and returns text content, or null if empty */
 	function parseText() {
 		let text = '';
 		while (pos < xml.length && xml[pos] !== '<') text += xml[pos++];
@@ -84,19 +125,16 @@ export function fromXml(xml: string) {
 		return text ? escapeXml(text, true) : null;
 	}
 
-	/** Skips over XML declaration (<?xml ... ?>) */
 	function parseDeclaration() {
 		while (xml[pos] !== '>') pos++;
 		pos++;
 	}
 
-	/** Skips over XML comments (<!-- ... -->) */
 	function parseComment() {
 		while (!(xml[pos] === '-' && xml[pos + 1] === '-' && xml[pos + 2] === '>')) pos++;
 		pos += 3;
 	}
 
-	/** Advances position past any whitespace characters */
 	function skipWhitespace() {
 		while (pos < xml.length && /\s/.test(xml[pos])) pos++;
 	}

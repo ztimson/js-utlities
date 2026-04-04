@@ -10,4 +10,6 @@ RUN if [ ! -d "node_modules" ]; then npm i; fi && \
 # Use Nginx to serve
 FROM nginx:1.23-alpine
 
+RUN npm i fast-xml-parser
+
 COPY --from=build /app/docs /usr/share/nginx/html
