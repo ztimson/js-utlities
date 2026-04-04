@@ -5,71 +5,80 @@ describe('XML Parser', () => {
 		it('should parse simple tag', () => {
 			const xml = '<root></root>';
 			const result = fromXml(xml);
-			expect(result).toEqual({ tag: 'root', attributes: {}, children: [] });
+			expect(result).toEqual({ root: '' });
 		});
 
 		it('should parse self-closing tag', () => {
 			const xml = '<item />';
 			const result = fromXml(xml);
-			expect(result).toEqual({ tag: 'item', attributes: {}, children: [] });
+			expect(result).toEqual({ item: '' });
 		});
 
-		it('should parse tag with attributes', () => {
+		it('should parse tag with attributes (ignored in fast-xml-parser format)', () => {
 			const xml = '<user id="1" name="someone" />';
 			const result = fromXml(xml);
-			expect(result).toEqual({
-				tag: 'user',
-				attributes: { id: '1', name: 'someone' },
-				children: []
-			});
+			expect(result).toEqual({ user: '' });
 		});
 
 		it('should parse tag with text content', () => {
 			const xml = '<email>someone@example.com</email>';
 			const result = fromXml(xml);
-			expect(result).toEqual({
-				tag: 'email',
-				attributes: {},
-				children: ['someone@example.com']
-			});
+			expect(result).toEqual({ email: 'someone@example.com' });
+		});
+
+		it('should parse tag with numeric content', () => {
+			const xml = '<ttl>240</ttl>';
+			const result = fromXml(xml);
+			expect(result).toEqual({ ttl: 240 });
 		});
 
 		it('should parse nested tags', () => {
 			const xml = '<root><child>text</child></root>';
 			const result = fromXml(xml);
 			expect(result).toEqual({
-				tag: 'root',
-				attributes: {},
-				children: [
-					{ tag: 'child', attributes: {}, children: ['text'] }
-				]
+				root: {
+					child: 'text'
+				}
 			});
 		});
 
-		it('should parse multiple children', () => {
-			const xml = '<root><a /><b /><c /></root>';
+		it('should parse multiple children with same tag as array', () => {
+			const xml = '<root><item>a</item><item>b</item><item>c</item></root>';
 			const result = fromXml(xml);
-			expect(result.children.length).toBe(3);
-			expect(result.children[0]).toEqual({ tag: 'a', attributes: {}, children: [] });
+			expect(result).toEqual({
+				root: {
+					item: ['a', 'b', 'c']
+				}
+			});
 		});
 
-		it('should skip XML declaration', () => {
+		it('should parse mixed children', () => {
+			const xml = '<root><a>1</a><b>2</b><c>3</c></root>';
+			const result = fromXml(xml);
+			expect(result.root).toEqual({ a: 1, b: 2, c: 3 });
+		});
+
+		it('should skip XML declaration and include as key', () => {
 			const xml = '<?xml version="1.0"?><root />';
 			const result = fromXml(xml);
-			expect(result.tag).toBe('root');
+			expect(result).toHaveProperty('?xml');
+			expect(result).toHaveProperty('root');
 		});
 
 		it('should skip comments', () => {
-			const xml = '<root><!-- comment --><child /></root>';
+			const xml = '<root><!-- comment --><child>text</child></root>';
 			const result = fromXml(xml);
-			expect(result.children.length).toBe(1);
-			expect(result.children[0].tag).toBe('child');
+			expect(result).toEqual({
+				root: {
+					child: 'text'
+				}
+			});
 		});
 
 		it('should handle escaped characters', () => {
 			const xml = '<text>&lt;hello&gt; &amp; &quot;world&quot;</text>';
 			const result = fromXml(xml);
-			expect(result.children[0]).toBe('<hello> & "world"');
+			expect(result.text).toBe('<hello> & "world"');
 		});
 
 		it('should parse complex nested structure', () => {
@@ -82,10 +91,37 @@ describe('XML Parser', () => {
         </root>
       `;
 			const result = fromXml(xml);
-			expect(result.tag).toBe('root');
-			expect(result.children[0].tag).toBe('user');
-			expect(result.children[0].attributes.name).toBe('someone');
-			expect(result.children[0].children.length).toBe(2);
+			expect(result).toEqual({
+				root: {
+					user: {
+						email: 'someone@example.com',
+						active: ''
+					}
+				}
+			});
+		});
+
+		it('should parse RSS-like structure with multiple items', () => {
+			const xml = `
+                <rss>
+                    <channel>
+                        <title>Test Feed</title>
+                        <item>
+                            <title>Item 1</title>
+                            <link>http://example.com/1</link>
+                        </item>
+                        <item>
+                            <title>Item 2</title>
+                            <link>http://example.com/2</link>
+                        </item>
+                    </channel>
+                </rss>
+            `;
+			const result = fromXml(xml);
+			expect(result.rss.channel.title).toBe('Test Feed');
+			expect(Array.isArray(result.rss.channel.item)).toBe(true);
+			expect(result.rss.channel.item.length).toBe(2);
+			expect(result.rss.channel.item[0].title).toBe('Item 1');
 		});
 	});
 
@@ -154,7 +190,7 @@ describe('XML Parser', () => {
 	});
 
 	describe('round-trip', () => {
-		it('should encode and decode to same structure', () => {
+		it('should parse toXml output back to fast-xml-parser format', () => {
 			const obj = {
 				tag: 'root',
 				attributes: { id: '1' },
@@ -164,7 +200,11 @@ describe('XML Parser', () => {
 			};
 			const xml = toXml(obj);
 			const parsed = fromXml(xml);
-			expect(parsed).toEqual(obj);
+			expect(parsed).toEqual({
+				root: {
+					child: 'text'
+				}
+			});
 		});
 	});
 });

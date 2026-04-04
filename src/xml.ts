@@ -3,6 +3,11 @@
  * @param {string} xml - The XML string to parse
  * @returns {Object} An object with `tag`, `attributes`, and `children` properties
  */
+/**
+ * Parses an XML string into a structured JavaScript object (fast-xml-parser format).
+ * @param {string} xml - The XML string to parse
+ * @returns {Object} An object with tag names as keys and text content or nested objects as values
+ */
 export function fromXml(xml: string) {
 	xml = xml.trim();
 	let pos = 0;
@@ -13,8 +18,8 @@ export function fromXml(xml: string) {
 		pos++; // skip <
 
 		if(xml[pos] === '?') {
-			parseDeclaration();
-			return parseNode();
+			const declaration = parseDeclaration();
+			return { ['?' + declaration]: '', ...parseNode() };
 		}
 
 		if(xml[pos] === '!') {
@@ -28,11 +33,13 @@ export function fromXml(xml: string) {
 
 		if(xml[pos] === '/' && xml[pos + 1] === '>') {
 			pos += 2; // skip />
-			return { tag: tagName, attributes, children: [] };
+			return { [tagName]: '' };
 		}
 
 		pos++; // skip >
-		const children = [];
+		const children: any[] = [];
+		let textContent = '';
+
 		while(pos < xml.length) {
 			skipWhitespace();
 			if(xml[pos] === '<' && xml[pos + 1] === '/') {
@@ -42,20 +49,51 @@ export function fromXml(xml: string) {
 				pos++; // skip >
 				break;
 			}
+			const startPos = pos;
 			const child = parseNode();
-			if(child) children.push(child);
+			if(typeof child === 'string') {
+				textContent += child;
+			} else if(child) {
+				children.push(child);
+			}
 		}
-		return { tag: tagName, attributes, children };
+
+		// If only text content, return simple value
+		if(children.length === 0 && textContent) {
+			const value = isNumeric(textContent) ? Number(textContent) : textContent;
+			return { [tagName]: value };
+		}
+
+		// If only text with no children
+		if(children.length === 0) {
+			return { [tagName]: '' };
+		}
+
+		// Merge children into object
+		const result: any = {};
+		for(const child of children) {
+			for(const [key, value] of Object.entries(child)) {
+				if(result[key]) {
+					// Convert to array if duplicate tags
+					if(!Array.isArray(result[key])) {
+						result[key] = [result[key]];
+					}
+					result[key].push(value);
+				} else {
+					result[key] = value;
+				}
+			}
+		}
+
+		return { [tagName]: result };
 	}
 
-	/** Parses and returns the tag name at the current position */
 	function parseTagName() {
 		let name = '';
 		while (pos < xml.length && /[a-zA-Z0-9_:-]/.test(xml[pos])) name += xml[pos++];
 		return name;
 	}
 
-	/** Parses and returns an object containing all attributes at the current position */
 	function parseAttributes() {
 		const attrs: any = {};
 		while (pos < xml.length) {
@@ -76,7 +114,6 @@ export function fromXml(xml: string) {
 		return attrs;
 	}
 
-	/** Parses and returns text content, or null if empty */
 	function parseText() {
 		let text = '';
 		while (pos < xml.length && xml[pos] !== '<') text += xml[pos++];
@@ -84,21 +121,28 @@ export function fromXml(xml: string) {
 		return text ? escapeXml(text, true) : null;
 	}
 
-	/** Skips over XML declaration (<?xml ... ?>) */
 	function parseDeclaration() {
+		pos++; // skip ?
+		let name = '';
+		while (pos < xml.length && xml[pos] !== ' ' && xml[pos] !== '?') {
+			name += xml[pos++];
+		}
 		while (xml[pos] !== '>') pos++;
 		pos++;
+		return name;
 	}
 
-	/** Skips over XML comments (<!-- ... -->) */
 	function parseComment() {
 		while (!(xml[pos] === '-' && xml[pos + 1] === '-' && xml[pos + 2] === '>')) pos++;
 		pos += 3;
 	}
 
-	/** Advances position past any whitespace characters */
 	function skipWhitespace() {
 		while (pos < xml.length && /\s/.test(xml[pos])) pos++;
+	}
+
+	function isNumeric(str: string) {
+		return !isNaN(Number(str)) && !isNaN(parseFloat(str)) && str.trim() !== '';
 	}
 
 	return parseNode();
