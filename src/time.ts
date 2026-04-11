@@ -78,19 +78,62 @@ export function dayOfYear(date: Date): number {
  *
  * @param {string} format How date string will be formatted, default: `YYYY-MM-DD H:mm A`
  * @param {Date | number | string} date Date or timestamp, defaults to now
- * @param tz Set timezone offset
+ * @param tz Set timezone offset in: hours (-4) or minutes (430) or IANA string (America/New_York)
  * @return {string} Formated date
  */
 export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | number | string = new Date(), tz: string | number = 'local'): string {
 	if (typeof date === 'number' || typeof date === 'string') date = new Date(date);
 	if (isNaN(date.getTime())) throw new Error('Invalid date input');
-	const numericTz = typeof tz === 'number';
-	const localTz = tz === 'local' || (!numericTz && tz.toLowerCase?.() === 'local');
-	const tzName = localTz ? Intl.DateTimeFormat().resolvedOptions().timeZone : numericTz ? 'UTC' : tz;
+
+	const TIMEZONE_MAP = [
+		{ name: 'IDLW', iana: 'Etc/GMT+12', offset: -720 },
+		{ name: 'SST', iana: 'Pacific/Pago_Pago', offset: -660 },
+		{ name: 'HST', iana: 'Pacific/Honolulu', offset: -600 },
+		{ name: 'AKST', iana: 'America/Anchorage', offset: -540 },
+		{ name: 'PST', iana: 'America/Los_Angeles', offset: -480 },
+		{ name: 'MST', iana: 'America/Denver', offset: -420 },
+		{ name: 'CST', iana: 'America/Chicago', offset: -360 },
+		{ name: 'EST', iana: 'America/New_York', offset: -300 },
+		{ name: 'AST', iana: 'America/Halifax', offset: -240 },
+		{ name: 'BRT', iana: 'America/Sao_Paulo', offset: -180 },
+		{ name: 'MAT', iana: 'Atlantic/South_Georgia', offset: -120 },
+		{ name: 'AZOT', iana: 'Atlantic/Azores', offset: -60 },
+		{ name: 'UTC', iana: 'UTC', offset: 0 },
+		{ name: 'CET', iana: 'Europe/Paris', offset: 60 },
+		{ name: 'EET', iana: 'Europe/Athens', offset: 120 },
+		{ name: 'MSK', iana: 'Europe/Moscow', offset: 180 },
+		{ name: 'GST', iana: 'Asia/Dubai', offset: 240 },
+		{ name: 'PKT', iana: 'Asia/Karachi', offset: 300 },
+		{ name: 'IST', iana: 'Asia/Kolkata', offset: 330 },
+		{ name: 'BST', iana: 'Asia/Dhaka', offset: 360 },
+		{ name: 'ICT', iana: 'Asia/Bangkok', offset: 420 },
+		{ name: 'CST', iana: 'Asia/Shanghai', offset: 480 },
+		{ name: 'JST', iana: 'Asia/Tokyo', offset: 540 },
+		{ name: 'AEST', iana: 'Australia/Sydney', offset: 600 },
+		{ name: 'SBT', iana: 'Pacific/Guadalcanal', offset: 660 },
+		{ name: 'TOT', iana: 'Pacific/Tongatapu', offset: 780 },
+		{ name: 'LINT', iana: 'Pacific/Kiritimati', offset: 840 },
+	];
+
+	let numericTz = typeof tz === 'number';
+	const localTz = tz === 'local' || (!numericTz && tz.toString().toLowerCase?.() === 'local');
+	let tzName = localTz ? Intl.DateTimeFormat().resolvedOptions().timeZone : numericTz ? 'UTC' : tz;
+	let offsetMinutes = 0;
+
+	if (numericTz) {
+		// Convert hours to minutes if offset is small (likely hours)
+		offsetMinutes = Math.abs(tz as number) < 24 ? (tz as number) * 60 : (tz as number);
+
+		// Find closest matching timezone
+		const closest = TIMEZONE_MAP.reduce((prev, curr) =>
+			Math.abs(curr.offset - offsetMinutes) < Math.abs(prev.offset - offsetMinutes) ? curr : prev
+		);
+		tzName = closest.iana;
+	}
 
 	if (!numericTz && tzName !== 'UTC') {
 		try {
-			new Intl.DateTimeFormat('en-US', { timeZone: tzName }).format();
+			new Intl.DateTimeFormat('en-US', { timeZone: <string>tzName }).format();
 		} catch {
 			throw new Error(`Invalid timezone: ${tzName}`);
 		}
@@ -99,9 +142,10 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 	let zonedDate = new Date(date);
 	let get: (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds') => number;
 	const partsMap: Record<string, string> = {};
+
 	if (!numericTz && tzName !== 'UTC') {
 		const parts = new Intl.DateTimeFormat('en-US', {
-			timeZone: tzName,
+			timeZone: <string>tzName,
 			year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long',
 			hour: '2-digit', minute: '2-digit', second: '2-digit',
 			hour12: false
@@ -127,8 +171,7 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 			}
 		};
 	} else {
-		const offset = numericTz ? tz as number : 0;
-		zonedDate = new Date(date.getTime() + offset * 60 * 60 * 1000);
+		zonedDate = new Date(date.getTime() + offsetMinutes * 60 * 1000);
 		get = (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds'): number => zonedDate[`getUTC${fn}`]();
 	}
 
@@ -139,14 +182,13 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 	}
 
 	function getTZOffset(): string {
-		if (numericTz) {
-			const total = (tz as number) * 60;
-			const hours = Math.floor(Math.abs(total) / 60);
-			const mins = Math.abs(total) % 60;
-			return `${tz >= 0 ? '+' : '-'}${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+		if(numericTz) {
+			const hours = Math.floor(Math.abs(offsetMinutes) / 60);
+			const mins = Math.abs(offsetMinutes) % 60;
+			return `${offsetMinutes >= 0 ? '+' : '-'}${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 		}
 		try {
-			const offset = new Intl.DateTimeFormat('en-US', {timeZone: tzName, timeZoneName: 'longOffset', hour: '2-digit', minute: '2-digit',})
+			const offset = new Intl.DateTimeFormat('en-US', {timeZone: <string>tzName, timeZoneName: 'longOffset', hour: '2-digit', minute: '2-digit',})
 				.formatToParts(<Date>date).find(p => p.type === 'timeZoneName')?.value.match(/([+-]\d{2}:\d{2})/)?.[1];
 			if (offset) return offset;
 		} catch {}
@@ -154,12 +196,11 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 	}
 
 	function getTZAbbr(): string {
-		if (numericTz && tz === 0) return 'UTC';
 		try {
-			return new Intl.DateTimeFormat('en-US', { timeZone: tzName, timeZoneName: 'short' })
+			return new Intl.DateTimeFormat('en-US', { timeZone: <string>tzName, timeZoneName: 'short' })
 				.formatToParts(<Date>date).find(p => p.type === 'timeZoneName')?.value || '';
 		} catch {
-			return tzName;
+			return <string>tzName;
 		}
 	}
 
