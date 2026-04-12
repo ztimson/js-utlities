@@ -155,7 +155,7 @@ export function formatDate(format: string = 'YYYY-MM-DD H:mm', date: Date | numb
 		});
 
 		const monthValue = parseInt(partsMap.month) - 1;
-		const dayOfWeekValue = new Date(`${partsMap.year}-${partsMap.month}-${partsMap.day}`).getDay();
+		const dayOfWeekValue = new Date(Date.UTC(parseInt(partsMap.year), parseInt(partsMap.month) - 1, parseInt(partsMap.day))).getUTCDay();
 		const hourValue = parseInt(partsMap.hour);
 
 		get = (fn: 'FullYear' | 'Month' | 'Date' | 'Day' | 'Hours' | 'Minutes' | 'Seconds' | 'Milliseconds'): number => {
