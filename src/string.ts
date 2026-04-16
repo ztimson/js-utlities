@@ -241,7 +241,6 @@ export function snakeCase(str?: string): string {
 	return wordSegments(str).map(w => w.toLowerCase()).join("_");
 }
 
-
 /**
  * Splice a string together (Similar to Array.splice)
  *
@@ -255,6 +254,20 @@ export function strSplice(str: string, start: number, deleteCount: number, inser
 	const before = str.slice(0, start);
 	const after = str.slice(start + deleteCount);
 	return before + insert + after;
+}
+
+function titleCase(str: string) {
+	// Normalize separators: replace underscores and hyphens with spaces
+	let normalizedStr = str.replace(/(_|-)/g, ' ');
+	// Handle CamelCase/PascalCase boundaries: insert a space before capital letters
+	normalizedStr = normalizedStr.replace(/([a-z])([A-Z])/g, '$1 $2');
+	// Lowercase the whole string, split by any whitespace, and capitalize each word
+	let words = normalizedStr.toLowerCase().split(/\s+/).filter(Boolean);
+	const titledWords = words.map(word => {
+		if (word.length === 0) return '';
+		return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+	});
+	return titledWords.join(' ');
 }
 
 /**
