@@ -10,6 +10,7 @@ uploads
 public/momentum*js
 junit.xml
 /docs/
+main.mjs
 
 # Logs
 *.log

@@ -135,7 +135,7 @@ export class PathEvent {
 		let temp = p.split('/').filter(p => !!p);
 		this.module = temp.splice(0, 1)[0] || '';
 		this.path = temp.join('/');
-		this.dir = temp.length > 2 ? temp.slice(0, -1).join('/') : '';
+		this.dir = temp.length > 1 ? temp.slice(0, -1).join('/') : '';
 		this.fullPath = `${this.module}${this.module && this.path ? '/' : ''}${this.path}`;
 		this.name = temp.pop() || '';
 		this.hasGlob = this.fullPath.includes('*');
