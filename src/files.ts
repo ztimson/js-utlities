@@ -83,6 +83,7 @@ export function timestampFilename(name?: string, date: Date | number | string = 
 
 /**
  * Upload file to URL with progress callback using PromiseProgress
+ * Works in both browser (with progress) and Node.js (fallback without progress)
  *
  * @param {{url: string, files: File[], headers?: {[p: string]: string}, withCredentials?: boolean}} options
  * @return {PromiseProgress<T>} Promise of request with `onProgress` callback
@@ -93,19 +94,40 @@ export function uploadWithProgress<T>(options: {
 	headers?: {[key: string]: string};
 	withCredentials?: boolean;
 }): PromiseProgress<T> {
-	return new PromiseProgress<T>((res, rej, prog) => {
-		const xhr = new XMLHttpRequest();
-		const formData = new FormData();
-		options.files.forEach(f => formData.append('file', f));
+	// Browser environment - use XMLHttpRequest for progress
+	if (typeof XMLHttpRequest !== 'undefined') {
+		return new PromiseProgress<T>((res, rej, prog) => {
+			const xhr = new XMLHttpRequest();
+			const formData = new FormData();
+			options.files.forEach(f => formData.append('files', f));
 
-		xhr.withCredentials = !!options.withCredentials;
-		xhr.upload.addEventListener('progress', (event) => event.lengthComputable ? prog(event.loaded / event.total) : null);
-		xhr.addEventListener('loadend', () => res(<T>JSONAttemptParse(xhr.responseText)));
-		xhr.addEventListener('error', () => rej(JSONAttemptParse(xhr.responseText)));
-		xhr.addEventListener('timeout', () => rej({error: 'Request timed out'}));
+			xhr.withCredentials = !!options.withCredentials;
+			xhr.upload.addEventListener('progress', (event) => event.lengthComputable ? prog(event.loaded / event.total) : null);
+			xhr.addEventListener('loadend', () => res(<T>JSONAttemptParse(xhr.responseText)));
+			xhr.addEventListener('error', () => rej(JSONAttemptParse(xhr.responseText)));
+			xhr.addEventListener('timeout', () => rej({error: 'Request timed out'}));
 
-		xhr.open('POST', options.url);
-		Object.entries(options.headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));
-		xhr.send(formData);
+			xhr.open('POST', options.url);
+			Object.entries(options.headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+			xhr.send(formData);
+		});
+	}
+
+	// Node.js environment - fallback to fetch without progress
+	return new PromiseProgress<T>(async (res, rej) => {
+		try {
+			const formData = new FormData();
+			options.files.forEach(f => formData.append('files', f));
+			const response = await fetch(options.url, {method: 'POST', headers: options.headers || {}, body: formData});
+			if(!response.ok) {
+				const error = await response.text();
+				rej(JSONAttemptParse(error));
+			} else {
+				const result = await response.text();
+				res(<T>JSONAttemptParse(result));
+			}
+		} catch (error) {
+			rej(error);
+		}
 	});
 }
