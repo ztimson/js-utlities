@@ -76,8 +76,18 @@ export class PathEvent {
 	/** Whether this path contains glob patterns */
 	hasGlob!: boolean;
 
-	/** Internal cache for PathEvent instances to avoid redundant parsing */
-	private static pathEventCache: Map<string, PathEvent> = new Map();
+	/** Internal cache for parsed path data (plain objects, not instances) */
+	private static pathEventCache: Map<string, {
+		module: string;
+		fullPath: string;
+		dir: string;
+		path: string;
+		name: string;
+		methods: Method[];
+		hasGlob: boolean;
+	}> = new Map();
+	/** Max size for path cache before LRU eviction */
+	private static readonly MAX_PATH_CACHE_SIZE = 1000;
 	/** Cache for compiled permissions (path + required permissions → result) */
 	private static permissionCache: Map<string, PathEvent> = new Map();
 	/** Max size for permission cache before LRU eviction */
@@ -111,8 +121,20 @@ export class PathEvent {
 			return;
 		}
 
+		// Check cache and reconstruct from plain object
 		if(PathEvent.pathEventCache.has(e)) {
-			Object.assign(this, PathEvent.pathEventCache.get(e)!);
+			const cached = PathEvent.pathEventCache.get(e)!;
+			// Move to end (LRU - most recently used)
+			PathEvent.pathEventCache.delete(e);
+			PathEvent.pathEventCache.set(e, cached);
+
+			this.module = cached.module;
+			this.fullPath = cached.fullPath;
+			this.dir = cached.dir;
+			this.path = cached.path;
+			this.name = cached.name;
+			this.methods = new ASet(cached.methods);
+			this.hasGlob = cached.hasGlob;
 			return;
 		}
 
@@ -128,7 +150,22 @@ export class PathEvent {
 			this.name = '';
 			this.methods = new ASet<Method>(p === '*' ? ['*'] : <any>method.split(''));
 			this.hasGlob = true;
-			PathEvent.pathEventCache.set(e, this);
+
+			// LRU eviction
+			if(PathEvent.pathEventCache.size >= PathEvent.MAX_PATH_CACHE_SIZE) {
+				const firstKey = PathEvent.pathEventCache.keys().next().value;
+				if(firstKey) PathEvent.pathEventCache.delete(firstKey);
+			}
+
+			PathEvent.pathEventCache.set(e, {
+				module: this.module,
+				fullPath: this.fullPath,
+				dir: this.dir,
+				path: this.path,
+				name: this.name,
+				methods: [...this.methods],
+				hasGlob: this.hasGlob
+			});
 			return;
 		}
 
@@ -140,7 +177,22 @@ export class PathEvent {
 		this.name = temp.pop() || '';
 		this.hasGlob = this.fullPath.includes('*');
 		this.methods = new ASet(<any>method.split(''));
-		PathEvent.pathEventCache.set(e, this);
+
+		// LRU eviction
+		if(PathEvent.pathEventCache.size >= PathEvent.MAX_PATH_CACHE_SIZE) {
+			const firstKey = PathEvent.pathEventCache.keys().next().value;
+			if(firstKey) PathEvent.pathEventCache.delete(firstKey);
+		}
+
+		PathEvent.pathEventCache.set(e, {
+			module: this.module,
+			fullPath: this.fullPath,
+			dir: this.dir,
+			path: this.path,
+			name: this.name,
+			methods: [...this.methods],
+			hasGlob: this.hasGlob
+		});
 	}
 
 	/**
