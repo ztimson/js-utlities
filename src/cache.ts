@@ -31,7 +31,7 @@ export class Cache<K extends string | number | symbol, T> {
 	/** Await initial loading */
 	loading = new Promise<void>(r => this._loading = r);
 
-	get size() { return this.store.size; }
+	get size() { return this.store.keys().toArray().length }
 
 	/**
 	 * Create new cache
