@@ -31,6 +31,8 @@ export class Cache<K extends string | number | symbol, T> {
 	/** Await initial loading */
 	loading = new Promise<void>(r => this._loading = r);
 
+	get size() { return this.store.size; }
+
 	/**
 	 * Create new cache
 	 * @param {keyof T} key Default property to use as primary key
