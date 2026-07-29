@@ -280,19 +280,16 @@ function titleCase(str: string) {
  * @return {RegExpExecArray[]} Found matches.
  */
 export function matchAll(value: string, regex: RegExp | string): RegExpExecArray[] {
-	if(typeof regex === 'string') {
-		regex = new RegExp(regex, 'g');
-	}
-
-	// https://stackoverflow.com/a/60290199
-	if(!regex.global) {
-		throw new TypeError('Regular expression must be global.');
-	}
+	if(typeof regex === 'string') regex = new RegExp(regex, 'g');
+	if(!regex.global) throw new TypeError('Regular expression must be global.');
 
 	let ret: RegExpExecArray[] = [];
 	let match: RegExpExecArray | null;
 	while((match = regex.exec(value)) !== null) {
 		ret.push(match);
+		if(match[0].length === 0) {
+			regex.lastIndex++;
+		}
 	}
 
 	return ret;
