@@ -1,7 +1,7 @@
 {
 	"name": "@ztimson/utils",
 	"version": "0.30.3",
-	"description": "Utility library",S
+	"description": "Utility library",
 	"author": "Zak Timson",
 	"license": "MIT",
 	"private": false,
