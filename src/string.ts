@@ -28,32 +28,6 @@ export function camelCase(str?: string): string {
 }
 
 /**
- * Decode HTML escaped characters
- * @param html HTML to clean up
- * @returns {any}
- */
-export function decodeHtml(html: string) {
-	return html
-		.replace(/&nbsp;/g, '\u00A0')
-		.replace(/&quot;/g, '"')
-		.replace(/&apos;/g, "'")
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&cent;/g, '¢')
-		.replace(/&pound;/g, '£')
-		.replace(/&yen;/g, '¥')
-		.replace(/&euro;/g, '€')
-		.replace(/&copy;/g, '©')
-		.replace(/&reg;/g, '®')
-		.replace(/&trade;/g, '™')
-		.replace(/&times;/g, '×')
-		.replace(/&divide;/g, '÷')
-		.replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
-		.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
-		.replace(/&amp;/g, '&'); // Always last!
-}
-
-/**
  * Convert number of bytes into a human-readable size
  *
  * @param {number} bytes Number of bytes
@@ -124,7 +98,6 @@ export function kebabCase(str?: string): string {
 	if(!str) return '';
 	return wordSegments(str).map(w => w.toLowerCase()).join("-");
 }
-
 
 /**
  * Add padding to string
@@ -256,18 +229,14 @@ export function strSplice(str: string, start: number, deleteCount: number, inser
 	return before + insert + after;
 }
 
-function titleCase(str: string) {
-	// Normalize separators: replace underscores and hyphens with spaces
-	let normalizedStr = str.replace(/(_|-)/g, ' ');
-	// Handle CamelCase/PascalCase boundaries: insert a space before capital letters
-	normalizedStr = normalizedStr.replace(/([a-z])([A-Z])/g, '$1 $2');
-	// Lowercase the whole string, split by any whitespace, and capitalize each word
-	let words = normalizedStr.toLowerCase().split(/\s+/).filter(Boolean);
-	const titledWords = words.map(word => {
-		if (word.length === 0) return '';
-		return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-	});
-	return titledWords.join(' ');
+/**
+ * Converts text to Title Case
+ */
+export function titleCase(str?: string): string {
+	if(!str) return '';
+	return wordSegments(str)
+		.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+		.join(' ');
 }
 
 /**
