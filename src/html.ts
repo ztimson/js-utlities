@@ -26,20 +26,40 @@ export function decodeHtml(html: string) {
 
 /**
  * Parse markdown headers
+ *
+ * **NOTE: frontmatter parsing only works 2 layers deep**
+ *
  * @param {string} content
  * @returns {{meta: any, content: string} | {meta: {}, content: string}}
  */
 export function parseMarkdown(content: string) {
 	const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-	if(!match) return {meta: {}, content};
+	if (!match) return {meta: {}, content};
 
 	const meta: any = {};
-	for (const line of match[1].split('\n')) {
+	let currentParent: string | null = null;
+
+	for (const rawLine of match[1].split('\n')) {
+		if (!rawLine.trim()) continue;
+		const indented = /^\s+/.test(rawLine);
+		const line = rawLine.trim();
 		const colonIdx = line.indexOf(':');
 		if (colonIdx === -1) continue;
-		const key   = line.slice(0, colonIdx).trim();
+
+		const key = line.slice(0, colonIdx).trim();
 		const value = line.slice(colonIdx + 1).trim();
-		try { meta[key] = JSON.parse(value); } catch { meta[key] = value; }
+
+		let parsed: any = value;
+		try { parsed = JSON.parse(value); } catch {}
+
+		if (!indented) {
+			currentParent = value === '' ? key : null;
+			if (value === '') meta[key] = {};
+			else meta[key] = parsed;
+		} else if (currentParent) {
+			meta[currentParent][key] = parsed;
+		}
 	}
+
 	return {meta, content: match[2].trim()};
 }
