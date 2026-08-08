@@ -45,18 +45,18 @@ export function reservedIp(ip: string): boolean {
 /**
  * Check if IP is within a reserved range
  * @param {string} ip
- * @returns {string | null}
+ * @returns {null | 'Invalid' | 'Host' | 'Loopback' | 'Private (Class A)' | 'Private (Class B)' | 'Link-Local' | 'IETF Protocol Assignments' | 'Documentation (TEST-NET-1)' | 'Benchmarking' | 'Documentation (TEST-NET-2)' | 'Documentation (TEST-NET-3)' | 'Multicast' | 'Reserved (Class E)'} null if public, class name if reserved
  */
-export function isReserved(ip: string) {
+export function isReserved(ip: string): null | 'Invalid' | 'Host' | 'Loopback' | 'Private (Class A)' | 'Private (Class B)' | 'Link-Local' | 'IETF Protocol Assignments' | 'Documentation (TEST-NET-1)' | 'Benchmarking' | 'Documentation (TEST-NET-2)' | 'Documentation (TEST-NET-3)' | 'Multicast' | 'Reserved (Class E)' {
 	const ipToNumber = (ip: string) => {
 		return ip.split('.').reduce((acc: number, octet: string) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
 	};
 
 	const ipNum = ipToNumber(ip);
-	if (ipNum === null) return 'invalid';
+	if (ipNum === null) return 'Invalid';
 
 	const reserved = [
-		{ name: "This host", start: ipToNumber("0.0.0.0"), end: ipToNumber("0.255.255.255") },
+		{ name: "Host", start: ipToNumber("0.0.0.0"), end: ipToNumber("0.255.255.255") },
 		{ name: "Loopback", start: ipToNumber("127.0.0.0"), end: ipToNumber("127.255.255.255") },
 		{ name: "Private (Class A)", start: ipToNumber("10.0.0.0"), end: ipToNumber("10.255.255.255") },
 		{ name: "CGNAT", start: ipToNumber("100.64.0.0"), end: ipToNumber("100.127.255.255") },
@@ -73,5 +73,5 @@ export function isReserved(ip: string) {
 	];
 
 	const match = reserved.find(r => ipNum >= r.start && ipNum <= r.end);
-	return match ? match.name : null;
+	return match ? <any>match.name : null;
 }
