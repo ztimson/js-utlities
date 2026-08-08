@@ -12,6 +12,7 @@ export * from './errors';
 export * from './files';
 export * from './html';
 export * from './http';
+export * from './ip';
 export * from './json';
 export * from './jwt';
 export * from './logger';

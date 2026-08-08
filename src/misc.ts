@@ -77,46 +77,6 @@ export function gravatar(email: string, def='mp') {
 }
 
 /**
- * Check if IP address falls within CIDR range
- * @param {string} ip IPV4 to check (192.168.0.12)
- * @param {string} cidr IP range to check against (example: 192.168.0.0/24)
- * @returns {boolean} Whether IP address is within range
- */
-export function matchesCidr(ip: string, cidr: string): boolean {
-	if(!cidr) return true;
-	if(!ip) return false;
-	if(!cidr?.includes('/')) return ip === cidr; // Single IP
-	const [range, bits] = cidr.split('/');
-	const mask = ~(2 ** (32 - parseInt(bits)) - 1);
-	const ipToInt = (str: string) => str.split('.')
-		.reduce((int, octet) => (int << 8) + parseInt(octet), 0) >>> 0;
-	return (ipToInt(ip) & mask) === (ipToInt(range) & mask);
-}
-
-/**
- * Convert IPv6 to v4 because who uses that, NAT4Life
- * @param {string} ip IPv6 address, e.g. 2001:0db8:85a3:0000:0000:8a2e:0370:7334
- * @returns {string | null} IPv4 address, e.g. 172.16.58.3
- */
-export function ipV6ToV4(ip: string) {
-	if(!ip) return null;
-	const ipv4 = ip.split(':').splice(-1)[0];
-	if(ipv4 == '1') return '127.0.0.1';
-	return ipv4;
-}
-
-/**
- * Check if IP is reserved, e.g. localhost, private IPs, etc.
- * @param {string} ip
- * @returns {boolean}
- */
-export function reservedIp(ip: string): boolean {
-	if(ip == 'localhost' || ip == '127.0.0.1') return true;
-	return /\b(10\.(?:[0-9]{1,3}\.){2}[0-9]{1,3})\b|\b(172\.(?:1[6-9]|2[0-9]|3[0-1])\.(?:[0-9]{1,3}\.)[0-9]{1,3})\b|\b(192\.168\.(?:[0-9]{1,3}\.)[0-9]{1,3})\b/.test(ip);
-}
-
-
-/**
  * Represents a function that listens for events and handles them accordingly.
  *
  * @param {PathEvent} event - The event object containing data related to the triggered event.
