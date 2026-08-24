@@ -97,8 +97,10 @@ export function deepCopy<T>(value: T): T {
  * @return {any} The des
  */
 export function deepMerge<T>(target: any, ...sources: any[]): T {
+	const BLOCKED = new Set(['__proto__', 'constructor', 'prototype']);
 	sources.forEach(s => {
 		for(const key in s) {
+			if(BLOCKED.has(key) || !Object.prototype.hasOwnProperty.call(s, key)) continue;
 			if(s[key] && typeof s[key] == 'object' && !Array.isArray(s[key])) {
 				if(!target[key]) target[key] = {};
 				deepMerge(target[key], s[key]);
