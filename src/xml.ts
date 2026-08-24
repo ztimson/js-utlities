@@ -1,12 +1,12 @@
 /**
- * Parses an XML string into a structured JavaScript object.
+ * Parses an XML string into a plain JavaScript object.
+ * Each tag becomes a key. Attributes and child tags are merged as
+ * sibling properties on that tag's object. Duplicate tag/attribute
+ * names are collapsed into arrays. Text-only tags resolve to their
+ * (optionally numeric) value; if a tag has both text and attributes/
+ * children, the text is kept under a `_text` key.
  * @param {string} xml - The XML string to parse
- * @returns {Object} An object with `tag`, `attributes`, and `children` properties
- */
-/**
- * Parses an XML string into a structured JavaScript object (fast-xml-parser format).
- * @param {string} xml - The XML string to parse
- * @returns {Object} An object with tag names as keys and text content or nested objects as values
+ * @returns {Object} The parsed object tree
  */
 export function fromXml(xml: string) {
 	xml = xml.trim();
@@ -33,11 +33,11 @@ export function fromXml(xml: string) {
 
 		if(xml[pos] === '/' && xml[pos + 1] === '>') {
 			pos += 2; // skip />
-			return { [tagName]: '' };
+			return { [tagName]: Object.keys(attributes).length ? attributes : '' };
 		}
 
 		pos++; // skip >
-		const children: any[] = [];
+		const children: any[] = Object.entries(attributes).map(([k, v]) => ({ [k]: v }));
 		let textContent = '';
 
 		while(pos < xml.length) {
@@ -49,7 +49,6 @@ export function fromXml(xml: string) {
 				pos++; // skip >
 				break;
 			}
-			const startPos = pos;
 			const child = parseNode();
 			if(typeof child === 'string') {
 				textContent += child;
@@ -64,17 +63,18 @@ export function fromXml(xml: string) {
 			return { [tagName]: value };
 		}
 
-		// If only text with no children
+		// If nothing at all
 		if(children.length === 0) {
 			return { [tagName]: '' };
 		}
 
-		// Merge children into object
+		// Merge attributes/children into object
 		const result: any = {};
+		if(textContent) result._text = isNumeric(textContent) ? Number(textContent) : textContent;
 		for(const child of children) {
 			for(const [key, value] of Object.entries(child)) {
 				if(result[key]) {
-					// Convert to array if duplicate tags
+					// Convert to array if duplicate tags/attrs
 					if(!Array.isArray(result[key])) {
 						result[key] = [result[key]];
 					}

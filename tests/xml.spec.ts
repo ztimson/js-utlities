@@ -14,10 +14,10 @@ describe('XML Parser', () => {
 			expect(result).toEqual({ item: '' });
 		});
 
-		it('should parse tag with attributes (ignored in fast-xml-parser format)', () => {
+		it('should parse tag with attributes as merged properties', () => {
 			const xml = '<user id="1" name="someone" />';
 			const result = fromXml(xml);
-			expect(result).toEqual({ user: '' });
+			expect(result).toEqual({ user: { id: '1', name: 'someone' } });
 		});
 
 		it('should parse tag with text content', () => {
@@ -94,6 +94,8 @@ describe('XML Parser', () => {
 			expect(result).toEqual({
 				root: {
 					user: {
+						id: '1',
+						name: 'someone',
 						email: 'someone@example.com',
 						active: ''
 					}
@@ -190,7 +192,7 @@ describe('XML Parser', () => {
 	});
 
 	describe('round-trip', () => {
-		it('should parse toXml output back to fast-xml-parser format', () => {
+		it('should parse toXml output back with attributes merged as properties', () => {
 			const obj = {
 				tag: 'root',
 				attributes: { id: '1' },
@@ -202,6 +204,7 @@ describe('XML Parser', () => {
 			const parsed = fromXml(xml);
 			expect(parsed).toEqual({
 				root: {
+					id: '1',
 					child: 'text'
 				}
 			});
