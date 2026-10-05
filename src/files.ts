@@ -82,11 +82,11 @@ export function timestampFilename(name?: string, date: Date | number | string = 
 }
 
 /**
- * Upload file to URL with progress callback using PromiseProgress
+ * Upload file to URL with progress (size/total/speed/eta/...) via PromiseProgress
  * Works in both browser (with progress) and Node.js (fallback without progress)
  *
  * @param {{url: string, files: File[], headers?: {[p: string]: string}, withCredentials?: boolean}} options
- * @return {PromiseProgress<T>} Promise of request with `onProgress` callback
+ * @return {PromiseProgress<T>} Promise of request with `onProgress` callback & meta getters
  */
 export function uploadWithProgress<T>(options: {
 	url: string;
@@ -102,7 +102,7 @@ export function uploadWithProgress<T>(options: {
 			options.files.forEach(f => formData.append('files', f));
 
 			xhr.withCredentials = !!options.withCredentials;
-			xhr.upload.addEventListener('progress', (event) => event.lengthComputable ? prog(event.loaded / event.total) : null);
+			xhr.upload.addEventListener('progress', (event) => event.lengthComputable ? prog(event.loaded, event.total) : null);
 			xhr.addEventListener('loadend', () => res(<T>JSONAttemptParse(xhr.responseText)));
 			xhr.addEventListener('error', () => rej(JSONAttemptParse(xhr.responseText)));
 			xhr.addEventListener('timeout', () => rej({error: 'Request timed out'}));
@@ -126,6 +126,42 @@ export function uploadWithProgress<T>(options: {
 				const result = await response.text();
 				res(<T>JSONAttemptParse(result));
 			}
+		} catch (error) {
+			rej(error);
+		}
+	});
+}
+
+/**
+ * Download file from URL with progress (size/total/speed/eta/...) via PromiseProgress
+ * Streams the response body for progress when supported, falls back to a plain blob otherwise
+ *
+ * @param {{url: string, name?: string, headers?: {[p: string]: string}}} options name - if set, triggers a file save via `downloadFile`
+ * @return {PromiseProgress<Blob>} Promise of downloaded blob with `onProgress` callback & meta getters
+ */
+export function downloadWithProgress(options: {url: string; name?: string; headers?: {[key: string]: string}}): PromiseProgress<Blob> {
+	return new PromiseProgress<Blob>(async (res, rej, prog) => {
+		try {
+			const response = await fetch(options.url, {headers: options.headers || {}});
+			if(!response.ok) return rej(JSONAttemptParse(await response.text()));
+			const total = Number(response.headers.get('content-length')) || 0;
+			if(!response.body?.getReader) {
+				const blob = await response.blob();
+				options.name && downloadFile(blob, options.name);
+				return res(blob);
+			}
+			const reader = response.body.getReader();
+			const chunks: Uint8Array[] = [];
+			let size = 0;
+			while(true) {
+				const {done, value} = await reader.read();
+				if(done) break;
+				chunks.push(value);
+				prog(size += value.length, total);
+			}
+			const blob = new Blob(chunks as BlobPart[]);
+			options.name && downloadFile(blob, options.name);
+			res(blob);
 		} catch (error) {
 			rej(error);
 		}
