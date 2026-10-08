@@ -48,12 +48,12 @@ export function reservedIp(ip: string): boolean {
  * @returns {null | 'Invalid' | 'Host' | 'Loopback' | 'Private (Class A)' | 'Private (Class B)' | 'Link-Local' | 'IETF Protocol Assignments' | 'Documentation (TEST-NET-1)' | 'Benchmarking' | 'Documentation (TEST-NET-2)' | 'Documentation (TEST-NET-3)' | 'Multicast' | 'Reserved (Class E)'} null if public, class name if reserved
  */
 export function isReserved(ip: string): null | 'Invalid' | 'Host' | 'Loopback' | 'Private (Class A)' | 'Private (Class B)' | 'Link-Local' | 'IETF Protocol Assignments' | 'Documentation (TEST-NET-1)' | 'Benchmarking' | 'Documentation (TEST-NET-2)' | 'Documentation (TEST-NET-3)' | 'Multicast' | 'Reserved (Class E)' {
-	const ipToNumber = (ip: string) => {
-		return ip.split('.').reduce((acc: number, octet: string) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
-	};
+	const ipToNumber = (ip: string) => ip.split('.').reduce((acc: number, octet: string) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
 
-	const ipNum = ipToNumber(ip);
-	if (ipNum === null) return 'Invalid';
+	const ipv4 = ip.includes(':') ? ipV6ToV4(ip) : ip;
+	if(ipv4 === null || !ipv4.includes('.')) return 'Invalid';
+	const ipNum = ipToNumber(ipv4);
+	if(ipNum === null) return 'Invalid';
 
 	const reserved = [
 		{ name: "Host", start: ipToNumber("0.0.0.0"), end: ipToNumber("0.255.255.255") },
