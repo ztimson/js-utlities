@@ -165,6 +165,15 @@ export function encodeQuery(data: any): string {
 	).join('&');
 }
 
+/** Recursively walks obj/arrays, calling cb(dotPath, value) for every leaf+branch prop */
+export function everyNested(obj: any, cb: (key: string, value: any) => void, prefix = ''){
+	Object.entries(obj).forEach(([k, v]) => {
+		const key = prefix ? `${prefix}.${k}` : k;
+		cb(key, v);
+		if (v && typeof v === 'object') everyNested(v, cb, key);
+	});
+}
+
 /**
  * Recursively flatten a nested object, while maintaining key structure
  *
