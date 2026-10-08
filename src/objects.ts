@@ -255,36 +255,40 @@ export function includes(target: any, values: any, allowMissing = false): boolea
  * @param {string} [path] - Internal, current dot-path
  * @returns {boolean} True if they match
  */
-export function isEqual(a: any, b: any, compare?: string[] | ((key: string, a: any, b: any) => boolean | void), seen = new WeakMap<object, object>(), path = ''): boolean {
-	if(Array.isArray(compare)) {
-		if(compare.some(p => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^.]*')}(\\.|$)`).test(path))) return true;
-	} else if(typeof compare === 'function') {
-		const r = compare(path, a, b);
-		if(r !== undefined) return r;
-	}
-	if(a === b) return true;
-	if(a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
-	if(a instanceof RegExp && b instanceof RegExp) return a.source === b.source && a.flags === b.flags;
-	if(typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
-		if(Number.isNaN(a) && Number.isNaN(b)) return true;
-		if(typeof a === 'function' && typeof b === 'function') return a.toString() === b.toString();
-		return false;
-	}
-	if(seen.has(a)) return seen.get(a) === b;
-	seen.set(a, b);
-	const isArrayA = Array.isArray(a), isArrayB = Array.isArray(b);
-	if(isArrayA && isArrayB) {
-		if(a.length !== b.length) return false;
-		for(let i = 0; i < a.length; i++) if(!isEqual(a[i], b[i], compare, seen, path ? `${path}.${i}` : `${i}`)) return false;
+export function isEqual(a: any, b: any, compare?: string[] | ((key: string, a: any, b: any) => boolean | void)): boolean {
+	const eq = (a: any, b: any, compare: any, seen: WeakMap<object, object>, path: string) => {
+		if(Array.isArray(compare)) {
+			if(compare.some(p => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^.]*')}(\\.|$)`).test(path))) return true;
+		} else if(typeof compare === 'function') {
+			const r = compare(path, a, b);
+			if(r !== undefined) return r;
+		}
+		if(a === b) return true;
+		if(a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
+		if(a instanceof RegExp && b instanceof RegExp) return a.source === b.source && a.flags === b.flags;
+		if(typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
+			if(Number.isNaN(a) && Number.isNaN(b)) return true;
+			if(typeof a === 'function' && typeof b === 'function') return a.toString() === b.toString();
+			return false;
+		}
+		if(seen.has(a)) return seen.get(a) === b;
+		seen.set(a, b);
+		const isArrayA = Array.isArray(a), isArrayB = Array.isArray(b);
+		if(isArrayA && isArrayB) {
+			if(a.length !== b.length) return false;
+			for(let i = 0; i < a.length; i++) if(!eq(a[i], b[i], compare, seen, path ? `${path}.${i}` : `${i}`)) return false;
+			return true;
+		}
+		if(isArrayA !== isArrayB) return false;
+		const keysA = Object.keys(a), keysB = Object.keys(b);
+		if(keysA.length !== keysB.length) return false;
+		for(const key of keysA) {
+			if(!Object.prototype.hasOwnProperty.call(b, key) || !eq(a[key], b[key], compare, seen, path ? `${path}.${key}` : key)) return false;
+		}
 		return true;
 	}
-	if(isArrayA !== isArrayB) return false;
-	const keysA = Object.keys(a), keysB = Object.keys(b);
-	if(keysA.length !== keysB.length) return false;
-	for(const key of keysA) {
-		if(!Object.prototype.hasOwnProperty.call(b, key) || !isEqual(a[key], b[key], compare, seen, path ? `${path}.${key}` : key)) return false;
-	}
-	return true;
+
+	return eq(a, b, compare, new WeakMap(), '');
 }
 
 /**
